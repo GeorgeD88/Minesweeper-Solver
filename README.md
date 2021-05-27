@@ -5,4 +5,4 @@ This is a personal project I've been wanting to work on for a while. After playi
 Before getting to writing my solving algorithm, I noticed some problems with the original minesweeper script that I wanted to change so I made a copy called minesweeper_v2 and will be fixing up this copy. After fixing the copy, I will proceed to integrating into it with...
 
 ## Solving Algorithm
-After finishing v2, I will write my own cosde into v2 to basically sink my "tentacles" into the game's code and hook my algorithm onto components of the game it will need to interact with. That is all I have planned for now and will continue to update this once I have more.
+After finishing v2, I will write my own code into v2 to basically sink my "tentacles" into the game's code and hook my algorithm onto components of the game it will need to interact with. That is all I have planned for now and will continue to update this once I have more.
