@@ -55,8 +55,6 @@ for r in range(1, rows+1):
             print(str(solution[r][c]) + ' ', end="")
     print()
 
-game = [[False for i in range(cols+2)] for j in range(rows+2)]
-
 #-----------------------------------------------------------------------
 
 # python minesweeper.py 3 5 .5
