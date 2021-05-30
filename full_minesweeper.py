@@ -22,15 +22,6 @@ for r in range(1, rows+1):
     for c in range(1, cols+1):
         bombs[r][c] = (random.random() < prob)
 
-# prints the initial state of the board with just the bombs and regular tiles
-for r in range(1, rows+1):
-    for c in range(1, cols+1):
-        if bombs[r][c]:
-            print('* ', end="")
-        else:
-            print('. ', end="")
-    print()
-
 # initializes a 2d array to hold the solution board as a rows+2 * cols+2 array,
 # each regular tile contains the number of adjacent tiles with bombs.
 solution = [[0 for i in range(cols+2)] for j in range(rows+2)]
@@ -45,34 +36,24 @@ for r in range(1, rows+1):
                 if bombs[rr][cc]:
                     solution[r][c] += 1
 
+
+# # prints the initial state of the board with just the bombs and regular tiles
+# for r in range(1, rows+1):
+#     for c in range(1, cols+1):
+#         if bombs[r][c]:
+#             print('* ', end="")
+#         else:
+#             print('. ', end="")
+#     print()
+
 # prints the solution of the board with the number tiles and exposed bombs
-print()
-for r in range(1, rows+1):
-    for c in range(1, cols+1):
-        if bombs[r][c]:
-            print('* ', end="")
-        else:
-            print(str(solution[r][c]) + ' ', end="")
-    print()
+# print()
+# for r in range(1, rows+1):
+#     for c in range(1, cols+1):
+#         if bombs[r][c]:
+#             print('* ', end="")
+#         else:
+#             print(str(solution[r][c]) + ' ', end="")
+#     print()
 
 game = [[False for i in range(cols+2)] for j in range(rows+2)]
-
-#-----------------------------------------------------------------------
-
-# python minesweeper.py 3 5 .5
-# . . * . *
-# * . * . *
-# * * * . *
-#
-# 1 3 * 4 *
-# * 6 * 6 *
-# * * * 4 *
-
-# python minesweeper.py 3 5 .5
-# . . * * .
-# . . . * *
-# . . . . *
-#
-# 0 1 * * 3
-# 0 1 3 * *
-# 0 0 1 3 *
