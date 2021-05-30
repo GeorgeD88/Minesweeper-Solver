@@ -7,38 +7,38 @@ import stdarray
 import sys
 import random
 
-# Accept integers m and n, and float p as command-line arguments.
-# Create a m x n minesweeper game where each cell is a bomb with
-# probability p. Write the m x n game and the neighboring bomb counts
+# Accept integers rows and cols, and float prob as command-line arguments.
+# Create a rows x cols minesweeper game where each cell is a bomb with
+# probability prob. Write the rows x cols game and the neighboring bomb counts
 # to standard output.
 
-m = int(sys.argv[1])
-n = int(sys.argv[2])
-p = float(sys.argv[3])
+rows = int(input('rows: '))
+cols = int(input('columns: '))
+prob = float(input('bomb probability: '))
 
-# Create bombs as a m+2 * n+2 array.
-bombs = stdarray.create2D(m+2, n+2, False)
+# Create bombs as a rows+2 * cols+2 array.
+bombs = stdarray.create2D(rows+2, cols+2, False)
 
-# bombs is [1..m][1..n]; the border is used to handle boundary cases.
-for r in range(1, m+1):
-    for c in range(1, n+1):
-        bombs[r][c] = (random.random() < p)
+# bombs is [1..rows][1..cols]; the border is used to handle boundary cases.
+for r in range(1, rows+1):
+    for c in range(1, cols+1):
+        bombs[r][c] = (random.random() < prob)
 
 # Write the bombs.
-for r in range(1, m+1):
-    for c in range(1, n+1):
+for r in range(1, rows+1):
+    for c in range(1, cols+1):
         if bombs[r][c]:
-            stdio.write('* ')
+            print('* ')
         else:
-            stdio.write('. ')
-    stdio.writeln()
+            print('. ')
+    print()
 
-# Create solution as a m+2 x n+2 array.
-solution = stdarray.create2D(m+2, n+2, 0)
+# Create solution as a rows+2 x cols+2 array.
+solution = stdarray.create2D(rows+2, cols+2, 0)
 
 # solution[i][j] is the number of bombs adjacent to cell (i, j).
-for r in range(1, m+1):
-    for c in range(1, n+1):
+for r in range(1, rows+1):
+    for c in range(1, cols+1):
         # (rr, cc) indexes neighboring cells.
         for rr in range(r-1, r+2):
             for cc in range(c-1, c+2):
@@ -46,14 +46,14 @@ for r in range(1, m+1):
                     solution[r][c] += 1
 
 # Write solution.
-stdio.writeln()
-for r in range(1, m+1):
-    for c in range(1, n+1):
+print()
+for r in range(1, rows+1):
+    for c in range(1, cols+1):
         if bombs[r][c]:
-            stdio.write('* ')
+            print('* ')
         else:
-            stdio.write(str(solution[r][c]) + ' ')
-    stdio.writeln()
+            print(str(solution[r][c]) + ' ')
+    print()
 
 #-----------------------------------------------------------------------
 
