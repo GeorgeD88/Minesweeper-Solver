@@ -24,7 +24,8 @@ for r in range(1, rows+1):
 
 # initializes a 2d array to hold the solution board as a rows+2 * cols+2 array,
 # each regular tile contains the number of adjacent tiles with bombs.
-solution = [[0 for i in range(cols+2)] for j in range(rows+2)]
+# INTERNAL BOARD
+board = [[0 for i in range(cols+2)] for j in range(rows+2)]
 
 # goes through every element and replaces every regular
 # tile with the number of bombs in the adjacent tiles.
@@ -34,29 +35,32 @@ for r in range(1, rows+1):
         for rr in range(r-1, r+2):
             for cc in range(c-1, c+2):
                 if bombs[rr][cc]:
-                    solution[r][c] += 1
+                    board[r][c] += 1
 
 
-# # prints the initial state of the board with just the bombs and regular tiles
-# for r in range(1, rows+1):
-#     for c in range(1, cols+1):
-#         if bombs[r][c]:
-#             print('* ', end="")
-#         else:
-#             print('. ', end="")
-#     print()
+# TODO: figure out characters to use
+mask = [['. ' for i in range(cols+2)] for j in range(rows+2)]
 
-# prints the solution of the board with the number tiles and exposed bombs
-# print()
-# for r in range(1, rows+1):
-#     for c in range(1, cols+1):
-#         if bombs[r][c]:
-#             print('* ', end="")
-#         else:
-#             print(str(solution[r][c]) + ' ', end="")
-#     print()
+# prints the mask board that the player sees
+def display_mask():
+    for r in range(1, rows+1):
+        for c in range(1, cols+1):
+            if mask[r][c]:
+                print('* ', end="")
+            else:
+                print('. ', end="")
+        print()
 
-game = [[False for i in range(cols+2)] for j in range(rows+2)]
+# prints the internal board that only the code sees
+def display_board():
+    print()
+    for r in range(1, rows+1):
+        for c in range(1, cols+1):
+            if bombs[r][c]:
+                print('* ', end="")
+            else:
+                print(str(board[r][c]) + ' ', end="")
+        print()
 
 
 # checks if the tile contains a bomb or not
