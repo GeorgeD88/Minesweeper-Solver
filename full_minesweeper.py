@@ -69,5 +69,11 @@ def press(r, c):
 # TODO: do the recursive function for opening a tile surrounded by 0s fro a while
 
 # allows the user to flag unopened tiles as a bomb if speculated to be
-def flag(r, c):
+def flag(r, c, maybe: bool = False):
+    """
+        Flags hidden tiles on player's board as surely bomb or possibly a bomb.
+
+        TODO: ARGS
+    """
+
     pass
