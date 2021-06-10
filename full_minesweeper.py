@@ -57,3 +57,17 @@ for r in range(1, rows+1):
 #     print()
 
 game = [[False for i in range(cols+2)] for j in range(rows+2)]
+
+
+# checks if the tile contains a bomb or not
+def check_tile(r, c):
+    pass
+
+# checks the pressed tile and decides if it's a regular tile and then proceeds as needed
+def press(r, c):
+    pass
+# TODO: do the recursive function for opening a tile surrounded by 0s fro a while
+
+# allows the user to flag unopened tiles as a bomb if speculated to be
+def flag(r, c):
+    pass
