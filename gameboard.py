@@ -17,7 +17,7 @@ def create_game_board(r, c, bomb_board: list) -> list:
         for c in range(1, c+1):
             # (rr, cc) indexes neighboring cells.
             for rr in range(r-1, r+2):
-               for cc in range(c-1, c+2):
+                for cc in range(c-1, c+2):
                     if bomb_board[rr][cc]:
                         game_board[r][c] += 1
 
@@ -28,29 +28,28 @@ def create_game_board(r, c, bomb_board: list) -> list:
 class Minesweeper:
 
     def __init__(self, rows, cols, prob, chars_config=None):
-        # this is basically the config dictionary as it holds the actual character
-        # to be used for displaying each element of the board; e.g. bomb = 'X'
+        # config dictionary that holds the actual character strings mappings
+        # for what character to display for each board element; e.g. bomb = 'X'
         self.chars = {'tile': '.', 'bomb': 'X', 'armed': '#', 'maybe': '?'} if chars_config is None else chars_config
         #(r, a, d, h, q respectively to reveal, arm or disarm a tile, to get help or to quit), optionally followed by coordinates
 
-        # these are the settings that were picked but not any actual game data such as boards.
+        # settings for the game board
         self.rows = rows
         self.cols = cols
         self.prob = prob
 
-        # these are the actual different boards, basically the game data.
+        # the different boards (external viewed by player and internal only viewed by code)
         #bombs = [[False for i in range(cols+2)] for j in range(rows+2)]
-        self.game = create_game_board(rows, cols, create_bomb_board(rows, cols, prob))
-        self.mask = []  # TODO: FIGURE OUT WHAT CHARACTER TO PUT FOR REGULAR TILES
-
-
-# initializes a 2d array to hold the bombs as a rows+2 * cols+2 array,
-# each element being a boolean for a bomb existing or not (False as default for now).
-bombs = [[False for i in range(cols+2)] for j in range(rows+2)]
+        self.bombs = create_bomb_board(rows, cols, prob)  # just the bombs, stored in code form
+        self.game = create_game_board(rows, cols, self.bombs)  # internal board, stored in code form
+        icon = self.chars['tile']
+        self.mask = [[icon for i in range(cols+2)] for j in range(rows+2)]  # displayed board, stored in the string characters
 
 # goes through every individual element in the bomb array and runs a random number to determine whether
 # or not to insert a bomb there; the bomb is inserted if the number is within the given probability.
 # OLD COMMENT: bombs is [1..rows][1..cols]; the border is used to handle boundary cases.
+bombs = [[False for i in range(cols+2)] for j in range(rows+2)]
+
 for r in range(1, rows+1):
     for c in range(1, cols+1):
         bombs[r][c] = (random.random() < prob)
