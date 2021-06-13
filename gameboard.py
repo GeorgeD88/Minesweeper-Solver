@@ -26,6 +26,7 @@ class Minesweeper:
     def create_bomb_board(self) -> list:
         # puts random bombs everywhere including border
         new_bomb_board = [[random.random() < self.prob for i in range(self.cols+2)] for j in range(self.rows+2)]
+
         # overwrites the border mixed bombs with just False so that it doesn't mess up the count
         for c in range(self.cols+2):  # top and bottom row
             new_bomb_board[0][c] = False
@@ -33,6 +34,7 @@ class Minesweeper:
         for r in range(1, self.rows+1):  # left and right columns besides the overlap
             new_bomb_board[r][0] = False
             new_bomb_board[r][-1] = False
+
         return new_bomb_board
 
     # creates a game board from a previously created bomb board: tiles (int of adjacent bombs) and bombs (True)
@@ -44,11 +46,13 @@ class Minesweeper:
         # tile with the number of bombs in the adjacent tiles.
         for r in range(1, self.rows+1):
             for c in range(1, self.cols+1):
-                # (rr, cc) indexes neighboring cells.
-                for rr in range(self.rows-1, self.rows+2):
-                    for cc in range(self.cols-1, self.cols+2):
-                        if self.bombs[rr][cc]:
-                            self.game[r][c] += 1
+                if game_board[r][c] is False:  # meaning it's not a bomb
+                    game_board[r][c] = 0
+                    # (rr, cc) indexes neighboring cells.
+                    for rr in range(r-1, r+2):
+                        for cc in range(c-1, c+2):
+                            if self.bombs[rr][cc]:
+                                game_board[r][c] += 1
 
         return game_board
 
@@ -57,34 +61,56 @@ class Minesweeper:
         regular_tile = self.chars['tile']
         return [[regular_tile for i in range(self.cols)] for j in range(self.rows)]
 
+    def display_bombs(self):
+        for r in range(1, self.rows+1):
+            for c in range(1, self.cols+1):
+                print(self.bombs[r][c] + ' ', end='')
+            print()
 
-# goes through every individual element in the bomb array and runs a random number to determine whether
-# or not to insert a bomb there; the bomb is inserted if the number is within the given probability.
-# OLD COMMENT: bombs is [1..rows][1..cols]; the border is used to handle boundary cases.
-bombs = [[False for i in range(cols+2)] for j in range(rows+2)]
+    def display_game(self):
+        for r in range(self.rows):
+            for c in range(self.cols):
+                cell = self.game[r][c]
+                if cell is True:
+                    print(self.chars['bomb'] + ' ', end='')
+                elif type(cell) is int:
+                    print(str(cell) + ' ', end='')
+            print()
 
-for r in range(1, rows+1):
-    for c in range(1, cols+1):
-        bombs[r][c] = (random.random() < prob)
-
-# initializes a 2d array to hold the solution board as a rows+2 * cols+2 array,
-# each regular tile contains the number of adjacent tiles with bombs.
-# INTERNAL BOARD
-board = [[0 for i in range(cols+2)] for j in range(rows+2)]
-
-# goes through every element and replaces every regular
-# tile with the number of bombs in the adjacent tiles.
-for r in range(1, rows+1):
-    for c in range(1, cols+1):
-        # (rr, cc) indexes neighboring cells.
-        for rr in range(r-1, r+2):
-            for cc in range(c-1, c+2):
-                if bombs[rr][cc]:
-                    board[r][c] += 1
+    def display_mask(self):
+        for r in range(self.rows):
+            for c in range(self.cols):
+                print(self.mask[r][c] + ' ', end='')
+            print()
 
 
-# TODO: figure out characters to use
-mask = [['. ' for i in range(cols+2)] for j in range(rows+2)]
+# # goes through every individual element in the bomb array and runs a random number to determine whether
+# # or not to insert a bomb there; the bomb is inserted if the number is within the given probability.
+# # OLD COMMENT: bombs is [1..rows][1..cols]; the border is used to handle boundary cases.
+# bombs = [[False for i in range(cols+2)] for j in range(rows+2)]
+
+# for r in range(1, rows+1):
+#     for c in range(1, cols+1):
+#         bombs[r][c] = (random.random() < prob)
+
+# # initializes a 2d array to hold the solution board as a rows+2 * cols+2 array,
+# # each regular tile contains the number of adjacent tiles with bombs.
+# # INTERNAL BOARD
+# board = [[0 for i in range(cols+2)] for j in range(rows+2)]
+
+# # goes through every element and replaces every regular
+# # tile with the number of bombs in the adjacent tiles.
+# for r in range(1, rows+1):
+#     for c in range(1, cols+1):
+#         # (rr, cc) indexes neighboring cells.
+#         for rr in range(r-1, r+2):
+#             for cc in range(c-1, c+2):
+#                 if bombs[rr][cc]:
+#                     board[r][c] += 1
+
+
+# # TODO: figure out characters to use
+# mask = [['. ' for i in range(cols+2)] for j in range(rows+2)]
 
 # prints the mask board that the player sees
 def display_mask():
