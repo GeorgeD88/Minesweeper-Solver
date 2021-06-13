@@ -1,28 +1,6 @@
 import random
 
 
-# creates a bomb board: tiles (False) and bombs (True)
-def create_bomb_board(r, c, p) -> list:
-    return [[random.random() < p for i in range(c+2)] for j in range(r+2)]
-
-# creates a game board from a previously created bomb board: tiles (int of adjacent bombs) and bombs (True)
-def create_game_board(r, c, bomb_board: list) -> list:
-    # defines the board by starting with a copy of the bomb board that it can edit
-    game_board = bomb_board.copy()
-    #board = [[0 for i in range(c+2)] for j in range(r+2)]
-
-    # goes through every element and replaces every regular
-    # tile with the number of bombs in the adjacent tiles.
-    for r in range(1, r+1):
-        for c in range(1, c+1):
-            # (rr, cc) indexes neighboring cells.
-            for rr in range(r-1, r+2):
-                for cc in range(c-1, c+2):
-                    if bomb_board[rr][cc]:
-                        game_board[r][c] += 1
-
-    return game_board
-
 # Minesweeper class to create objects representing a whole game with the boards.
 # This class allows me to easily run methods on the game instead of using global variables.
 class Minesweeper:
@@ -40,10 +18,36 @@ class Minesweeper:
 
         # the different boards (external viewed by player and internal only viewed by code)
         #bombs = [[False for i in range(cols+2)] for j in range(rows+2)]
-        self.bombs = create_bomb_board(rows, cols, prob)  # just the bombs, stored in code form
-        self.game = create_game_board(rows, cols, self.bombs)  # internal board, stored in code form
-        icon = self.chars['tile']
-        self.mask = [[icon for i in range(cols+2)] for j in range(rows+2)]  # displayed board, stored in the string characters
+        self.bombs = self.create_bomb_board()  # just the bombs, stored in code form
+        self.game = self.create_game_board()  # internal board, stored in code form
+        self.mask = self.create_mask_board()  # the board as seen by the user, stored as strings
+
+    # creates a bomb board: tiles (False) and bombs (True)
+    def create_bomb_board(self) -> list:
+        return [[random.random() < self.prob for i in range(self.cols+2)] for j in range(self.rows+2)]
+
+    # creates a game board from a previously created bomb board: tiles (int of adjacent bombs) and bombs (True)
+    def create_game_board(self, r, c, bomb_board: list) -> list:
+        # defines the board by starting with a copy of the bomb board that it can edit
+        game_board = bomb_board.copy()
+        #board = [[0 for i in range(c+2)] for j in range(r+2)]
+        # goes through every element and replaces every regular
+        # tile with the number of bombs in the adjacent tiles.
+        for r in range(1, r+1):
+            for c in range(1, c+1):
+                # (rr, cc) indexes neighboring cells.
+                for rr in range(r-1, r+2):
+                    for cc in range(c-1, c+2):
+                        if bomb_board[rr][cc]:
+                            game_board[r][c] += 1
+
+        return game_board
+
+    # creates a mask board to display to the user: tiles, armed flags, maybe flags, etc. (strings)
+    def create_mask_board(self) -> list:
+        regular_tile = self.chars['tile']
+        return [[regular_tile for i in range(self.cols)] for j in range(self.rows)]
+
 
 # goes through every individual element in the bomb array and runs a random number to determine whether
 # or not to insert a bomb there; the bomb is inserted if the number is within the given probability.
