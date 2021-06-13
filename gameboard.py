@@ -24,22 +24,31 @@ class Minesweeper:
 
     # creates a bomb board: tiles (False) and bombs (True)
     def create_bomb_board(self) -> list:
-        return [[random.random() < self.prob for i in range(self.cols+2)] for j in range(self.rows+2)]
+        # puts random bombs everywhere including border
+        new_bomb_board = [[random.random() < self.prob for i in range(self.cols+2)] for j in range(self.rows+2)]
+        # overwrites the border mixed bombs with just False so that it doesn't mess up the count
+        for c in range(self.cols+2):  # top and bottom row
+            new_bomb_board[0][c] = False
+            new_bomb_board[-1][c] = False
+        for r in range(1, self.rows+1):  # left and right columns besides the overlap
+            new_bomb_board[r][0] = False
+            new_bomb_board[r][-1] = False
+        return new_bomb_board
 
     # creates a game board from a previously created bomb board: tiles (int of adjacent bombs) and bombs (True)
-    def create_game_board(self, r, c, bomb_board: list) -> list:
+    def create_game_board(self) -> list:
         # defines the board by starting with a copy of the bomb board that it can edit
-        game_board = bomb_board.copy()
+        game_board = self.bombs.copy()
         #board = [[0 for i in range(c+2)] for j in range(r+2)]
         # goes through every element and replaces every regular
         # tile with the number of bombs in the adjacent tiles.
-        for r in range(1, r+1):
-            for c in range(1, c+1):
+        for r in range(1, self.rows+1):
+            for c in range(1, self.cols+1):
                 # (rr, cc) indexes neighboring cells.
-                for rr in range(r-1, r+2):
-                    for cc in range(c-1, c+2):
-                        if bomb_board[rr][cc]:
-                            game_board[r][c] += 1
+                for rr in range(self.rows-1, self.rows+2):
+                    for cc in range(self.cols-1, self.cols+2):
+                        if self.bombs[rr][cc]:
+                            self.game[r][c] += 1
 
         return game_board
 
