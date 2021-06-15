@@ -1,6 +1,5 @@
 from copy import deepcopy
 import random
-from typing import Sequence
 
 
 # Minesweeper class to create objects representing a whole game with the boards.
@@ -10,7 +9,7 @@ class Minesweeper:
     def __init__(self, rows, cols, prob, chars_config=None) -> object:
         # config dictionary that holds the actual character strings mappings
         # for what character to display for each board element; e.g. bomb = 'X'
-        self.chars = {'tile': '□', 'bomb': '🅱️', 'zero': ' ', 'armed': '#', 'maybe': '?'} if chars_config is None else chars_config
+        self.chars = {'tile': '□', 'bomb': '🅱️', 'zero': ' ', 'flag': '█', 'maybe': '?'} if chars_config is None else chars_config
         #                                   █🅱️
         #(r, a, d, h, q respectively to reveal, arm or disarm a tile, to get help or to quit), optionally followed by coordinates
 
@@ -24,6 +23,10 @@ class Minesweeper:
         self.bombs = self.create_bomb_board()  # just the bombs, stored in code form
         self.game = self.create_game_board()  # internal board, stored in code form
         self.mask = self.create_mask_board()  # the board as seen by the user, stored as strings
+
+        self.bomb_count = 0
+        for bomb_row in self.bombs:
+            self.bomb_count += bomb_row.count(True)
 
     # creates a bomb board: tiles (False) and bombs (True)
     def create_bomb_board(self) -> list:
@@ -60,8 +63,7 @@ class Minesweeper:
 
     # creates a mask board to display to the user: tiles, armed flags, maybe flags, etc. (strings)
     def create_mask_board(self) -> list:
-        regular_tile = self.chars['tile']
-        return [[regular_tile for i in range(self.cols)] for j in range(self.rows)]
+        return [[False for i in range(self.cols)] for j in range(self.rows)]
 
     def display_bombs(self):
         for r in range(1, self.rows+1):
@@ -82,77 +84,78 @@ class Minesweeper:
             print()
 
     def display_mask(self):
+        repeat = [1, 2, 3, 4, 5, 6, 7, 8, 9, '█']
+        rem = self.cols % 10
+        guide = []
+        for i in range(int(self.cols-rem)//10):
+            guide.extend(repeat)
+        for i in range(rem):
+            guide.append(repeat[i])
+
+        print('   ', end='')
+        for num in guide:
+            print(str(num) + ' ', end='')
+        print()
+        print('   ', end='')
+        for i in range(self.cols):
+            print('| ', end='')
+        print()
+
+        rem = self.rows % 10
+        guide = []
+        for i in range(int(self.rows-rem)//10):
+            guide.extend(repeat)
+        for i in range(rem):
+            guide.append(repeat[i])
+
         for r in range(self.rows):
+            print(f'{guide[r]}--', end='')
             for c in range(self.cols):
-                print(self.mask[r][c] + ' ', end='')
+                cell = self.mask[r][c]
+                if cell is True:
+                    print(self.chars['bomb'] + ' ', end='')
+                elif cell is False:
+                    print(self.chars['tile'] + ' ', end='')
+                elif cell == 0:
+                    print(self.chars['zero'] + ' ', end='')
+                elif type(cell) is int:
+                    print(str(cell) + ' ', end='')
+                else:
+                    print(cell + ' ', end='')
             print()
 
+    def cascade(self, r, c):
+        for rr in range(r-1, r+2):
+            for cc in range(c-1, c+2):
+                checking = self.game[rr][cc]
+                if checking is False or self.mask[rr-1][cc-1] is not False:  # meaning this is part of the no-no border or it's already been checked
+                    continue
+                # this part checks if the mask is 0 so it's checking if it was already cascaded/discovered
+                # try:
+                # elif :  # if this tile was already revealed then don't cascade from it
+                #     continue
+                # except IndexError:
+                #     continue
+                self.mask[rr-1][cc-1] = checking
+                if checking == 0:
+                    self.cascade(rr, cc)
 
-# # # goes through every individual element in the bomb array and runs a random number to determine whether
-# # # or not to insert a bomb there; the bomb is inserted if the number is within the given probability.
-# # # OLD COMMENT: bombs is [1..rows][1..cols]; the border is used to handle boundary cases.
-# # bombs = [[False for i in range(cols+2)] for j in range(rows+2)]
+    # checks the pressed tile and decides if it's a regular tile and then proceeds as needed
+    def reveal(self, r, c):
+        cell = self.game[r][c]
+        self.mask[r-1][c-1] = cell
+        if cell == 0:
+            self.cascade(r, c)
 
-# # for r in range(1, rows+1):
-# #     for c in range(1, cols+1):
-# #         bombs[r][c] = (random.random() < prob)
+    # allows the user to flag unopened tiles as a bomb if speculated to be
+    def flag(self, r, c):
+        if self.mask[r-1][c-1] == self.chars['flag']:  # unflags if already flagged
+            self.mask[r-1][c-1] = False
+        else:
+            self.mask[r-1][c-1] = self.chars['flag']  # flags
 
-# # # initializes a 2d array to hold the solution board as a rows+2 * cols+2 array,
-# # # each regular tile contains the number of adjacent tiles with bombs.
-# # # INTERNAL BOARD
-# # board = [[0 for i in range(cols+2)] for j in range(rows+2)]
-
-# # # goes through every element and replaces every regular
-# # # tile with the number of bombs in the adjacent tiles.
-# # for r in range(1, rows+1):
-# #     for c in range(1, cols+1):
-# #         # (rr, cc) indexes neighboring cells.
-# #         for rr in range(r-1, r+2):
-# #             for cc in range(c-1, c+2):
-# #                 if bombs[rr][cc]:
-# #                     board[r][c] += 1
-
-
-# # # TODO: figure out characters to use
-# # mask = [['. ' for i in range(cols+2)] for j in range(rows+2)]
-
-# # prints the mask board that the player sees
-# def display_mask():
-#     for r in range(1, rows+1):
-#         for c in range(1, cols+1):
-#             if mask[r][c]:
-#                 print('* ', end="")
-#             else:
-#                 print('. ', end="")
-#         print()
-
-# # prints the internal board that only the code sees
-# def display_board():
-#     print()
-#     for r in range(1, rows+1):
-#         for c in range(1, cols+1):
-#             if bombs[r][c]:
-#                 print('* ', end="")
-#             else:
-#                 print(str(board[r][c]) + ' ', end="")
-#         print()
-
-
-# checks if the tile contains a bomb or not
-def check_tile(r, c):
-    pass
-
-# checks the pressed tile and decides if it's a regular tile and then proceeds as needed
-def press(r, c):
-    pass
-# TODO: do the recursive function for opening a tile surrounded by 0s fro a while
-
-# allows the user to flag unopened tiles as a bomb if speculated to be
-def flag(r, c, maybe: bool = False):
-    """
-        Flags hidden tiles on player's board as surely bomb or possibly a bomb.
-
-        TODO: ARGS
-    """
-
-    pass
+    def maybe(self, r, c):
+        if self.mask[r-1][c-1] == self.chars['maybe']:  # unmaybes if already flagged
+            self.mask[r-1][c-1] = False
+        else:
+            self.mask[r-1][c-1] = self.chars['maybe']  # maybes
