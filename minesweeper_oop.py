@@ -2,7 +2,7 @@ from copy import Error
 from gameboard import Minesweeper
 
 
-game = Minesweeper(20, 30, .01)
+game = Minesweeper(20, 30, .15)
 last = ''
 print('\n'*30)
 
