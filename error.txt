@@ -1,1 +1,0 @@
-The fill character must be exactly one character long
