@@ -1,22 +1,27 @@
 from copy import deepcopy
 import random
-
+# FIXME: when you flag and unflag a number it disappears
 
 # Minesweeper class to create objects representing a whole game with the boards.
 # This class allows me to easily run methods on the game instead of using global variables.
 class Minesweeper:
 
-    def __init__(self, rows, cols, prob, chars_config=None) -> object:
+    def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         # config dictionary that holds the actual character strings mappings
         # for what character to display for each board element; e.g. bomb = 'X'
-        self.chars = {'tile': '□', 'bomb': '🅱️', 'zero': ' ', 'flag': '█', 'maybe': '?'} if chars_config is None else chars_config
-        #                                   █🅱️
+        self.chars = {'tile': '□',
+                      'bomb': '🅱️',
+                      'zero': ' ',
+                      'flag': '+',
+                      'maybe': '?'
+                      } if chars_config is None else chars_config
+        # █🅱️
         #(r, a, d, h, q respectively to reveal, arm or disarm a tile, to get help or to quit), optionally followed by coordinates
 
         # settings for the game board
         self.rows = rows
         self.cols = cols
-        self.prob = prob
+        self.prob = mine_spawn
 
         # the different boards (external viewed by player and internal only viewed by code)
         #bombs = [[False for i in range(cols+2)] for j in range(rows+2)]
