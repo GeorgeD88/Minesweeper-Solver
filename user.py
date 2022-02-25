@@ -1,8 +1,12 @@
+from click import Choice
 from game import Minesweeper
 from textwrap import fill
 
 
 SPACER = 50  # amount of lines to print to space boards out
+CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
+END_CHOICES = ['p', 'e', 'q']  # the available end game options
+
 
 class User(Minesweeper):
 
@@ -21,12 +25,18 @@ class User(Minesweeper):
                 # prints last move, mask, and input guide
                 print(f'last move: {last_move}\n')
                 self.display_mask()  # displays game to user
-                print('\ninput format: mode row column\nreveal: R | F | M | Q')
+                print('\ninput format: mode row column\nmodes: R | F | M | Q')
 
                 # gets input
                 choice_str = last_move = input('\n')
                 choice = choice_str.split()
                 mode = choice.pop(0).lower()
+                # keeps looping until proper menu choice
+                while mode not in CHOICES:
+                    print('\n choice doesn\'t exist, only: R | F | M | Q')
+                    choice_str = last_move = input('\n')
+                    choice = choice_str.split()
+                    mode = choice.pop(0).lower()
                 if mode == 'q':
                     break
                 row, col = map(int, choice)
@@ -50,7 +60,7 @@ class User(Minesweeper):
                 if mode == 'q':
                     break
 
-                # acts on choices: R | F | M | Q
+                # executes choices: R | F | M | Q
                 if mode == 'r':
                     # checks if choice was a mine (and mask is unexplored) and ends game
                     if self.mask[row][col] is False and self.game[row][col] is True:
@@ -58,6 +68,10 @@ class User(Minesweeper):
                         self.display_game(border=True)
                         lose_message()
                         end_choice = input().lower()
+                        # keeps looping until proper end game choice
+                        while end_choice not in END_CHOICES:
+                            print('\n choice doesn\'t exist, only: P | E | Q')
+                            end_choice = input().lower()
                         if end_choice == 'p':  # play again
                             self.reset_game()
                         elif end_choice == 'e':  # edit settings
@@ -75,6 +89,10 @@ class User(Minesweeper):
                             self.display_game(border=True)
                             win_message()
                             end_choice = input().lower()
+                            # keeps looping until proper end game choice
+                            while end_choice not in END_CHOICES:
+                                print('\n choice doesn\'t exist, only: P | E | Q')
+                                end_choice = input().lower()
                             if end_choice == 'p':  # play again
                                 self.reset_game()
                             elif end_choice == 'e':  # edit settings
@@ -92,6 +110,7 @@ class User(Minesweeper):
 
             except Exception as e:
                 with open('error.txt', 'w+') as error_file:
+                    error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
                     error_file.write(str(e))
                 print('~~ error logged to file ~~')
 
