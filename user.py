@@ -6,6 +6,7 @@ from textwrap import fill
 SPACER = 50  # amount of lines to print to space boards out
 CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
 END_CHOICES = ['p', 'e', 'q']  # the available end game options
+DEFAULT_MINE_CHANCE = .18  # default mine probability
 
 
 class User(Minesweeper):
@@ -118,7 +119,9 @@ class User(Minesweeper):
 def get_options():
     """ Gets game options: rows, columns, and mine probability. """
     options_input = input('format: rows  columns  probability(optional)\n').split()
-    return int(options_input[0]), int(options_input[1]), float(options_input[2])
+    # use default probability if it wasn't given
+    probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
+    return int(options_input[0]), int(options_input[1]), probability
 
 def space():
     print('\n'*SPACER)
