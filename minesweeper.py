@@ -1,13 +1,11 @@
-from http.client import ImproperConnectionState
-
-
-import solver
-import user
-
+from solver import *
+from solver import *
+from user import *
 
 
 # Minesweeper w/ user
-user.play()  # user(game)
+game = play_game()
+game.play()  # user(game)
 
 # Minesweeper w/ bot
-solver.play()  # solver(game)
+# solver.play()  # solver(game)
