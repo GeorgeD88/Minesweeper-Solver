@@ -1,6 +1,4 @@
-from click import Choice
 from game import Minesweeper
-from textwrap import fill
 
 
 SPACER = 50  # amount of lines to print to space boards out
