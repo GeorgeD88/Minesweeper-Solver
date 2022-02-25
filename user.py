@@ -1,15 +1,16 @@
-from copy import Error
-from gameboard import Minesweeper
+from textwrap import fill
+from game import Minesweeper
 
-
-game = Minesweeper(20, 30, .15)
+# FIXME: fix being able to reveal on 0s
+# FIXME: and maybe consider refactoring doing the false border
+game = Minesweeper(5, 5, .15)
 last = ''
 print('\n'*30)
 
 while True:
     print(last + '\n')
     game.display_mask()  # displays game to user
-    print('\ninput format: mode row column\nreveal: r | f | m | q')
+    print('\ninput format: mode row column\nreveal: R | F | M | Q')
 
     try:
         # gets input
@@ -35,7 +36,7 @@ while True:
                 game.display_game()
                 print('😂'*game.cols)
                 print('😂'*game.cols)
-                print(' boi you Losttt boiiiiii '.center(game.cols*2, '😂'))
+                print(' boi you Losttt boiiiiii '.center(game.cols))
                 print('😂'*game.cols)
                 print('😂'*game.cols)
                 break
