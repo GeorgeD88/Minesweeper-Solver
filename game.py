@@ -113,9 +113,9 @@ class Minesweeper:
             # goes through every tile in the row and gets mask symbol
             for c in range(self.cols):
                 tile = self.mask[r][c]
-                if tile is True:  # mine
-                    print(self.chars['mine'], end=' ')
-                elif tile is False:  # unexplored tile
+                # if tile is True:  # mine
+                #     print(self.chars['mine'], end=' ')
+                if tile is False:  # unexplored tile
                     print(self.chars['tile'], end=' ')
                 elif tile == 0:  # empty tile (zero)
                     print(self.chars['zero'], end=' ')
@@ -125,42 +125,39 @@ class Minesweeper:
                     print(tile, end=' ')
             print()
 
-    def cascade(self, r, c):
-        """ Flood fill algorithm. """
+    def floodfill(self, r, c):
+        """ Flood fill algorithm: recursively reveals tiles on the board. """
         for rr in range(r-1, r+2):
             for cc in range(c-1, c+2):
-                checking = self.game[rr][cc]
-                if checking is False or self.mask[rr-1][cc-1] is not False:  # meaning this is part of the no-no border or it's already been checked
-                    continue
-                # this part checks if the mask is 0 so it's checking if it was already cascaded/discovered
-                # try:
-                # elif :  # if this tile was already revealed then don't cascade from it
-                #     continue
-                # except IndexError:
-                #     continue
-                self.mask[rr-1][cc-1] = checking
-                if checking == 0:
-                    self.cascade(rr, cc)
+                self.reveal(rr, cc)
 
-    # checks the pressed tile and decides if it's a regular tile and then proceeds as needed
     def reveal(self, r, c):
-        tile = self.game[r][c]
-        self.mask[r-1][c-1] = tile
-        if tile == 0:
-            self.cascade(r, c)
+        """ Reveals tile and flood fills if needed. """
+        if self.bounds(r, c) and self.mask[r][c] is False:  # only reveals if in bounds and unexplored
+            tile = self.game[r][c]  # gets the tile from the game board
+            self.mask[r][c] = tile  # reveals tile on mask
+            if tile == 0:  # recurses/floodfill if tile is 0
+                self.floodfill(r, c)
 
-    # allows the user to flag unopened tiles as a mine if speculated to be
     def flag(self, r, c):
-        if self.mask[r-1][c-1] == self.chars['flag']:  # unflags if already flagged
-            self.mask[r-1][c-1] = False
+        """ Sets tile to flag so users can mark tiles as mines. """
+        if self.mask[r][c] == self.chars['flag']:  # unflags if already flagged
+            self.mask[r][c] = False
+        elif self.mask[r][c] is False:  # can only flag unexplored tiles
+            self.mask[r][c] = self.chars['flag']  # flags
         else:
-            self.mask[r-1][c-1] = self.chars['flag']  # flags
+            # can't flag already revealed tiles
+            pass
 
     def maybe(self, r, c):
-        if self.mask[r-1][c-1] == self.chars['maybe']:  # unmaybes if already flagged
-            self.mask[r-1][c-1] = False
+        """ Sets tile to maybe so users can mark tiles as possible mines. """
+        if self.mask[r][c] == self.chars['maybe']:  # unmaybes if already maybeged
+            self.mask[r][c] = False
+        elif self.mask[r][c] is False:  # can only maybe unexplored tiles
+            self.mask[r][c] = self.chars['maybe']  # maybes
         else:
-            self.mask[r-1][c-1] = self.chars['maybe']  # maybes
+            # can't maybe already revealed tiles TODO: this needs to be handled in input first
+            pass
 
     def make_guide(self, length: int):
         """ Makes board guide based on given length. """
@@ -177,7 +174,7 @@ class Minesweeper:
 
     def bounds(self, r, c) -> bool:
         """ Checks if given coord is within board bounds. """
-        if r < 0 or r >= self.rows or c < 0 or c >= self.rows:  # ripped from Guha's water.c floodfill function
+        if r < 0 or r >= self.rows or c < 0 or c >= self.cols:  # ripped from Guha's water.c floodfill function
             return False  # meaning the coord is outside of the board
         else:
             return True  # coord is within the board
