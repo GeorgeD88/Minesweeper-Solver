@@ -9,18 +9,22 @@ class Minesweeper:
         # config dictionary that holds the actual character strings mappings
         # for what character to display for each board element; e.g. mine = 'X'
         self.chars = {'tile': '□',
-                      'mine': '🅱️',  # *
+                      'mine': '☹',  # *
                       'zero': ' ',
                       'flag': '+',
                       'maybe': '?'
                       } if chars_config is None else chars_config
-        # █🅱️
+        # █🅱️💥💣
         #(R, A, D, H, Q respectively to reveal, arm or disarm a tile, to get help or to quit), optionally followed by coordinates
+        self.set_up_game(rows, cols, mine_spawn)
 
+    def set_up_game(self, rows, cols, prob):
+        """ Sets up new game. """
         # settings for the game board
         self.rows = rows
         self.cols = cols
-        self.prob = mine_spawn
+        self.area = rows * cols
+        self.prob = prob
 
         # board guides
         self.rguide = self.make_guide(rows)
@@ -35,6 +39,24 @@ class Minesweeper:
         self.mine_count = 0
         for mine_row in self.mines:
             self.mine_count += mine_row.count(True)
+
+    def reset_game(self):
+        """ Resets values of the same game. """
+        self.mask = self.gen_mask_board()  # just resets mask board
+
+    def iswin(self):
+        """ Checks if the player won. """
+        count = 0
+        # counts number of number tiles
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if type(self.mask[r][c]) is int:
+                    count += 1
+        # checks if total tiles - number tiles is equal to bombs, this means you found everything
+        if self.area - count == self.mine_count:
+            return True
+        else:
+            return False
 
     def gen_mine_board(self) -> list:
         """ Generates a mine board based on probability given. (just True and False) """
@@ -76,9 +98,13 @@ class Minesweeper:
                     print(self.mines[r][c], end=' ')
                 print()
 
-    def display_game(self):
+    def display_game(self, border: bool = False):
         """ Iterates through game board and prints tiles. (so numbers and mines) """
+        if border:
+            print('-'*(self.cols*2+3))
         for r in range(self.rows):
+            if border:
+                print('|', end=' ')
             for c in range(self.cols):
                 tile = self.game[r][c]
                 if tile is True:  # mine
@@ -87,7 +113,11 @@ class Minesweeper:
                     print(self.chars['zero'], end=' ')
                 elif type(tile) is int:  # number tile
                     print(str(tile), end=' ')
+            if border:
+                print('|', end='')
             print()
+        if border:
+            print('-'*(self.cols*2+3))
 
     def display_mask(self):
         """ Iterates through mask board and prints tiles. (what user sees) """
@@ -156,7 +186,7 @@ class Minesweeper:
         elif self.mask[r][c] is False:  # can only maybe unexplored tiles
             self.mask[r][c] = self.chars['maybe']  # maybes
         else:
-            # can't maybe already revealed tiles TODO: this needs to be handled in input first
+            # can't maybe already revealed tiles
             pass
 
     def make_guide(self, length: int):
