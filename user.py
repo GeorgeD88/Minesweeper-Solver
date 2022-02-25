@@ -19,7 +19,7 @@ class User(Minesweeper):
 
         while True:
 
-            # catches all errors so game doesn't crash and logs them to error.txt
+            # catches all errors and logs them to error.txt so game doesn't crash
             try:
                 # prints last move, mask, and input guide
                 print(f'last move: {last_move}\n')

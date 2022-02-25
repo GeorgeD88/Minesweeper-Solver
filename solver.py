@@ -1,9 +1,10 @@
 from game import Minesweeper
+from time import sleep
 
 
 SPACER = 50  # amount of lines to print to space boards out
-CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
-END_CHOICES = ['p', 'e', 'q']  # the available end game options
+# CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
+# END_CHOICES = ['p', 'e', 'q']  # the available end game options
 
 
 class Solver(Minesweeper):
@@ -11,14 +12,14 @@ class Solver(Minesweeper):
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         super().__init__(rows, cols, mine_spawn, chars_config)
 
-    def play(self):
-        """ Starts game loop. """
-        last_move = ''
+    def solve(self):
+        """ Starts game/solving loop. """
+        # last_move = ''
         space()
 
         while True:
 
-            # catches all errors so game doesn't crash and logs them to error.txt
+            # catches all errors and logs them to error.txt so game doesn't crash
             try:
                 # prints last move, mask, and input guide
                 print(f'last move: {last_move}\n')
