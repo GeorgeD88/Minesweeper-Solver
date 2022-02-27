@@ -1,8 +1,8 @@
 from copy import deepcopy
+from time import sleep
 import random
-from re import T
-# FIXME: when you flag and unflag a number it disappears
 
+VISUAL_DELAY = 0.1
 class Minesweeper:
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
@@ -167,6 +167,7 @@ class Minesweeper:
             tile = self.game[r][c]  # gets the tile from the game board
             self.mask[r][c] = tile  # reveals tile on mask
             if tile == 0:  # recurses/floodfill if tile is 0
+                sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
                 self.floodfill(r, c)
 
     def flag(self, r, c):
