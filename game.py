@@ -2,14 +2,17 @@ from copy import deepcopy
 from time import sleep
 import random
 
-VISUAL_DELAY = 0.1
+VISUAL_DELAY = 0.06
+SPACER = 50  # amount of lines to print to space boards out
+
+
 class Minesweeper:
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         # config dictionary that holds the actual character strings mappings
         # for what character to display for each board element; e.g. mine = 'X'
         self.chars = {'tile': '□',
-                      'mine': '☹',  # *
+                      'mine': '☹',
                       'zero': ' ',
                       'flag': '+',
                       'maybe': '?'
@@ -167,6 +170,8 @@ class Minesweeper:
             tile = self.game[r][c]  # gets the tile from the game board
             self.mask[r][c] = tile  # reveals tile on mask
             if tile == 0:  # recurses/floodfill if tile is 0
+                space()
+                self.display_mask()
                 sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
                 self.floodfill(r, c)
 
@@ -209,3 +214,7 @@ class Minesweeper:
             return False  # meaning the coord is outside of the board
         else:
             return True  # coord is within the board
+
+
+def space():
+    print('\n'*SPACER)
