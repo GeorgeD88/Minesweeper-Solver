@@ -1,26 +1,29 @@
-from click import Choice
+from re import S
 from game import Minesweeper
-from textwrap import fill
+from random import randint
+from time import sleep
 
 
 SPACER = 50  # amount of lines to print to space boards out
-CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
-END_CHOICES = ['p', 'e', 'q']  # the available end game options
+# CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
+# END_CHOICES = ['p', 'e', 'q']  # the available end game options
 
 
+# NOTE: remember when we do this we need to make sure we only give the
+# bot access to what a regular player could see to make it accurate.
 class Solver(Minesweeper):
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         super().__init__(rows, cols, mine_spawn, chars_config)
 
-    def play(self):
-        """ Starts game loop. """
-        last_move = ''
+    def solve(self):
+        """ Starts game/solving loop. """
+        # last_move = ''
         space()
 
         while True:
 
-            # catches all errors so game doesn't crash and logs them to error.txt
+            # catches all errors and logs them to error.txt so game doesn't crash
             try:
                 # prints last move, mask, and input guide
                 print(f'last move: {last_move}\n')
@@ -113,6 +116,18 @@ class Solver(Minesweeper):
                     error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
                     error_file.write(str(e))
                 print('~~ error logged to file ~~')
+
+    def random_drop(self):
+        """ Randomly picks coord to drop onto. """
+        self.reveal(randint(0, self.rows-1), randint(0, self.cols-1))
+
+    def persistent_drop(self):
+        """ Keeps dropping until it hits a zero. """
+        row, col = randint(0, self.rows-1), randint(0, self.cols-1)
+        self.reveal(row, col)
+        while self.mask[row][col] != 0:  # keep going while you're not getting zero
+            row, col = randint(0, self.rows-1), randint(0, self.cols-1)
+            self.reveal(row, col)
 
 
 def get_options():
