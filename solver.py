@@ -173,8 +173,8 @@ def lose_message():
   (P) play again (Q) quit (E) edit settings
             """)
 
-def play_game():
+def init_solver():
     welcome_message()
     print('           ', end='')  # prints a spacer to push get options message under welcome message
     rows, cols, prob = get_options()
-    return User(rows, cols, prob)
+    return Solver(rows, cols, prob)
