@@ -1,10 +1,11 @@
-from solver import *
-from user import *
+import solver
+import user
 
 
-# Minesweeper w/ user
-game = play_game()
-game.play()  # user(game)
+# Minesweeper game
+game = user.init_game()
+game.play()  # user + game
 
-# Minesweeper w/ bot
-# solver.play()  # solver(game)
+# Minesweeper bot
+# bot = solver.init_solver()
+# bot.solve()  # solver + game
