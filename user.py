@@ -1,4 +1,5 @@
 from game import Minesweeper
+from random import randint
 
 
 SPACER = 50  # amount of lines to print to space boards out
@@ -24,7 +25,7 @@ class User(Minesweeper):
                 # prints last move, mask, and input guide
                 print(f'last move: {last_move}\n')
                 self.display_mask()  # displays game to user
-                print('\ninput format: mode row column\nmodes: R | F | M | Q')
+                print('\ninput format: mode row column\nmodes: r | f | m | q')
 
                 # gets input
                 choice_str = last_move = input('\n')
@@ -32,7 +33,7 @@ class User(Minesweeper):
                 mode = choice.pop(0).lower()
                 # keeps looping until proper menu choice
                 while mode not in CHOICES:
-                    print('\n choice doesn\'t exist, only: R | F | M | Q')
+                    print('\n choice doesn\'t exist, only: r | f | m | q')
                     choice_str = last_move = input('\n')
                     choice = choice_str.split()
                     mode = choice.pop(0).lower()
@@ -59,7 +60,7 @@ class User(Minesweeper):
                 if mode == 'q':
                     break
 
-                # executes choices: R | F | M | Q
+                # executes choices: r | f | m | q
                 if mode == 'r':
                     # checks if choice was a mine (and mask is unexplored) and ends game
                     if self.mask[row][col] is False and self.game[row][col] is True:
