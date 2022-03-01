@@ -2,7 +2,7 @@ from copy import deepcopy
 from time import sleep
 import random
 
-VISUAL_DELAY = 0.06
+VISUAL_DELAY = 0.04
 SPACER = 50  # amount of lines to print to space boards out
 
 
