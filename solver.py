@@ -1,22 +1,19 @@
-from re import S
 from game import Minesweeper
 from random import randint
 from time import sleep
-
 
 SPACER = 50  # amount of lines to print to space boards out
 # CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
 # END_CHOICES = ['p', 'e', 'q']  # the available end game options
 
 
-# NOTE: remember when we do this we need to make sure we only give the
-# bot access to what a regular player could see to make it accurate.
+# NOTE: remember to only give the bot access to what a regular player could see to make it accurate.
 class Solver(Minesweeper):
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         super().__init__(rows, cols, mine_spawn, chars_config)
 
-    def solve(self):
+    def visualizer(self):
         """ Starts game/solving loop. """
         # last_move = ''
         space()
@@ -28,7 +25,7 @@ class Solver(Minesweeper):
                 # prints last move, mask, and input guide
                 print(f'last move: {last_move}\n')
                 self.display_mask()  # displays game to user
-                print('\ninput format: mode row column\nmodes: R | F | M | Q')
+                print('\ninput format: mode row column\nmodes: r | f | m | q')
 
                 # gets input
                 choice_str = last_move = input('\n')
@@ -36,7 +33,7 @@ class Solver(Minesweeper):
                 mode = choice.pop(0).lower()
                 # keeps looping until proper menu choice
                 while mode not in CHOICES:
-                    print('\n choice doesn\'t exist, only: R | F | M | Q')
+                    print('\n choice doesn\'t exist, only: r | f | m | q')
                     choice_str = last_move = input('\n')
                     choice = choice_str.split()
                     mode = choice.pop(0).lower()
@@ -63,7 +60,7 @@ class Solver(Minesweeper):
                 if mode == 'q':
                     break
 
-                # executes choices: R | F | M | Q
+                # executes choices: r | f | m | q
                 if mode == 'r':
                     # checks if choice was a mine (and mask is unexplored) and ends game
                     if self.mask[row][col] is False and self.game[row][col] is True:
@@ -114,7 +111,7 @@ class Solver(Minesweeper):
             except Exception as e:
                 with open('error.txt', 'w+') as error_file:
                     error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
-                    error_file.write(str(e))
+                    error_file.write('\n' + str(e))
                 print('~~ error logged to file ~~')
 
     def random_drop(self):
