@@ -5,7 +5,8 @@ from time import sleep
 SPACER = 50  # amount of lines to print to space boards out
 # CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
 # END_CHOICES = ['p', 'e', 'q']  # the available end game options
-
+# FIXME: might need to do file for solver display, and then file for solver algorithms.
+#        cause unlike user, solver is display + other backend.
 
 # NOTE: remember to only give the bot access to what a regular player could see to make it accurate.
 class Solver(Minesweeper):
