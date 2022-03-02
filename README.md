@@ -18,7 +18,6 @@ bot.solve()  # solver + game
 ```
 ### Minesweeper Game
 <img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/minesweeper_demo.gif" alt="Minesweeper demo" width="400">
-align=asd"right"
 
 ### Minesweeper Bot
 _solver.py is currently being built and so far doesn't have anything to demo_
