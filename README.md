@@ -4,7 +4,6 @@
 **Minesweeper-Solver** is free software, distributed under the terms of the [GNU General Public License, version 3](https://www.gnu.org/licenses/gpl-3.0.html).
 ## How to Run
 The project has 2 parts, the game itself and the bot, spread across 3 files. `game.py` contains the backend of the game (no user input), while `user.py` and `solver.py` each connects the game to their own user interface. `user.py` connects the game to a user interface with inputs to allow the user to play, while `solver.py` connects the game to solving algorithms as well as a user interface (without inputs) to show the user what's going on.<br>
-_NOTE: solver.py is currently being built and so far doesn't have anything to start with_
 ```python
 import user
 import solver
@@ -17,3 +16,9 @@ game.play()  # user + game
 bot = solver.init_solver()
 bot.solve()  # solver + game
 ```
+### Minesweeper Game
+<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/minesweeper_demo.gif" alt="Minesweeper demo" width="400">
+align=asd"right"
+
+### Minesweeper Bot
+_solver.py is currently being built and so far doesn't have anything to demo_
