@@ -67,13 +67,14 @@ class User(Minesweeper):
                         space()
                         self.display_game(border=True)
                         lose_message()
+                        replay_options()
                         end_choice = input().lower()
                         # keeps looping until proper end game choice
                         while end_choice not in END_CHOICES:
                             print('\n choice doesn\'t exist, only: P | E | Q')
                             end_choice = input().lower()
                         if end_choice == 'p':  # play again
-                            self.reset_game()
+                            self.regen_game()
                         elif end_choice == 'e':  # edit settings
                             print()
                             last_move = ''
@@ -88,13 +89,14 @@ class User(Minesweeper):
                             space()
                             self.display_game(border=True)
                             win_message()
+                            replay_options()
                             end_choice = input().lower()
                             # keeps looping until proper end game choice
                             while end_choice not in END_CHOICES:
                                 print('\n choice doesn\'t exist, only: P | E | Q')
                                 end_choice = input().lower()
                             if end_choice == 'p':  # play again
-                                self.reset_game()
+                                self.regen_game()
                             elif end_choice == 'e':  # edit settings
                                 print()
                                 last_move = ''
@@ -145,8 +147,6 @@ def win_message():
                ===============
                == YOU WIN!! ==
                ===============
-
-  (P) play again (Q) quit (E) edit settings
             """)
 
 def lose_message():
@@ -156,7 +156,10 @@ def lose_message():
                ===============
                == GAME OVER ==
                ===============
+            """)
 
+def replay_options():
+    print("""
   (P) play again (Q) quit (E) edit settings
             """)
 
