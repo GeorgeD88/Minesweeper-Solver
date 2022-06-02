@@ -1,5 +1,6 @@
 from game import Minesweeper
 from random import randint
+import math
 
 
 SPACER = 50  # amount of lines to print to space boards out
@@ -64,6 +65,9 @@ class User(Minesweeper):
                         if self.iswin():  # if there's nothing more to be explored, it's a win
                             if self.win_procedure() == 'q':
                                 return 'q'
+                            last_move = self.start()
+                            if last_move == 'q':  # exits game if quit is entered
+                                return 'q'
                 elif mode == 'f':
                     self.flag(row, col)
                 elif mode == 'm':
@@ -100,13 +104,19 @@ class User(Minesweeper):
 
     def check_choice(self) -> tuple[str, str, str]:
         """ Gets menu choice input and loops until choice is valid. """
-        choice_str = input('\n')
+        choice_str = input('\n').strip()
+        while choice_str == '':
+            print('\n can\'t enter empty input')
+            choice_str = input('\n').strip()
         choice = choice_str.split()
         mode = choice.pop(0).lower()
 
         while mode not in CHOICES:  # loop if menu choice is invalid
             print('\n choice doesn\'t exist, only: r | f | m | q')
-            choice_str = input('\n')
+            choice_str = input('\n').strip()
+            while choice_str == '':
+                print('\n can\'t enter empty input')
+                choice_str = input('\n').strip()
             choice = choice_str.split()
             mode = choice.pop(0).lower()
 
@@ -121,6 +131,9 @@ class User(Minesweeper):
         while not self.bounds(row, col):
             print('selection out of bounds\n')
             choice = input('\n').split()
+            while choice_str == '':
+                print('\n can\'t enter empty input')
+                choice_str = input('\n').strip()
             mode = choice.pop(0).lower()
             if mode == 'q':
                 break
@@ -164,7 +177,6 @@ class User(Minesweeper):
         while end_choice not in END_CHOICES:
             print('\n choice doesn\'t exist, only: P | E | Q')
             end_choice = input().lower()
-        # TODO: Need to add empty spot checker before replay options too!
         if end_choice == 'p':  # play again
             self.regen_game()
         elif end_choice == 'e':  # edit settings
@@ -176,11 +188,16 @@ class User(Minesweeper):
 
 def get_options():
     """ Gets game options: rows, columns, and mine probability. """
-    options_input = input(
-        'format: rows  columns  probability(optional)\n').split()
+    options_input = input('format: rows  columns  probability(optional, max 0.85)\n').split()
     # use default probability if it wasn't given
-    probability = DEFAULT_MINE_CHANCE if len(
-        options_input) < 3 else float(options_input[2])
+    probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
+
+    # ensures mine probability isn't too high and causes errors with empty drop
+    while probability > 0.85:
+        print('\nmine probability too high, may cause errors\n')
+        options_input = input('format: rows  columns  probability(optional, max 0.85)\n').split()
+        probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
+
     return int(options_input[0]), int(options_input[1]), probability
 
 
