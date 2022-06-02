@@ -18,6 +18,8 @@ class User(Minesweeper):
         last_move = ''
         space()
 
+        # regen board until there's a zero at choice
+
         while True:
 
             # catches all errors and logs them to error.txt so game doesn't crash
@@ -27,36 +29,22 @@ class User(Minesweeper):
                 self.display_mask()  # displays game to user
                 print('\ninput format: mode row column\nmodes: r | f | m | q')
 
-                # input handling
+                # gets menu choice
                 choice_str = last_move = input('\n')
                 choice = choice_str.split()
                 mode = choice.pop(0).lower()
-
-                while mode not in CHOICES:  # loop if menu choice is invalid
-                    print('\n choice doesn\'t exist, only: r | f | m | q')
-                    choice_str = last_move = input('\n')
-                    choice = choice_str.split()
-                    mode = choice.pop(0).lower()
+                # then pipes menu choice through checker
+                mode, choice_str = self.check_choice(mode, choice_str)
                 if mode == 'q':
                     break
 
-                # grid coord handling
+                # gets grid coords from input
                 row, col = map(int, choice)
                 row -= 1  # grid guide is 1-indexed for user, so bring it down
                 col -= 1
                 print()
-
-                # loop if input is out of bounds
-                while not self.bounds(row, col):
-                    print('selection out of bounds\n')
-                    choice = input('\n').split()
-                    mode = choice.pop(0).lower()
-                    if mode == 'q':
-                        break
-                    row, col = map(int, choice)
-                    row -= 1
-                    col -= 1
-                    print()
+                # then pipe coords through bounds checker
+                mode, row, col = self.check_bounds(mode, row, col)
                 if mode == 'q':  # breaks outer loop after breaking other loop
                     break
 
@@ -111,21 +99,51 @@ class User(Minesweeper):
                 space()
 
             except Exception as e:
-                with open('solver_error_log.txt', 'a+') as error_file:
-                    error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
+                with open('user_error_log.txt', 'a+') as error_file:
+                    error_file.write('LINE NUMBER: ' +
+                                     str(e.__traceback__.tb_lineno))
                     error_file.write(f'\n{str(e)}\n')
                 print('~~ error logged to file ~~')
+
+    def check_choice(self, mode: str, choice_str: str) -> tuple[str, str]:
+        """ Loops until menu choice input has been made. """
+        while mode not in CHOICES:  # loop if menu choice is invalid
+            print('\n choice doesn\'t exist, only: r | f | m | q')
+            choice_str = input('\n')
+            choice = choice_str.split()
+            mode = choice.pop(0).lower()
+
+        return (mode, choice_str)  # returns unchanged if input was already valid
+
+    def check_bounds(self, mode: str, row: int, col: int) -> tuple[str, int, int]:
+        """ Loops until coordinate choice has been made within bounds. """
+        while not self.bounds(row, col):
+            print('selection out of bounds\n')
+            choice = input('\n').split()
+            mode = choice.pop(0).lower()
+            if mode == 'q':
+                break
+            row, col = map(int, choice)
+            row -= 1
+            col -= 1
+            print()
+
+        return mode, row, col  # returns unchanged if coords were already within bounds
 
 
 def get_options():
     """ Gets game options: rows, columns, and mine probability. """
-    options_input = input('format: rows  columns  probability(optional)\n').split()
+    options_input = input(
+        'format: rows  columns  probability(optional)\n').split()
     # use default probability if it wasn't given
-    probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
+    probability = DEFAULT_MINE_CHANCE if len(
+        options_input) < 3 else float(options_input[2])
     return int(options_input[0]), int(options_input[1]), probability
+
 
 def space():
     print('\n'*SPACER)
+
 
 def welcome_message():
     print("""
@@ -140,6 +158,7 @@ def welcome_message():
 
             """)
 
+
 def win_message():
     print("""
 
@@ -148,6 +167,7 @@ def win_message():
                == YOU WIN!! ==
                ===============
             """)
+
 
 def lose_message():
     print("""
@@ -158,13 +178,16 @@ def lose_message():
                ===============
             """)
 
+
 def replay_options():
     print("""
   (P) play again (Q) quit (E) edit settings
             """)
 
+
 def init_game():
     welcome_message()
-    print('           ', end='')  # prints a spacer to push get options message under welcome message
+    # prints a spacer to push get options message under welcome message
+    print('           ', end='')
     rows, cols, prob = get_options()
     return User(rows, cols, prob)
