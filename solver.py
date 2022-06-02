@@ -25,46 +25,36 @@ class Solver(Minesweeper):
             try:
                 self.display_mask()  # displays board
 
-                # gets input
-                choice_str = last_move = input('\n')
-                choice = choice_str.split()
-                mode = choice.pop(0).lower()
-                # keeps looping until proper menu choice
-                while mode not in CHOICES:
-                    print('\n choice doesn\'t exist, only: r | f | m | q')
-                    choice_str = last_move = input('\n')
-                    choice = choice_str.split()
-                    mode = choice.pop(0).lower()
-                if mode == 'q':
-                    break
-                row, col = map(int, choice)
-                row -= 1
-                col -= 1
+                # user input stuff used to be here
+
                 print()
 
-                # input checking to ensure it's within bounds
-                while not self.bounds(row, col):
-                    print('selection out of bounds\n')
-                    choice = input('\n').split()
-                    mode = choice.pop(0).lower()
-                    if mode == 'q':
+                # checks if choice was a mine (and mask is unexplored) and ends game
+                if self.mask[row][col] is False and self.game[row][col] is True:
+                    space()
+                    self.display_game(border=True)
+                    lose_message()
+                    end_choice = input().lower()
+                    # keeps looping until proper end game choice
+                    while end_choice not in END_CHOICES:
+                        print('\n choice doesn\'t exist, only: P | E | Q')
+                        end_choice = input().lower()
+                    if end_choice == 'p':  # play again
+                        self.reset_game()
+                    elif end_choice == 'e':  # edit settings
+                        print()
+                        last_move = ''
+                        rows, cols, prob = get_options()
+                        self.set_up_game(rows, cols, prob)
+                    elif end_choice == 'q':  # quits game
                         break
-                    row, col = map(int, choice)
-                    row -= 1
-                    col -= 1
-                    print()
-
-                # if Q is selected in redo loop, it wil break there so this is to break outer loop
-                if mode == 'q':
-                    break
-
-                # executes choices: r | f | m | q
-                if mode == 'r':
-                    # checks if choice was a mine (and mask is unexplored) and ends game
-                    if self.mask[row][col] is False and self.game[row][col] is True:
+                # if no mine then continue with revealing square
+                else:
+                    self.reveal(row, col)
+                    if self.iswin():  # if there's nothing more to be explored, it's a win
                         space()
                         self.display_game(border=True)
-                        lose_message()
+                        win_message()
                         end_choice = input().lower()
                         # keeps looping until proper end game choice
                         while end_choice not in END_CHOICES:
@@ -79,37 +69,13 @@ class Solver(Minesweeper):
                             self.set_up_game(rows, cols, prob)
                         elif end_choice == 'q':  # quits game
                             break
-                    # if no mine then continue with revealing square
-                    else:
-                        self.reveal(row, col)
-                        if self.iswin():  # if there's nothing more to be explored, it's a win
-                            space()
-                            self.display_game(border=True)
-                            win_message()
-                            end_choice = input().lower()
-                            # keeps looping until proper end game choice
-                            while end_choice not in END_CHOICES:
-                                print('\n choice doesn\'t exist, only: P | E | Q')
-                                end_choice = input().lower()
-                            if end_choice == 'p':  # play again
-                                self.reset_game()
-                            elif end_choice == 'e':  # edit settings
-                                print()
-                                last_move = ''
-                                rows, cols, prob = get_options()
-                                self.set_up_game(rows, cols, prob)
-                            elif end_choice == 'q':  # quits game
-                                break
-                elif mode == 'f':
-                    self.flag(row, col)
-                elif mode == 'm':
-                    self.maybe(row, col)
+
                 space()
 
             except Exception as e:
-                with open('error.txt', 'w+') as error_file:
+                with open('user_error_log.txt', 'a+') as error_file:
                     error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
-                    error_file.write('\n' + str(e))
+                    error_file.write(f'\n{str(e)}\n')
                 print('~~ error logged to file ~~')
 
     def random_drop(self):

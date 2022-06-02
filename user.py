@@ -27,24 +27,26 @@ class User(Minesweeper):
                 self.display_mask()  # displays game to user
                 print('\ninput format: mode row column\nmodes: r | f | m | q')
 
-                # gets input
+                # input handling
                 choice_str = last_move = input('\n')
                 choice = choice_str.split()
                 mode = choice.pop(0).lower()
-                # keeps looping until proper menu choice
-                while mode not in CHOICES:
+
+                while mode not in CHOICES:  # loop if menu choice is invalid
                     print('\n choice doesn\'t exist, only: r | f | m | q')
                     choice_str = last_move = input('\n')
                     choice = choice_str.split()
                     mode = choice.pop(0).lower()
                 if mode == 'q':
                     break
+
+                # grid coord handling
                 row, col = map(int, choice)
-                row -= 1
+                row -= 1  # grid guide is 1-indexed for user, so bring it down
                 col -= 1
                 print()
 
-                # input checking to ensure it's within bounds
+                # loop if input is out of bounds
                 while not self.bounds(row, col):
                     print('selection out of bounds\n')
                     choice = input('\n').split()
@@ -55,9 +57,7 @@ class User(Minesweeper):
                     row -= 1
                     col -= 1
                     print()
-
-                # if Q is selected in redo loop, it wil break there so this is to break outer loop
-                if mode == 'q':
+                if mode == 'q':  # breaks outer loop after breaking other loop
                     break
 
                 # executes choices: r | f | m | q
@@ -111,9 +111,9 @@ class User(Minesweeper):
                 space()
 
             except Exception as e:
-                with open('error.txt', 'w+') as error_file:
+                with open('solver_error_log.txt', 'a+') as error_file:
                     error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
-                    error_file.write('\n' + str(e))
+                    error_file.write(f'\n{str(e)}\n')
                 print('~~ error logged to file ~~')
 
 
