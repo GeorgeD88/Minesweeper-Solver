@@ -42,6 +42,7 @@ class Minesweeper:
         self.mine_count = 0
         for mine_row in self.mines:
             self.mine_count += mine_row.count(True)
+        self.mask_tile_count = 0
 
     def reset_game(self):
         """ Resets values of the same game. """
@@ -58,9 +59,17 @@ class Minesweeper:
         self.mine_count = 0
         for mine_row in self.mines:
             self.mine_count += mine_row.count(True)
+        self.mask_tile_count = 0
 
-    def iswin(self):
+    def iswin(self) -> bool:
         """ Checks if the player won. """
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # hugely optimized method of checking for win
+        if self.area - self.mask_tile_count == self.mine_count:
+            return True
+        else:
+            return False
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         count = 0
         # counts number of number tiles
         for r in range(self.rows):
@@ -72,6 +81,11 @@ class Minesweeper:
             return True
         else:
             return False
+
+    def isloss(self, row: int, col: int) -> bool:
+        """ Checks if coord choice is a loss. """
+        # lack of bomb is more likely, we use that as a shortcircuit
+        return self.mask[row][col] is False and self.game[row][col] is True
 
     def gen_mine_board(self) -> list:
         """ Generates a mine board based on probability given. (just True and False) """
@@ -181,6 +195,7 @@ class Minesweeper:
         if self.bounds(r, c) and self.mask[r][c] is False:  # checks bounds and if already explored (memoization)
             tile = self.game[r][c]  # gets the tile from the game board
             self.mask[r][c] = tile  # reveals tile on mask
+            self.mask_tile_count += 1  # increments counter of mask tiles
             if tile == 0:  # recurses/floodfill if tile is 0
                 space()
                 self.display_mask()
