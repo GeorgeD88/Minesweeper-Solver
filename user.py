@@ -42,6 +42,7 @@ class User(Minesweeper):
 
     def update(self, last_move: str):
         """ Starts game loop. """
+
         while True:
             # catches all errors and logs them to error.txt so game doesn't crash
             try:
