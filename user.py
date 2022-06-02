@@ -1,5 +1,6 @@
 from game import Minesweeper
 from random import randint
+import math
 
 
 SPACER = 50  # amount of lines to print to space boards out
@@ -145,7 +146,6 @@ class User(Minesweeper):
 
     def find_empty_drop(self, row, col):
         """ Regenerates game board until empty spot is found. """
-        # TODO: Check for no empties
         while not self.empty_spot(row, col):
             self.regen_game()
 
@@ -188,10 +188,16 @@ class User(Minesweeper):
 
 def get_options():
     """ Gets game options: rows, columns, and mine probability. """
-    options_input = input(
-        'format: rows  columns  probability(optional)\n').split()
+    options_input = input('format: rows  columns  probability(optional, max 0.85)\n').split()
     # use default probability if it wasn't given
     probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
+
+    # ensures mine probability isn't too high and causes errors with empty drop
+    while probability > 0.85:
+        print('\nmine probability too high, may cause errors\n')
+        options_input = input('format: rows  columns  probability(optional, max 0.85)\n').split()
+        probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
+
     return int(options_input[0]), int(options_input[1]), probability
 
 
