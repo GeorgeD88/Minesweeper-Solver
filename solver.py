@@ -73,7 +73,7 @@ class Solver(Minesweeper):
                 space()
 
             except Exception as e:
-                with open('user_error_log.txt', 'a+') as error_file:
+                with open('solver_error_log.txt', 'a+') as error_file:
                     error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
                     error_file.write(f'\n{str(e)}\n')
                 print('~~ error logged to file ~~')
