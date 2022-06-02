@@ -14,9 +14,14 @@ class User(Minesweeper):
         super().__init__(rows, cols, mine_spawn, chars_config)
 
     def play(self):
-        """ Starts game loop. """
-        # last_move = ''
+        """ Starts game by running start and update function (remember Unity). """
+        if self.start() == 'q':  # exits game if quit is entered
+            return
+        if self.update() == 'q':  # exits game if quit is entered
+            return
 
+    def start(self) -> str or None:
+        """ Runs startup code for game (first loop of game). """
         space()
 
         self.display_mask()  # displays game to user
@@ -25,22 +30,21 @@ class User(Minesweeper):
         # gets menu choice and checks if choice is valid
         mode, choice, last_move = self.check_choice()
         if mode == 'q':
-            return
+            return 'q'  # exits with "exit code: quit"
 
         # gets grid coords from input and checks bounds
         mode, row, col = self.check_bounds(mode, choice)
         if mode == 'q':  # breaks outer loop after breaking other loop
-            return
+            return 'q'  # exits with "exit code: quit"
 
-        # regen board until there's a zero under choice
-        while not self.empty_spot(row, col):
-            self.regen_game()
-
+        self.find_empty_drop(row, col)  # regen board until there's a zero under choice
         self.reveal(row, col)  # reveals spot once the 0 is found
-
         space()
 
-        # main game loop
+        return None
+
+    def update(self):
+        """ Starts game loop. """
         while True:
             # catches all errors and logs them to error.txt so game doesn't crash
             try:
@@ -52,13 +56,13 @@ class User(Minesweeper):
                 # gets menu choice and checks if choice is valid
                 mode, choice, last_move = self.check_choice()
                 if mode == 'q':
-                    return
+                    return 'q'  # exits with "exit code: quit"
 
                 print()
                 # gets grid coords from input and checks bounds
                 mode, row, col = self.check_bounds(mode, choice)
                 if mode == 'q':  # breaks outer loop after breaking other loop
-                    return
+                    return 'q'  # exits with "exit code: quit"
 
                 # executes choices: r | f | m | q
                 if mode == 'r':
@@ -117,6 +121,9 @@ class User(Minesweeper):
                     error_file.write(f'\n{str(e)}\n')
                 print('~~ error logged to file ~~')
 
+    def check_inputs(self) :
+        """ Runs check_choice() and pipes into check_bounds(). """
+
     def check_choice(self) -> tuple[str, str, str]:
         """ Gets menu choice input and loops until choice is valid. """
         choice_str = input('\n')
@@ -150,9 +157,34 @@ class User(Minesweeper):
 
         return mode, row, col  # returns unchanged if coords were already within bounds
 
+    def find_empty_drop(self, row, col):
+        """ Regenerates game board until empty spot is found. """
+        while not self.empty_spot(row, col):
+            self.regen_game()
+
     def empty_spot(self, row, col):
         """ Checks if given coords is an empty tile (0) or not. """
         return self.game[row][col] == 0
+
+    def losing_choice(self, ):
+        """ Runs losing procedure (triggered when mine is hit). """
+        space()
+        self.display_game(border=True)
+        lose_message()
+        replay_options()
+        end_choice = input().lower()
+        # keeps looping until proper end game choice
+        while end_choice not in END_CHOICES:
+            print('\n choice doesn\'t exist, only: P | E | Q')
+            end_choice = input().lower()
+        if end_choice == 'p':  # play again
+            self.regen_game()
+        elif end_choice == 'e':  # edit settings
+            print()
+            rows, cols, prob = get_options()
+            self.set_up_game(rows, cols, prob)
+        elif end_choice == 'q':  # quits game
+            return 'q'
 
 
 def get_options():
