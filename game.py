@@ -47,6 +47,18 @@ class Minesweeper:
         """ Resets values of the same game. """
         self.mask = self.gen_mask_board()  # just resets mask board
 
+    def regen_game(self):
+        """ Regenerates game (new board). """
+        # regenerates all the boards
+        self.mines = self.gen_mine_board()  # just the mines
+        self.game = self.gen_game_board()  # internal board
+        self.mask = self.gen_mask_board()  # the board as seen by the user
+
+        # goes through the newly created mine board and counts number of mines generated
+        self.mine_count = 0
+        for mine_row in self.mines:
+            self.mine_count += mine_row.count(True)
+
     def iswin(self):
         """ Checks if the player won. """
         count = 0
