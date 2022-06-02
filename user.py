@@ -5,7 +5,7 @@ from random import randint
 SPACER = 50  # amount of lines to print to space boards out
 CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
 END_CHOICES = ['p', 'e', 'q']  # the available end game options
-DEFAULT_MINE_CHANCE = .18  # default mine probability
+DEFAULT_MINE_CHANCE = .2 # default mine probability
 
 
 class User(Minesweeper):
@@ -15,13 +15,33 @@ class User(Minesweeper):
 
     def play(self):
         """ Starts game loop. """
-        last_move = ''
+        # last_move = ''
+
         space()
 
-        # regen board until there's a zero at choice
+        self.display_mask()  # displays game to user
+        print('\ninput format: mode row column\nmodes: r | f | m | q')
 
+        # gets menu choice and checks if choice is valid
+        mode, choice, last_move = self.check_choice()
+        if mode == 'q':
+            return
+
+        # gets grid coords from input and checks bounds
+        mode, row, col = self.check_bounds(mode, choice)
+        if mode == 'q':  # breaks outer loop after breaking other loop
+            return
+
+        # regen board until there's a zero under choice
+        while not self.empty_spot(row, col):
+            self.regen_game()
+
+        self.reveal(row, col)  # reveals spot once the 0 is found
+
+        space()
+
+        # main game loop
         while True:
-
             # catches all errors and logs them to error.txt so game doesn't crash
             try:
                 # prints last move, mask, and input guide
@@ -29,24 +49,16 @@ class User(Minesweeper):
                 self.display_mask()  # displays game to user
                 print('\ninput format: mode row column\nmodes: r | f | m | q')
 
-                # gets menu choice
-                choice_str = last_move = input('\n')
-                choice = choice_str.split()
-                mode = choice.pop(0).lower()
-                # then pipes menu choice through checker
-                mode, choice_str = self.check_choice(mode, choice_str)
+                # gets menu choice and checks if choice is valid
+                mode, choice, last_move = self.check_choice()
                 if mode == 'q':
-                    break
+                    return
 
-                # gets grid coords from input
-                row, col = map(int, choice)
-                row -= 1  # grid guide is 1-indexed for user, so bring it down
-                col -= 1
                 print()
-                # then pipe coords through bounds checker
-                mode, row, col = self.check_bounds(mode, row, col)
+                # gets grid coords from input and checks bounds
+                mode, row, col = self.check_bounds(mode, choice)
                 if mode == 'q':  # breaks outer loop after breaking other loop
-                    break
+                    return
 
                 # executes choices: r | f | m | q
                 if mode == 'r':
@@ -83,6 +95,7 @@ class User(Minesweeper):
                             while end_choice not in END_CHOICES:
                                 print('\n choice doesn\'t exist, only: P | E | Q')
                                 end_choice = input().lower()
+                            # TODO: Need to add empty spot checker before replay options too!
                             if end_choice == 'p':  # play again
                                 self.regen_game()
                             elif end_choice == 'e':  # edit settings
@@ -100,23 +113,30 @@ class User(Minesweeper):
 
             except Exception as e:
                 with open('user_error_log.txt', 'a+') as error_file:
-                    error_file.write('LINE NUMBER: ' +
-                                     str(e.__traceback__.tb_lineno))
+                    error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
                     error_file.write(f'\n{str(e)}\n')
                 print('~~ error logged to file ~~')
 
-    def check_choice(self, mode: str, choice_str: str) -> tuple[str, str]:
-        """ Loops until menu choice input has been made. """
+    def check_choice(self) -> tuple[str, str, str]:
+        """ Gets menu choice input and loops until choice is valid. """
+        choice_str = input('\n')
+        choice = choice_str.split()
+        mode = choice.pop(0).lower()
+
         while mode not in CHOICES:  # loop if menu choice is invalid
             print('\n choice doesn\'t exist, only: r | f | m | q')
             choice_str = input('\n')
             choice = choice_str.split()
             mode = choice.pop(0).lower()
 
-        return (mode, choice_str)  # returns unchanged if input was already valid
+        return mode, choice, choice_str  # returns unchanged if input was already valid
 
-    def check_bounds(self, mode: str, row: int, col: int) -> tuple[str, int, int]:
+    def check_bounds(self, mode: str, choice: str) -> tuple[str, int, int]:
         """ Loops until coordinate choice has been made within bounds. """
+        row, col = map(int, choice)
+        row -= 1  # grid guide is 1-indexed for user, so bring it down
+        col -= 1
+
         while not self.bounds(row, col):
             print('selection out of bounds\n')
             choice = input('\n').split()
@@ -129,6 +149,10 @@ class User(Minesweeper):
             print()
 
         return mode, row, col  # returns unchanged if coords were already within bounds
+
+    def empty_spot(self, row, col):
+        """ Checks if given coords is an empty tile (0) or not. """
+        return self.game[row][col] == 0
 
 
 def get_options():
