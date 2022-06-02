@@ -144,15 +144,6 @@ class User(Minesweeper):
 
         return mode, row, col  # returns unchanged if coords were already within bounds
 
-    def find_empty_drop(self, row, col):
-        """ Regenerates game board until empty spot is found. """
-        while not self.empty_spot(row, col):
-            self.regen_game()
-
-    def empty_spot(self, row, col):
-        """ Checks if given coords is an empty tile (0) or not. """
-        return self.game[row][col] == 0
-
     def losing_procedure(self):
         """ Runs losing procedure (triggered when mine is hit). """
         space()

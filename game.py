@@ -100,6 +100,15 @@ class Minesweeper:
         """ Generates a mask board to display to the user: tiles, armed flags, maybe flags, etc. (strings) """
         return [[False for i in range(self.cols)] for j in range(self.rows)]
 
+    def empty_spot(self, row, col):
+        """ Checks if given coords is an empty tile (0) or not. """
+        return self.game[row][col] == 0
+
+    def find_empty_drop(self, row, col):
+        """ Regenerates game board until empty spot is found. """
+        while not self.empty_spot(row, col):
+            self.regen_game()
+
     def display_mines(self, ascii: bool = False):
         """ Iterates through mine board and prints mine status. """
         if ascii:  # prints mines as their mask symbol
