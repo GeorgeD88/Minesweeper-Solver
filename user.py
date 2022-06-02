@@ -99,7 +99,7 @@ class User(Minesweeper):
                 space()
 
             except Exception as e:
-                with open('solver_error_log.txt', 'a+') as error_file:
+                with open('user_error_log.txt', 'a+') as error_file:
                     error_file.write('LINE NUMBER: ' +
                                      str(e.__traceback__.tb_lineno))
                     error_file.write(f'\n{str(e)}\n')
@@ -115,7 +115,7 @@ class User(Minesweeper):
 
         return (mode, choice_str)  # returns unchanged if input was already valid
 
-    def check_bounds(self, mode: str, row: int, col: int) -> tuple[str, tuple[int, int]]:
+    def check_bounds(self, mode: str, row: int, col: int) -> tuple[str, int, int]:
         """ Loops until coordinate choice has been made within bounds. """
         while not self.bounds(row, col):
             print('selection out of bounds\n')
@@ -128,7 +128,7 @@ class User(Minesweeper):
             col -= 1
             print()
 
-        return mode, (row, col)  # returns unchanged if coords were already within bounds
+        return mode, row, col  # returns unchanged if coords were already within bounds
 
 
 def get_options():
