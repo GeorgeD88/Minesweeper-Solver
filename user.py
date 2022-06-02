@@ -64,6 +64,9 @@ class User(Minesweeper):
                         if self.iswin():  # if there's nothing more to be explored, it's a win
                             if self.win_procedure() == 'q':
                                 return 'q'
+                            last_move = self.start()
+                            if last_move == 'q':  # exits game if quit is entered
+                                return 'q'
                 elif mode == 'f':
                     self.flag(row, col)
                 elif mode == 'm':
@@ -142,6 +145,7 @@ class User(Minesweeper):
 
     def find_empty_drop(self, row, col):
         """ Regenerates game board until empty spot is found. """
+        # TODO: Check for no empties
         while not self.empty_spot(row, col):
             self.regen_game()
 
@@ -173,7 +177,6 @@ class User(Minesweeper):
         while end_choice not in END_CHOICES:
             print('\n choice doesn\'t exist, only: P | E | Q')
             end_choice = input().lower()
-        # TODO: Need to add empty spot checker before replay options too!
         if end_choice == 'p':  # play again
             self.regen_game()
         elif end_choice == 'e':  # edit settings
