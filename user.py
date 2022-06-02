@@ -100,13 +100,19 @@ class User(Minesweeper):
 
     def check_choice(self) -> tuple[str, str, str]:
         """ Gets menu choice input and loops until choice is valid. """
-        choice_str = input('\n')
+        choice_str = input('\n').strip()
+        while choice_str == '':
+            print('\n can\'t enter empty input')
+            choice_str = input('\n').strip()
         choice = choice_str.split()
         mode = choice.pop(0).lower()
 
         while mode not in CHOICES:  # loop if menu choice is invalid
             print('\n choice doesn\'t exist, only: r | f | m | q')
-            choice_str = input('\n')
+            choice_str = input('\n').strip()
+            while choice_str == '':
+                print('\n can\'t enter empty input')
+                choice_str = input('\n').strip()
             choice = choice_str.split()
             mode = choice.pop(0).lower()
 
@@ -121,6 +127,9 @@ class User(Minesweeper):
         while not self.bounds(row, col):
             print('selection out of bounds\n')
             choice = input('\n').split()
+            while choice_str == '':
+                print('\n can\'t enter empty input')
+                choice_str = input('\n').strip()
             mode = choice.pop(0).lower()
             if mode == 'q':
                 break
@@ -179,8 +188,7 @@ def get_options():
     options_input = input(
         'format: rows  columns  probability(optional)\n').split()
     # use default probability if it wasn't given
-    probability = DEFAULT_MINE_CHANCE if len(
-        options_input) < 3 else float(options_input[2])
+    probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
     return int(options_input[0]), int(options_input[1]), probability
 
 
