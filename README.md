@@ -4,9 +4,10 @@
 **Minesweeper-Solver** is free software, distributed under the terms of the [GNU General Public License, version 3](https://www.gnu.org/licenses/gpl-3.0.html).
 ## What I Learned
 * Floodfill algorithm
-* Linear algebra for solver algorithms
+* Memoization
 * Displaying 2D matrices with coordinate guides
 * Licensing with GNU GPL
+<!-- * Linear algebra for solver algorithms -->
 ## How to Run
 The project has 2 parts, the game itself and the bot, spread across 3 files. `game.py` contains the backend of the game (no user input), while `user.py` and `solver.py` each connects the game to their own user interface. `user.py` connects the game to a user interface with inputs to allow the user to play, while `solver.py` connects the game to solving algorithms as well as a visualization to show the user what's going on.<br>
 ```python

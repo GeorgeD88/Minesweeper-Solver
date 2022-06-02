@@ -23,10 +23,7 @@ class Solver(Minesweeper):
 
             # catches all errors and logs them to error.txt so game doesn't crash
             try:
-                # prints last move, mask, and input guide
-                print(f'last move: {last_move}\n')
-                self.display_mask()  # displays game to user
-                print('\ninput format: mode row column\nmodes: r | f | m | q')
+                self.display_mask()  # displays board
 
                 # gets input
                 choice_str = last_move = input('\n')

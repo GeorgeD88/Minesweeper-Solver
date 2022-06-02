@@ -166,7 +166,7 @@ class Minesweeper:
 
     def reveal(self, r, c):
         """ Reveals tile and flood fills if needed. """
-        if self.bounds(r, c) and self.mask[r][c] is False:  # only reveals if in bounds and unexplored
+        if self.bounds(r, c) and self.mask[r][c] is False:  # checks bounds and if already explored (memoization)
             tile = self.game[r][c]  # gets the tile from the game board
             self.mask[r][c] = tile  # reveals tile on mask
             if tile == 0:  # recurses/floodfill if tile is 0
