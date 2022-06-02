@@ -63,21 +63,7 @@ class Minesweeper:
 
     def iswin(self) -> bool:
         """ Checks if the player won. """
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        # hugely optimized method of checking for win
         if self.area - self.mask_tile_count == self.mine_count:
-            return True
-        else:
-            return False
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        count = 0
-        # counts number of number tiles
-        for r in range(self.rows):
-            for c in range(self.cols):
-                if type(self.mask[r][c]) is int:
-                    count += 1
-        # checks if total tiles - number tiles is equal to bombs, this means you found everything
-        if self.area - count == self.mine_count:
             return True
         else:
             return False
