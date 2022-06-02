@@ -15,100 +15,55 @@ class User(Minesweeper):
 
     def play(self):
         """ Starts game by running start and update function (remember Unity). """
-        if self.start() == 'q':  # exits game if quit is entered
+        start_resp = self.start()
+        if start_resp == 'q':  # exits game if quit is entered
             return
-        if self.update() == 'q':  # exits game if quit is entered
+        if self.update(start_resp) == 'q':  # exits game if quit is entered
             return
 
-    def start(self) -> str or None:
+    def start(self) -> str:
         """ Runs startup code for game (first loop of game). """
         space()
 
         self.display_mask()  # displays game to user
         print('\ninput format: mode row column\nmodes: r | f | m | q')
 
-        # gets menu choice and checks if choice is valid
-        mode, choice, last_move = self.check_choice()
-        if mode == 'q':
-            return 'q'  # exits with "exit code: quit"
-
-        # gets grid coords from input and checks bounds
-        mode, row, col = self.check_bounds(mode, choice)
-        if mode == 'q':  # breaks outer loop after breaking other loop
-            return 'q'  # exits with "exit code: quit"
+        input_check = self.check_inputs()
+        if input_check[0] == 'q':  # checks menu choice and coords
+            return 'q'
+        mode, last_move, row, col = input_check
 
         self.find_empty_drop(row, col)  # regen board until there's a zero under choice
         self.reveal(row, col)  # reveals spot once the 0 is found
         space()
 
-        return None
+        return last_move
 
-    def update(self):
+    def update(self, last_move: str):
         """ Starts game loop. """
         while True:
             # catches all errors and logs them to error.txt so game doesn't crash
             try:
-                # prints last move, mask, and input guide
-                print(f'last move: {last_move}\n')
-                self.display_mask()  # displays game to user
-                print('\ninput format: mode row column\nmodes: r | f | m | q')
+                self.round_print(last_move)  # prints board and such
 
-                # gets menu choice and checks if choice is valid
-                mode, choice, last_move = self.check_choice()
-                if mode == 'q':
-                    return 'q'  # exits with "exit code: quit"
-
-                print()
-                # gets grid coords from input and checks bounds
-                mode, row, col = self.check_bounds(mode, choice)
-                if mode == 'q':  # breaks outer loop after breaking other loop
-                    return 'q'  # exits with "exit code: quit"
+                input_check = self.check_inputs()
+                if input_check[0] == 'q':  # checks menu choice and coords
+                    return 'q'
+                mode, last_move, row, col = input_check
 
                 # executes choices: r | f | m | q
                 if mode == 'r':
-                    # checks if choice was a mine (and mask is unexplored) and ends game
-                    if self.mask[row][col] is False and self.game[row][col] is True:
-                        space()
-                        self.display_game(border=True)
-                        lose_message()
-                        replay_options()
-                        end_choice = input().lower()
-                        # keeps looping until proper end game choice
-                        while end_choice not in END_CHOICES:
-                            print('\n choice doesn\'t exist, only: P | E | Q')
-                            end_choice = input().lower()
-                        if end_choice == 'p':  # play again
-                            self.regen_game()
-                        elif end_choice == 'e':  # edit settings
-                            print()
-                            last_move = ''
-                            rows, cols, prob = get_options()
-                            self.set_up_game(rows, cols, prob)
-                        elif end_choice == 'q':  # quits game
-                            break
-                    # if no mine then continue with revealing square
-                    else:
+                    if self.isloss(row, col):  # checks if coord is bomb
+                        if self.losing_procedure() == 'q':
+                            return 'q'
+                        last_move = self.start()
+                        if last_move == 'q':  # exits game if quit is entered
+                            return 'q'
+                    else:  # if no loss, continues revealing tile regularly
                         self.reveal(row, col)
                         if self.iswin():  # if there's nothing more to be explored, it's a win
-                            space()
-                            self.display_game(border=True)
-                            win_message()
-                            replay_options()
-                            end_choice = input().lower()
-                            # keeps looping until proper end game choice
-                            while end_choice not in END_CHOICES:
-                                print('\n choice doesn\'t exist, only: P | E | Q')
-                                end_choice = input().lower()
-                            # TODO: Need to add empty spot checker before replay options too!
-                            if end_choice == 'p':  # play again
-                                self.regen_game()
-                            elif end_choice == 'e':  # edit settings
-                                print()
-                                last_move = ''
-                                rows, cols, prob = get_options()
-                                self.set_up_game(rows, cols, prob)
-                            elif end_choice == 'q':  # quits game
-                                break
+                            if self.win_procedure() == 'q':
+                                return 'q'
                 elif mode == 'f':
                     self.flag(row, col)
                 elif mode == 'm':
@@ -121,8 +76,27 @@ class User(Minesweeper):
                     error_file.write(f'\n{str(e)}\n')
                 print('~~ error logged to file ~~')
 
+    def round_print(self, last_move: str):
+        """ Prints the last move, mask, and input guide for the round. """
+        print(f'last move: {last_move}\n')
+        self.display_mask()  # displays game to user
+        print('\ninput format: mode row column\nmodes: r | f | m | q')
+
     def check_inputs(self) :
         """ Runs check_choice() and pipes into check_bounds(). """
+        # gets menu choice and checks if choice is valid
+        mode, choice, last_move = self.check_choice()
+        if mode == 'q':
+            return ('q')  # exits with "exit code: quit"
+
+        print()
+
+        # gets grid coords from input and checks bounds
+        mode, row, col = self.check_bounds(mode, choice)
+        if mode == 'q':  # breaks outer loop after breaking other loop
+            return ('q')  # exits with "exit code: quit"
+
+        return mode, last_move, row, col
 
     def check_choice(self) -> tuple[str, str, str]:
         """ Gets menu choice input and loops until choice is valid. """
@@ -166,17 +140,31 @@ class User(Minesweeper):
         """ Checks if given coords is an empty tile (0) or not. """
         return self.game[row][col] == 0
 
-    def losing_choice(self, ):
+    def losing_procedure(self):
         """ Runs losing procedure (triggered when mine is hit). """
         space()
         self.display_game(border=True)
         lose_message()
+        if self.end_game_procedure() == 'q':
+            return 'q'
+
+    def win_procedure(self):
+        """ Runs winning procedure (triggered when mine is hit). """
+        space()
+        self.display_game(border=True)
+        win_message()
+        if self.end_game_procedure() == 'q':
+            return 'q'
+
+    def end_game_procedure(self):
+        """ Runs end game procedure (regardless of win or loss). """
         replay_options()
         end_choice = input().lower()
         # keeps looping until proper end game choice
         while end_choice not in END_CHOICES:
             print('\n choice doesn\'t exist, only: P | E | Q')
             end_choice = input().lower()
+        # TODO: Need to add empty spot checker before replay options too!
         if end_choice == 'p':  # play again
             self.regen_game()
         elif end_choice == 'e':  # edit settings
@@ -185,7 +173,6 @@ class User(Minesweeper):
             self.set_up_game(rows, cols, prob)
         elif end_choice == 'q':  # quits game
             return 'q'
-
 
 def get_options():
     """ Gets game options: rows, columns, and mine probability. """
