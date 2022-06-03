@@ -181,14 +181,14 @@ class User(Minesweeper):
 
 def get_options():
     """ Gets game options: rows, columns, and mine probability. """
-    options_input = input('format: rows  columns  probability(optional, max 0.85)\n').split()
+    options_input = input('format: rows  columns  probability(optional, max 0.28)\n').split()
     # use default probability if it wasn't given
     probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
 
     # ensures mine probability isn't too high and causes errors with empty drop
-    while probability > 0.85:
+    while probability > 0.28:
         print('\nmine probability too high, may cause errors\n')
-        options_input = input('format: rows  columns  probability(optional, max 0.85)\n').split()
+        options_input = input('format: rows  columns  probability(optional, max 0.28)\n').split()
         probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
 
     return int(options_input[0]), int(options_input[1]), probability
