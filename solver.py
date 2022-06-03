@@ -91,7 +91,7 @@ class Solver(Minesweeper):
     def losing_procedure(self):
         """ Runs losing procedure (triggered when mine is hit). """
         space()
-        self.display_game(border=True)
+        self.display_game()
         lose_message()
         if self.end_game_procedure() == 'q':
             return 'q'
@@ -99,7 +99,7 @@ class Solver(Minesweeper):
     def win_procedure(self):
         """ Runs winning procedure (triggered when mine is hit). """
         space()
-        self.display_game(border=True)
+        self.display_game()
         win_message()
         if self.end_game_procedure() == 'q':
             return 'q'

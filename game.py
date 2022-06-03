@@ -122,7 +122,7 @@ class Minesweeper:
                     print(self.mines[r][c], end=' ')
                 print()
 
-    def display_game(self, border: bool = False):
+    def display_game(self, border: bool = True):
         """ Iterates through game board and prints tiles. (so numbers and mines) """
         if border:
             print('-'*(self.cols*2+3))
