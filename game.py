@@ -187,7 +187,7 @@ class Minesweeper:
 
     def reveal(self, r, c):
         """ Reveals tile and flood fills if needed. """
-        if self.bounds(r, c) and self.mask[r][c] is False:  # checks bounds and if already explored (memoization)
+        if self.bounds(r, c) and self.is_new(r, c):  # only runs if within bounds and not already explored (memoization)
             tile = self.game[r][c]  # gets the tile from the game board
             self.mask[r][c] = tile  # reveals tile on mask
             self.mask_tile_count += 1  # increments counter of mask tiles
@@ -201,7 +201,7 @@ class Minesweeper:
         """ Sets tile to flag so users can mark tiles as mines. """
         if self.mask[r][c] == self.chars['flag']:  # unflags if already flagged
             self.mask[r][c] = False
-        elif self.mask[r][c] is False:  # can only flag unexplored tiles
+        elif self.is_new(r, c):  # can only flag unexplored tiles
             self.mask[r][c] = self.chars['flag']  # flags
         else:
             # can't flag already revealed tiles
@@ -211,7 +211,7 @@ class Minesweeper:
         """ Sets tile to maybe so users can mark tiles as possible mines. """
         if self.mask[r][c] == self.chars['maybe']:  # unmaybes if already maybeged
             self.mask[r][c] = False
-        elif self.mask[r][c] is False:  # can only maybe unexplored tiles
+        elif self.is_new(r, c):  # can only maybe unexplored tiles
             self.mask[r][c] = self.chars['maybe']  # maybes
         else:
             # can't maybe already revealed tiles
@@ -236,6 +236,10 @@ class Minesweeper:
             return False  # meaning the coord is outside of the board
         else:
             return True  # coord is within the board
+
+    def is_new(self, r, c) -> bool:
+        """ Checks if given tile has not been explored. """
+        return self.mask[r][c] is False
 
 
 def space():
