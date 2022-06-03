@@ -15,6 +15,8 @@ class Solver(Minesweeper):
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         super().__init__(rows, cols, mine_spawn, chars_config)
+        self.l_mode = None
+        self.last_move: tuple[int, int] = (None, None)
 
     def solve(self):
         """ Starts solver/game by running start and update function. """
@@ -32,14 +34,15 @@ class Solver(Minesweeper):
         self.reveal(row, col)  # reveals spot once the 0 is found
         space()
 
-        return f'r {row}, {col}'  # returns last move
+        self.l_mode = 'r'
+        self.last_move = (row, col)
 
     def update(self):
         """ Runs solving loop. """
         while True:
             # catches all errors and logs them to error.txt so game doesn't crash
             try:
-                self.round_print(last_move)
+                self.round_print()
                 """ NOTE: Maybe once I write the solving algorithm,
                 I should have it do solving algorithm and then whatever time is left
                 after figuring out the next move, I will delay only that. """
@@ -76,9 +79,9 @@ class Solver(Minesweeper):
                     error_file.write(f'\n{str(e)}\n')
                 print('~~ error logged to file ~~')
 
-    def round_print(self, last_move: str):
+    def round_print(self):
         """ Prints the last move, mask, and input guide for the round. """
-        print(f'last move: {last_move}\n')
+        print(f'last move: {self.str_lmove()}\n')
         self.display_mask()  # displays game to user
         print('\n')
 
@@ -136,6 +139,11 @@ class Solver(Minesweeper):
             return 0
         else:
             return MOVE_DELAY - time_elapsed
+
+    def str_lmove(self):
+        """ Returns last move but stringified. """
+        return f'{self.l_mode} {self.last_move[0]} {self.last_move[1]}'
+
 
 def get_options():
     """ Gets game options: rows, columns, and mine probability. """
