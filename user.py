@@ -7,7 +7,7 @@ SPACER = 50  # amount of lines to print to space boards out
 CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
 END_CHOICES = ['p', 'e', 'q']  # the available end game options
 REPLAY_MENU = '(P) play again (Q) quit (E) edit settings'
-DEFAULT_MINE_CHANCE = .2 # default mine probability
+DEFAULT_MINE_CHANCE = .15 # default mine probability
 
 
 class User(Minesweeper):
