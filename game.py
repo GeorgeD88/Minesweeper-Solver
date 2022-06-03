@@ -12,7 +12,7 @@ class Minesweeper:
         # config dictionary that holds the actual character strings mappings
         # for what character to display for each board element; e.g. mine = 'X'
         self.chars = {'tile': '□',
-                      'mine': '☹',
+                      'mine': '█', #☹
                       'zero': ' ',
                       'flag': '+',
                       'maybe': '?'
@@ -63,10 +63,7 @@ class Minesweeper:
 
     def iswin(self) -> bool:
         """ Checks if the player won. """
-        if self.area - self.mask_tile_count == self.mine_count:
-            return True
-        else:
-            return False
+        return self.area - self.mask_tile_count == self.mine_count:
 
     def isloss(self, row: int, col: int) -> bool:
         """ Checks if coord choice is a loss. """
