@@ -170,8 +170,10 @@ class Minesweeper:
                     print(self.chars['tile'], end=' ')
                 elif tile == 0:  # empty tile (zero)
                     print(self.chars['zero'], end=' ')
-                elif type(tile) is int:  # number tile
+                elif isinstance(tile, int):  # number tile
                     print(str(tile), end=' ')
+                elif isinstance(tile, str):  # should only happen if altered by solver for color
+                    print(tile, end=' ')
                 else:  # other chars: flag, maybe, etc.
                     print(tile, end=' ')
             print()
