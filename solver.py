@@ -64,12 +64,19 @@ class Solver(Minesweeper):
                 if action == 'r':
                     # checks if choice was a mine (and mask is unexplored) and ends game
                     if self.isloss(row, col):
-                        self.losing_procedure()
+                        if self.losing_procedure() == 'q':
+                            return 'q'
+                        self.start()
+                        if self.last_action == 'q':
+                            return 'q'
                     else:  # if no loss, continues revealing tile regularly
                         self.reveal(row, col)
                         if self.iswin():  # if there's nothing more to be explored, it's a win
-                            self.win_procedure()
-                            last_move = self.start()
+                            if self.win_procedure() == 'q':
+                                return 'q'
+                            self.start()
+                        if self.last_action == 'q':
+                            return 'q'
                 elif action == 'f':
                     self.flag(row, col)
                 elif action == 'm':
