@@ -146,14 +146,14 @@ class Solver(Minesweeper):
             row, col = self.random_coords()
             self.reveal(row, col)
 
-    def decide_delay(self, time_elapsed):
+    def decide_delay(self, time_elapsed) -> float:
         """ Returns how much longer to delay move after calculating next move. """
         if time_elapsed >= MOVE_DELAY:
             return 0
         else:
             return MOVE_DELAY - time_elapsed
 
-    def str_lmove(self):
+    def str_lmove(self) -> str:
         """ Returns last move but stringified. """
         return f'{self.last_action} {self.last_move[0]} {self.last_move[1]}'
 
@@ -205,6 +205,17 @@ def welcome_message():
 
             """)
 
+def dev_welcome_message():
+    """ Tweaked welcome message w/o delays for when I'm repeatedly running. """
+    print("""
+
+               @({{$*#%}":@$&)#^&#%&@@{^&!^&)$#E^&@
+               !@{^&!%                      \@$&)#!
+               $&@$&)  The Bot Version 🤖💣  {^&!)$
+               &$#E^&:                      $*#%}"U
+               *#@#(^%&@@{^}{|$G@@$#$@^&":@{^&!^&)$
+            """)
+
 def win_message():
     print(f"""
 
@@ -228,7 +239,7 @@ def lose_message():
             """)
 
 def init_solver():
-    welcome_message()
+    dev_welcome_message()
     print('           ', end='')  # prints a spacer to push get options message under welcome message
     rows, cols, prob = get_options()
     return Solver(rows, cols, prob)
