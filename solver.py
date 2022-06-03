@@ -5,8 +5,10 @@ from time import sleep, time
 
 MOVE_DELAY = .5  # how much to delay before the bot makes a move
 SPACER = 50  # amount of lines to print to space boards out
-# CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
-# END_CHOICES = ['p', 'e', 'q']  # the available end game options
+END_CHOICES = ['r', 'e', 'q']  # the available bot menu options
+REPLAY_MENU = '(R) run bot again (Q) quit (E) edit settings'
+DEFAULT_MINE_CHANCE = .2 # default mine probability
+# CHOICES = ['r', 'f', 'm', 'q']  # the available menu options  // no choices because you can't select anything as it's running
 # FIXME: might need to do file for solver display, and then file for solver algorithms.
 #        cause unlike user, solver is display + other backend.
 
@@ -15,7 +17,7 @@ class Solver(Minesweeper):
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         super().__init__(rows, cols, mine_spawn, chars_config)
-        self.l_mode = None
+        self.last_action = None
         self.last_move: tuple[int, int] = (None, None)
 
     def solve(self):
@@ -34,7 +36,7 @@ class Solver(Minesweeper):
         self.reveal(row, col)  # reveals spot once the 0 is found
         space()
 
-        self.l_mode = 'r'
+        self.last_action = 'r'
         self.last_move = (row, col)
 
     def update(self):
@@ -52,7 +54,8 @@ class Solver(Minesweeper):
                 before = time()
                 # TODO: run solving algorithm choose row and col here
                 row, col = self.random_coords()
-                action = "TODO: decide if to reveal or flag"
+                self.last_move = (row, col)  # NOTE: remember to always save last move
+                action = self.last_action = "TODO: decide if to reveal or flag"
                       # TEMPORARY ^^
                 after = time()
                 sleep(self.decide_delay(after-before))  # delay before next move
@@ -103,12 +106,13 @@ class Solver(Minesweeper):
 
     def end_game_procedure(self):
         """ Runs end game procedure (regardless of win or loss). """
+        print(f'  {REPLAY_MENU}\n')
         end_choice = input().lower()
         # keeps looping until proper end game choice
         while end_choice not in END_CHOICES:
-            print('\n choice doesn\'t exist, only: P | E | Q')
+            print('\n choice doesn\'t exist, only: R | E | Q')
             end_choice = input().lower()
-        if end_choice == 'p':  # play again
+        if end_choice == 'r':  # run bot again
             self.regen_game()
         elif end_choice == 'e':  # edit settings
             print()
@@ -142,7 +146,7 @@ class Solver(Minesweeper):
 
     def str_lmove(self):
         """ Returns last move but stringified. """
-        return f'{self.l_mode} {self.last_move[0]} {self.last_move[1]}'
+        return f'{self.last_action} {self.last_move[0]} {self.last_move[1]}'
 
 
 def get_options():
@@ -184,25 +188,25 @@ def welcome_message():
             """)
 
 def win_message():
-    print("""
+    print(f"""
 
 
                ===============
                == YOU WIN!! ==
                ===============
 
-  (P) play again (Q) quit (E) edit settings
+  {REPLAY_MENU}
             """)
 
 def lose_message():
-    print("""
+    print(f"""
 
 
                ===============
                == GAME OVER ==
                ===============
 
-  (P) play again (Q) quit (E) edit settings
+  {REPLAY_MENU}
             """)
 
 def init_solver():

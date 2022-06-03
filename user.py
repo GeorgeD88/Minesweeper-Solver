@@ -6,6 +6,7 @@ import math
 SPACER = 50  # amount of lines to print to space boards out
 CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
 END_CHOICES = ['p', 'e', 'q']  # the available end game options
+REPLAY_MENU = '(P) play again (Q) quit (E) edit settings'
 DEFAULT_MINE_CHANCE = .2 # default mine probability
 
 
@@ -163,7 +164,7 @@ class User(Minesweeper):
 
     def end_game_procedure(self):
         """ Runs end game procedure (regardless of win or loss). """
-        replay_options()
+        print(f'  {REPLAY_MENU}\n')
         end_choice = input().lower()
         # keeps looping until proper end game choice
         while end_choice not in END_CHOICES:
@@ -218,6 +219,8 @@ def win_message():
                ===============
                == YOU WIN!! ==
                ===============
+
+  {REPLAY_MENU}
             """)
 
 
@@ -228,12 +231,8 @@ def lose_message():
                ===============
                == GAME OVER ==
                ===============
-            """)
 
-
-def replay_options():
-    print("""
-  (P) play again (Q) quit (E) edit settings
+  {REPLAY_MENU}
             """)
 
 
