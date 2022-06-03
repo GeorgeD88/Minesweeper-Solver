@@ -63,7 +63,7 @@ class Minesweeper:
 
     def iswin(self) -> bool:
         """ Checks if the player won. """
-        return self.area - self.mask_tile_count == self.mine_count:
+        return self.area - self.mask_tile_count == self.mine_count
 
     def isloss(self, row: int, col: int) -> bool:
         """ Checks if coord choice is a loss. """
