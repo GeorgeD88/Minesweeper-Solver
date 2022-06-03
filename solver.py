@@ -48,16 +48,18 @@ class Solver(Minesweeper):
                 """ NOTE: Maybe once I write the solving algorithm,
                 I should have it do solving algorithm and then whatever time is left
                 after figuring out the next move, I will delay only that. """
-
                 print()
 
-                before = time()
+                before = time()  # before main bot algorithm ====
+
                 # TODO: run solving algorithm choose row and col here
-                row, col = self.random_coords()
+                row, col = self.random_coords()  # temporary random choice
+
+                after = time()  # after main bot algorithm ======
+
                 self.last_move = (row, col)  # NOTE: remember to always save last move
                 action = self.last_action = "TODO: decide if to reveal or flag"
-                      # TEMPORARY ^^
-                after = time()
+
                 sleep(self.decide_delay(after-before))  # delay before next move
 
                 # executes choices: r | f | m
@@ -177,7 +179,7 @@ def welcome_message():
 
                @({{$*#%}":@$&)#^&#%&@@{^&!^&)$#E^&@
                !@{^&!%                      \@$&)#!
-               $&@$&)  The Bot Version 🤖👾  {^&!)$
+               $&@$&)  The Bot Version 🤖💣  {^&!)$
                &$#E^&:                      $*#%}"U
                *#@#(^%&@@{^}{|$G@@$#$@^&":@{^&!^&)$
             """)
@@ -186,11 +188,12 @@ def welcome_message():
 
                     To get started, input your
              desired dimensions and mine probability.
-
             """)
     sleep(2)
     print("""
             #$%*}#G  and I'll do the rest 😈  ^&$@#$%
+
+
 
             """)
 
