@@ -160,9 +160,26 @@ def welcome_message():
                ====================================
                === WELCOME TO MINESWEEPER! 💣🧹 ===
                ====================================
+            """)
+    sleep(1.5)
+    print("""
+
+               @({{$*#%}":@$&)#^&#%&@@{^&!^&)$#E^&@
+               !@{^&!%                      \@$&)#!
+               $&@$&)  The Bot Version 🤖👾  {^&!)$
+               &$#E^&:                      $*#%}"U
+               *#@#(^%&@@{^}{|$G@@$#$@^&":@{^&!^&)$
+            """)
+    sleep(2)
+    print("""
 
                     To get started, input your
              desired dimensions and mine probability.
+
+            """)
+    sleep(2)
+    print("""
+            #$%*}#G  and I'll do the rest 😈  ^&$@#$%
 
             """)
 
