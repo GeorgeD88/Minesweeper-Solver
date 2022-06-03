@@ -158,10 +158,18 @@ class Solver(Minesweeper):
         return f'{self.last_action} {self.last_move[0]} {self.last_move[1]}'
 
 
-def get_options():
+def get_options() -> tuple[int, int, float]:
     """ Gets game options: rows, columns, and mine probability. """
-    options_input = input('format: rows  columns  probability(optional)\n').split()
-    return int(options_input[0]), int(options_input[1]), float(options_input[2])
+    options_input = input('format: rows  columns  probability(optional, max 0.85)\n').split()
+    # use default probability if it wasn't given
+    probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
+    # ensures mine probability isn't too high and causes errors with empty drop
+    while probability > 0.85:
+        print('\nmine probability too high, may cause errors\n')
+        options_input = input('format: rows  columns  probability(optional, max 0.85)\n').split()
+        probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
+
+    return int(options_input[0]), int(options_input[1]), probability
 
 def space():
     print('\n'*SPACER)
