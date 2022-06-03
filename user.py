@@ -220,8 +220,7 @@ def win_message():
                == YOU WIN!! ==
                ===============
 
-  {REPLAY_MENU}
-            """)
+""")
 
 
 def lose_message():
@@ -232,8 +231,7 @@ def lose_message():
                == GAME OVER ==
                ===============
 
-  {REPLAY_MENU}
-            """)
+""")
 
 
 def init_game():
