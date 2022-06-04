@@ -28,7 +28,7 @@ class User(Minesweeper):
         space()
 
         self.display_mask()  # displays game to user
-        print('\ninput format: mode row column\nmodes: r | f | m | q')
+        print('\ninput format: mode row column\nmodes: r | q')
 
         input_check = self.check_inputs()
         if input_check[0] == 'q':  # checks menu choice and coords
