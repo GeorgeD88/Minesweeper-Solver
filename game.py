@@ -4,11 +4,13 @@ from copy import deepcopy
 from time import sleep
 import random
 
-VISUAL_DELAY = 0.01
+
+HELPER_DELAY = 0.005  # this delay is to give the code a 1ms bump after printing the board in hopes of getting rid of the jittery visuals
+VISUAL_DELAY = 0.001#01
 SPACER = 50  # amount of lines to print to space boards out
-# BREADTH_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
-BREADTH_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
-BREADTH_COORDS.pop(4)
+# ADJACENT_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
+ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
+ADJACENT_COORDS.pop(4)
 
 class Minesweeper:
 
@@ -76,6 +78,16 @@ class Minesweeper:
 
     def gen_mine_board(self) -> list:
         """ Generates a mine board based on probability given. (just True and False) """
+        # this way creates the list while counting mines at the same time
+        """ scratch_mine_board = []
+        for j in range(self.rows):
+            scratch_mine_board.append([])
+            for i in range(self.cols):
+                is_mine = random.random() < self.prob
+                scratch_mine_board.append(is_mine)
+                if is_mine:
+                    self.mine_count += 1 """
+        # this way creates the list and returns it inline
         return [[random.random() < self.prob for i in range(self.cols)] for j in range(self.rows)]
 
     def gen_game_board(self) -> list:
@@ -108,6 +120,7 @@ class Minesweeper:
     def find_empty_drop(self, row, col):
         """ Regenerates game board until empty spot is found. """
         while not self.empty_spot(row, col):
+            print('POOUUOOP')
             self.regen_game()
 
     def display_mines(self, ascii: bool = False):
@@ -186,6 +199,7 @@ class Minesweeper:
         """ Prints a space and then the board. """
         space()
         self.display_mask()
+        sleep(HELPER_DELAY)
 
     def reveal(self, r, c):
         """ Helper function to reveal without starting a recursion. """
@@ -216,10 +230,10 @@ class Minesweeper:
                 sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
                 self.floodfill(r, c)
 
-    # BREADTH FIRST SEARCH ALGORITHM
-    def breadth_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
+    # BREADTH FIRST SEARCH ALGORITHM RELATED CODE
+    def adjacent_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
         """ Returns the coords of the surrounding nodes. """
-        for offset_c in BREADTH_COORDS:
+        for offset_c in ADJACENT_COORDS:
             yield self.offset_coord(curr, offset_c)
 
     def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
@@ -228,10 +242,8 @@ class Minesweeper:
 
     def bfs_fill(self, r, c):
         """ Breadth first search implementation of floodfill. """
-        # queue = deque([(r, c)])  # use append to enqueue popleft to dequeue
-        queue = deque()  # use append to enqueue popleft to dequeue
+        queue = deque([(r, c)])  # use append to enqueue popleft to dequeue
         processed = set((r, c))  # hashset containing nodes already processed
-        queue.append((r, c))
 
         while len(queue) > 0:  # while queue not empty
             curr = queue.popleft()
@@ -255,7 +267,7 @@ class Minesweeper:
                 #     continue
 
             # check next breadth of nodes
-            for adj in self.breadth_nodes(curr):
+            for adj in self.adjacent_nodes(curr):
                 # the bounds makes sure it doesn't try searching outside the board
                 # NOTE: consider checking if adj in queue, but may take O(n) time so could be just as bad as leaving it in queue
                 if adj not in processed and adj not in queue and self.bounds(*adj) and self.is_new(*adj):  # is not bomb, or int?
