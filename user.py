@@ -6,7 +6,8 @@ import math
 SPACER = 50  # amount of lines to print to space boards out
 CHOICES = ['r', 'f', 'm', 'q']  # the available menu options
 END_CHOICES = ['p', 'e', 'q']  # the available end game options
-DEFAULT_MINE_CHANCE = .2 # default mine probability
+REPLAY_MENU = '(P) play again (Q) quit (E) edit settings'
+DEFAULT_MINE_CHANCE = .15 # default mine probability
 
 
 class User(Minesweeper):
@@ -27,7 +28,7 @@ class User(Minesweeper):
         space()
 
         self.display_mask()  # displays game to user
-        print('\ninput format: mode row column\nmodes: r | f | m | q')
+        print('\ninput format: mode row column\nmodes: r | q')
 
         input_check = self.check_inputs()
         if input_check[0] == 'q':  # checks menu choice and coords
@@ -42,6 +43,7 @@ class User(Minesweeper):
 
     def update(self, last_move: str):
         """ Starts game loop. """
+
         while True:
             # catches all errors and logs them to error.txt so game doesn't crash
             try:
@@ -144,19 +146,10 @@ class User(Minesweeper):
 
         return mode, row, col  # returns unchanged if coords were already within bounds
 
-    def find_empty_drop(self, row, col):
-        """ Regenerates game board until empty spot is found. """
-        while not self.empty_spot(row, col):
-            self.regen_game()
-
-    def empty_spot(self, row, col):
-        """ Checks if given coords is an empty tile (0) or not. """
-        return self.game[row][col] == 0
-
     def losing_procedure(self):
         """ Runs losing procedure (triggered when mine is hit). """
         space()
-        self.display_game(border=True)
+        self.display_game()
         lose_message()
         if self.end_game_procedure() == 'q':
             return 'q'
@@ -164,14 +157,14 @@ class User(Minesweeper):
     def win_procedure(self):
         """ Runs winning procedure (triggered when mine is hit). """
         space()
-        self.display_game(border=True)
+        self.display_game()
         win_message()
         if self.end_game_procedure() == 'q':
             return 'q'
 
     def end_game_procedure(self):
         """ Runs end game procedure (regardless of win or loss). """
-        replay_options()
+        print(f'  {REPLAY_MENU}\n')
         end_choice = input().lower()
         # keeps looping until proper end game choice
         while end_choice not in END_CHOICES:
@@ -188,14 +181,14 @@ class User(Minesweeper):
 
 def get_options():
     """ Gets game options: rows, columns, and mine probability. """
-    options_input = input('format: rows  columns  probability(optional, max 0.85)\n').split()
+    options_input = input('format: rows  columns  probability(optional, max 0.28)\n').split()
     # use default probability if it wasn't given
     probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
 
     # ensures mine probability isn't too high and causes errors with empty drop
-    while probability > 0.85:
+    while probability > 0.28:
         print('\nmine probability too high, may cause errors\n')
-        options_input = input('format: rows  columns  probability(optional, max 0.85)\n').split()
+        options_input = input('format: rows  columns  probability(optional, max 0.28)\n').split()
         probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
 
     return int(options_input[0]), int(options_input[1]), probability
@@ -226,7 +219,8 @@ def win_message():
                ===============
                == YOU WIN!! ==
                ===============
-            """)
+
+""")
 
 
 def lose_message():
@@ -236,13 +230,8 @@ def lose_message():
                ===============
                == GAME OVER ==
                ===============
-            """)
 
-
-def replay_options():
-    print("""
-  (P) play again (Q) quit (E) edit settings
-            """)
+""")
 
 
 def init_game():
