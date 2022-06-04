@@ -1,10 +1,14 @@
+from collections.abc import Generator
+from collections import deque
 from copy import deepcopy
 from time import sleep
 import random
 
-VISUAL_DELAY = 0.04
+VISUAL_DELAY = 0.01
 SPACER = 50  # amount of lines to print to space boards out
-
+# BREADTH_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
+BREADTH_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
+BREADTH_COORDS.pop(4)
 
 class Minesweeper:
 
@@ -12,7 +16,7 @@ class Minesweeper:
         # config dictionary that holds the actual character strings mappings
         # for what character to display for each board element; e.g. mine = 'X'
         self.chars = {'tile': '□',
-                      'mine': '█', #☹
+                      'mine': '☹',
                       'zero': ' ',
                       'flag': '+',
                       'maybe': '?'
@@ -68,7 +72,7 @@ class Minesweeper:
     def isloss(self, row: int, col: int) -> bool:
         """ Checks if coord choice is a loss. """
         # lack of bomb is more likely, we use that as a shortcircuit
-        return self.mask[row][col] is False and self.game[row][col] is True
+        return self.is_new(row, col) and self.game[row][col] is True
 
     def gen_mine_board(self) -> list:
         """ Generates a mine board based on probability given. (just True and False) """
@@ -160,7 +164,7 @@ class Minesweeper:
         # == Y-AXIS & BOARD ==
 
         for r in range(self.rows):
-            print(f'{self.cguide[r]}--', end='')  # prints the guide: number + tick
+            print(f'{self.rguide[r]}--', end='')  # prints the guide: number + tick
             # goes through every tile in the row and gets mask symbol
             for c in range(self.cols):
                 tile = self.mask[r][c]
@@ -178,23 +182,91 @@ class Minesweeper:
                     print(tile, end=' ')
             print()
 
+    def print_board(self):
+        """ Prints a space and then the board. """
+        space()
+        self.display_mask()
+
+    def reveal(self, r, c):
+        """ Helper function to reveal without starting a recursion. """
+        if self.bounds(r, c) and self.is_new(r, c):  # only runs if within bounds and not already explored (memoization)
+            tile = self.just_reveal(r, c)
+            if tile == 0:  # recurses/floodfill if tile is 0
+                self.print_board()
+                sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
+                self.bfs_fill(r, c)  # NOTE: change this to change fill algorithm used for game
+
+    # FLOOD FILL ALGORITHM
     def floodfill(self, r, c):
         """ Flood fill algorithm: recursively reveals tiles on the board. """
         for rr in range(r-1, r+2):
             for cc in range(c-1, c+2):
-                self.reveal(rr, cc)
+                self.flood_reveal(rr, cc)
 
-    def reveal(self, r, c):
+    def flood_reveal(self, r, c):
         """ Reveals tile and flood fills if needed. """
         if self.bounds(r, c) and self.is_new(r, c):  # only runs if within bounds and not already explored (memoization)
             tile = self.game[r][c]  # gets the tile from the game board
+            if tile is True:
+                return False
             self.mask[r][c] = tile  # reveals tile on mask
             self.mask_tile_count += 1  # increments counter of mask tiles
             if tile == 0:  # recurses/floodfill if tile is 0
-                space()
-                self.display_mask()
+                self.print_board()
                 sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
                 self.floodfill(r, c)
+
+    # BREADTH FIRST SEARCH ALGORITHM
+    def breadth_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
+        """ Returns the coords of the surrounding nodes. """
+        for offset_c in BREADTH_COORDS:
+            yield self.offset_coord(curr, offset_c)
+
+    def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
+        """ Returns a coord with the given offset. """
+        return tuple(x + y for x, y in zip(coord, offset))
+
+    def bfs_fill(self, r, c):
+        """ Breadth first search implementation of floodfill. """
+        # queue = deque([(r, c)])  # use append to enqueue popleft to dequeue
+        queue = deque()  # use append to enqueue popleft to dequeue
+        processed = set((r, c))  # hashset containing nodes already processed
+        queue.append((r, c))
+
+        while len(queue) > 0:  # while queue not empty
+            curr = queue.popleft()
+
+            # if this node hasn't been processed or revealed in the past
+            if curr not in processed and self.is_new(*curr):
+                tile = self.just_reveal(*curr)  # process node
+                processed.add(curr)  # add to processed
+
+                self.print_board()
+                sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
+
+                if tile != 0:
+                    continue
+
+                # else:
+                #     if tile is True:
+                #         print(curr)
+                #         print(queue)
+                #         exit()
+                #     continue
+
+            # check next breadth of nodes
+            for adj in self.breadth_nodes(curr):
+                # the bounds makes sure it doesn't try searching outside the board
+                # NOTE: consider checking if adj in queue, but may take O(n) time so could be just as bad as leaving it in queue
+                if adj not in processed and adj not in queue and self.bounds(*adj) and self.is_new(*adj):  # is not bomb, or int?
+                    queue.append(adj)
+
+    def just_reveal(self, r, c) -> int or bool:
+        """ Reveals tile and bfs fills if needed (returns True if number). """
+        tile = self.game[r][c]  # gets the tile from the game board
+        self.mask[r][c] = tile  # reveals tile on mask
+        self.mask_tile_count += 1  # increments counter of mask tiles
+        return tile
 
     def flag(self, r, c):
         """ Sets tile to flag so users can mark tiles as mines. """
