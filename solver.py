@@ -60,16 +60,13 @@ class Solver(Minesweeper):
                 after figuring out the next move, I will delay only that. """
                 print()
 
-                # before = time()  # before main bot algorithm ====
-                self.bfs(*self.last_move)
-                exit()
-                # after = time()  # after main bot algorithm ======
+                before = time()  # before main bot algorithm ====
+                self.dfs(*self.last_move)
+                after = time()  # after main bot algorithm ======
                 # print(after-before)
 
-                row, col = None, None
                 # TODO: run solving algorithm choose row and col here
-                # row, col = self.unvisited_random()  # temporary random choice
-
+                row, col = self.unvisited_random()  # temporary random choice
 
                 self.last_move = (row, col)  # NOTE: remember to always save last move
                 action = self.last_action = 'r'  # TODO: decide if to reveal or flag
@@ -130,6 +127,8 @@ class Solver(Minesweeper):
 
             self.color_change(curr, CYAN)  # sets processed node to cyan
 
+        self.color_change((r, c), GREEN)  # remarks the source node to green because it gets overwritten
+
     def dfs(self, r, c) -> tuple[int, int]:
         """ Depth first search around coord and returns coord of first wall encountered. """
         stack = deque([(r, c)])  # use append to push, pop to pop
@@ -154,6 +153,8 @@ class Solver(Minesweeper):
                     stack.append(adj)
 
             self.color_change(curr, CYAN)  # sets processed node to cyan
+
+        self.color_change((r, c), GREEN)  # remarks the source node to green because it gets overwritten
 
     def adjacent_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
         """ Returns the coords of the surrounding nodes. """
@@ -187,7 +188,7 @@ class Solver(Minesweeper):
     def losing_procedure(self):
         """ Runs losing procedure (triggered when mine is hit). """
         space()
-        self.display_game()
+        self.display_color_game()
         lose_message()
         if self.end_game_procedure() == 'q':
             return 'q'
@@ -195,7 +196,7 @@ class Solver(Minesweeper):
     def win_procedure(self):
         """ Runs winning procedure (triggered when mine is hit). """
         space()
-        self.display_game()
+        self.display_color_game()
         win_message()
         if self.end_game_procedure() == 'q':
             return 'q'
@@ -216,6 +217,29 @@ class Solver(Minesweeper):
             self.set_up_game(rows, cols, prob)
         elif end_choice == 'q':  # quits game
             return 'q'
+#30 50
+    def display_color_game(self, border: bool = True):
+        """ Variation of the display_game() function where it prints the color too. """
+        if border:
+            print('-'*(self.cols*2+3))
+        for r in range(self.rows):
+            if border:
+                print('|', end=' ')
+            for c in range(self.cols):
+                tile = self.game[r][c]
+                if tile is True:  # mine
+                    print(self.chars['mine'], end=' ')
+                elif isinstance(self.mask[r][c], str):  # should only happen if altered by solver for color
+                    print(self.mask[r][c], end=' ')
+                elif tile == 0:  # empty tile (zero)
+                    print(self.chars['zero'], end=' ')
+                elif type(tile) is int:  # number tile
+                    print(str(tile), end=' ')
+            if border:
+                print('|', end='')
+            print()
+        if border:
+            print('-'*(self.cols*2+3))
 
     def random_coords(self) -> tuple[int, int]:
         """ Randomly generates coords. """
@@ -273,7 +297,7 @@ class Solver(Minesweeper):
 
         # rest is the regen_board() code but without the mine generation part because that's the part we're taking control of
         self.mask = self.gen_mask_board()  # the board as seen by the user
-        self.display_game()
+        # self.display_game()
         self.mask_tile_count = 0
 
 def get_options() -> tuple[int, int, float]:
