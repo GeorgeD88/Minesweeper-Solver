@@ -6,7 +6,7 @@ import random
 
 
 HELPER_DELAY = 0.005  # this delay is to give the code a 1ms bump after printing the board in hopes of getting rid of the jittery visuals
-VISUAL_DELAY = 0.001#01
+VISUAL_DELAY = 0.01
 SPACER = 50  # amount of lines to print to space boards out
 # ADJACENT_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
 ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
