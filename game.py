@@ -5,8 +5,8 @@ from time import sleep
 import random
 
 
-HELPER_DELAY = 0.005  # this delay is to give the code a 1ms bump after printing the board in hopes of getting rid of the jittery visuals
-VISUAL_DELAY = 0.01
+HELPER_DELAY = 0.01  # this delay is to give the code a 1ms bump after printing the board in hopes of getting rid of the jittery visuals
+VISUAL_DELAY = 0.0001#01
 SPACER = 50  # amount of lines to print to space boards out
 # ADJACENT_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
 ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
@@ -243,7 +243,8 @@ class Minesweeper:
     def bfs_fill(self, r, c):
         """ Breadth first search implementation of floodfill. """
         queue = deque([(r, c)])  # use append to enqueue popleft to dequeue
-        processed = set((r, c))  # hashset containing nodes already processed
+        processed = set()  # hashset containing nodes already processed
+        processed.add((r, c))
 
         while len(queue) > 0:  # while queue not empty
             curr = queue.popleft()
