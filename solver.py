@@ -8,8 +8,8 @@ from colors import *
 
 
 pp = PrettyPrinter().pprint
-MOVE_DELAY = .8  # how long to delay before the bot makes a move
-GRAPH_SEARCH_DELAY = .05  # how long to delay during a graph search step
+MOVE_DELAY = .2  # how long to delay before the bot makes a move
+GRAPH_SEARCH_DELAY = 0.007  # how long to delay during a graph search step
 SPACER = 50  # amount of lines to print to space boards out
 END_CHOICES = ['r', 'e', 'q']  # the available bot menu options
 REPLAY_MENU = '(R) run bot again (Q) quit (E) edit settings'
@@ -26,6 +26,9 @@ class Solver(Minesweeper):
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         super().__init__(rows, cols, mine_spawn, chars_config)
+        self.completed = [[False]*self.cols]*self.rows  # stores a matrix/hashmap of all the fully completed nodes
+        self.solved_count = 0  # len of completed matrix
+        self.flag_tracker = 0  # keeps count of number of flags
         self.last_action = None
         self.last_move: tuple[int, int] = (None, None)
 
@@ -53,23 +56,40 @@ class Solver(Minesweeper):
         """ Runs solving loop. """
         while True:
             # catches all errors and logs them to error.txt so game doesn't crash
-            try:
+            # try:
                 self.round_print()
-                """ NOTE: Maybe once I write the solving algorithm,
-                I should have it do solving algorithm and then whatever time is left
-                after figuring out the next move, I will delay only that. """
                 print()
 
-                # before = time()  # before main bot algorithm ====
-                self.bfs(*self.last_move)
-                exit()
-                # after = time()  # after main bot algorithm ======
+                before = time()  # before main bot algorithm ====
+                wall = self.dfs(*self.last_move)  # finds nearest number
+                self.grind_chain(*wall)
+                # wall = self.bfs_zero_fill(*self.last_move)  # finds nearest number
+                # last_border_touched = set()
+                # border_touched = self.mark_wall(*wall)
+                # while len(border_touched) > len(last_border_touched):
+                #     if not wall:  # didn't hit any number means board is empty:
+                #         self.win_procedure()
+                #         exit()
+                #     self.grind_chain(*wall)
+                #     last_border_touched = border_touched
+                #     wall = self.new_dfs(*self.last_move, last_border_touched)  # finds nearest number
+                #     border_touched = self.mark_wall(*wall)
+                #     # wall, border_touched = self.bfs_zero_fill(*self.last_move)  # finds nearest number
+
+                """ walls = set()
+                while True:
+                    wall = self.bfs(*self.last_move)  # finds nearest number
+                    if wall in walls:  # break if all numbers connected to this one have been solved
+                        break
+                    walls.add(wall)  # adds wall to visited walls
+                    self.grind_chain(*wall)
+                    print('chain: GRINDED')
+                    # exit() """
+                after = time()  # after main bot algorithm ======
                 # print(after-before)
 
-                row, col = None, None
                 # TODO: run solving algorithm choose row and col here
-                # row, col = self.unvisited_random()  # temporary random choice
-
+                row, col = self.persistent_drop()  # temporary random choice
 
                 self.last_move = (row, col)  # NOTE: remember to always save last move
                 action = self.last_action = 'r'  # TODO: decide if to reveal or flag
@@ -80,80 +100,31 @@ class Solver(Minesweeper):
                 if action == 'r':
                     # checks if choice was a mine (and mask is unexplored) and ends game
                     if self.isloss(row, col):
+                        self.mask[row][col] = self.color_string(self.chars['mine'], RED)
                         if self.losing_procedure() == 'q':
                             return 'q'
                         self.start()
                         if self.last_action == 'q':
                             return 'q'
                     else:  # if no loss, continues revealing tile regularly
-                        self.reveal(row, col)
+                        self.check_reveal(row, col)
                         if self.iswin():  # if there's nothing more to be explored, it's a win
                             if self.win_procedure() == 'q':
                                 return 'q'
                             self.start()
-                        if self.last_action == 'q':
-                            return 'q'
+                            if self.last_action == 'q':
+                                return 'q'
                 elif action == 'f':
                     self.flag(row, col)
                 elif action == 'm':
                     self.maybe(row, col)
                 space()
 
-            except Exception as e:
-                with open('solver_error_log.txt', 'a+') as error_file:
-                    error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
-                    error_file.write(f'\n{str(e)}\n')
-                print('~~ error logged to file ~~')
-
-    def bfs(self, r, c) -> tuple[int, int]:
-        """ Breadth first search around coord and returns coord of first wall encountered. """
-        queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
-        checked = set((r, c))  # hashset containing nodes already processed
-        self.color_change((r, c), GREEN)  # marks the source node green
-
-        while len(queue) > 0:  # while queue not empty
-            curr = queue.popleft()
-            self.color_change(curr, PURPLE)  # sets current node to purple
-
-            if curr not in checked:  # if this node hasn't been checked yet
-                # if we hit a number, return its coords
-                if self.game[curr[0]][curr[1]] != 0:
-                    self.color_change(curr, RED)  # sets destination node to red
-                    return curr
-                checked.add(curr)
-
-            # check next breadth of nodes
-            for adj in self.adjacent_nodes(curr):
-                # the bounds makes sure it doesn't try searching outside the board
-                if adj not in checked and adj not in queue and self.bounds(*adj):
-                    queue.append(adj)
-
-            self.color_change(curr, CYAN)  # sets processed node to cyan
-
-    def dfs(self, r, c) -> tuple[int, int]:
-        """ Depth first search around coord and returns coord of first wall encountered. """
-        stack = deque([(r, c)])  # use append to push, pop to pop
-        checked = set((r, c))  # hashset containing nodes already processed
-        self.color_change((r, c), GREEN)  # marks the source node green
-
-        while len(stack) > 0:  # while stack not empty
-            curr = stack.pop()
-            self.color_change(curr, PURPLE)  # sets current node to purple
-
-            if curr not in checked:  # if this node hasn't been checked yet
-                # if we hit a number, return its coords
-                if self.game[curr[0]][curr[1]] != 0:
-                    self.color_change(curr, RED)  # sets destination node to red
-                    return curr
-                checked.add(curr)
-
-            # checks neighbors
-            for adj in self.adjacent_nodes(curr):
-                # the bounds makes sure it doesn't try searching outside the board
-                if adj not in checked and adj not in stack and self.bounds(*adj):
-                    stack.append(adj)
-
-            self.color_change(curr, CYAN)  # sets processed node to cyan
+            # except Exception as e:
+            #     with open('solver_error_log.txt', 'a+') as error_file:
+            #         error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
+            #         error_file.write(f'\n{str(e)}\n')
+            #     print('~~ error logged to file ~~')
 
     def adjacent_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
         """ Returns the coords of the surrounding nodes. """
@@ -164,19 +135,365 @@ class Solver(Minesweeper):
         """ Returns a coord with the given offset. """
         return tuple(x + y for x, y in zip(coord, offset))
 
+    # BREADTH FIRST SEARCH ALGORITHM
+    def bfs(self, r, c) -> tuple[int, int]:
+        """ Breadth first search around coord and returns coord of first wall encountered. """
+        queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
+        checked = set()  # hashset containing nodes already processed
+        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
+        self.color_exposed((r, c), GREEN)  # marks the source node green
+
+        while len(queue) > 0:  # while queue not empty
+            curr = queue.popleft()
+            self.color_exposed(curr, PURPLE)  # sets current node to purple
+
+            if curr not in checked:  # if this node hasn't been checked yet
+                # if we hit a number, return its coords
+                if self.game[curr[0]][curr[1]] != 0:
+                    self.color_exposed(curr, RED)  # sets destination node to red
+                    self.bold_node((r, c))  # bolds the source node
+                    return curr
+                checked.add(curr)
+
+            self.color_exposed(curr, CYAN)  # sets processed node to cyan
+
+            # check next breadth of nodes
+            for adj in self.adjacent_nodes(curr):
+                # the bounds makes sure it doesn't try searching outside the board
+                if adj not in checked and adj not in queue and self.bounds(*adj):
+                    queue.append(adj)
+
+    def bfs_zero_fill(self, r, c) -> tuple[int, int]:
+        """ Breadth first search around coord but fills whole pool with zeros before returning coord. """
+        queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
+        checked = set()  # hashset containing nodes already processed
+        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
+        self.color_exposed((r, c), GREEN)  # marks the source node green
+        coord_found = None
+
+        while len(queue) > 0:  # while queue not empty
+            curr = queue.popleft()
+            self.color_exposed(curr, PURPLE)  # sets current node to purple
+
+            if curr not in checked:  # if this node hasn't been checked yet
+                # if we hit a number, return its coords
+                if not coord_found and self.game[curr[0]][curr[1]] != 0:
+                    self.color_exposed(curr, RED)  # sets destination node to red
+                    coord_found = curr
+                checked.add(curr)
+
+            if isinstance(self.game[curr[0]][curr[1]], int) and self.game[curr[0]][curr[1]] != 0:
+                self.wipe_color(curr)
+            else:
+                self.color_exposed(curr, CYAN)  # sets processed node to cyan
+
+            # check next breadth of nodes
+            for adj in self.adjacent_nodes(curr):
+                # the bounds makes sure it doesn't try searching outside the board
+                if coord_found and isinstance(self.game[curr[0]][curr[1]], int) and self.game[curr[0]][curr[1]] != 0:
+                    continue
+                elif adj not in checked and adj not in queue and self.bounds(*adj):
+                    queue.append(adj)
+
+        self.color_exposed(coord_found, RED)  # sets destination node to red
+        self.bold_node((r, c))  # bolds the source node
+        return coord_found
+
+    # DEPTH FIRST SEARCH ALGORITHM
+    def dfs(self, r, c) -> tuple[int, int]:
+        """ Depth first search around coord and returns coord of first wall encountered. """
+        stack = deque([(r, c)])  # use append to push, pop to pop
+        checked = set()  # hashset containing nodes already processed
+        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
+        self.color_exposed((r, c), GREEN)  # marks the source node green
+
+        while len(stack) > 0:  # while stack not empty
+            curr = stack.pop()
+            self.color_exposed(curr, PURPLE)  # sets current node to purple
+
+            if curr not in checked:  # if this node hasn't been checked yet
+                # if we hit a number, return its coords
+                if self.game[curr[0]][curr[1]] != 0:
+                    self.color_exposed(curr, RED)  # sets destination node to red
+                    return curr
+                checked.add(curr)
+
+            self.color_exposed(curr, CYAN)  # sets processed node to cyan
+
+            # checks neighbors
+            for adj in self.adjacent_nodes(curr):
+                # that means this bumped into an already completed wall
+                if not self.bounds(*adj):
+                    continue
+                if self.is_completed(*adj):
+                    input('chick chick, BOOOMMM')
+                    return adj
+                if adj not in checked and adj not in stack:
+                    stack.append(adj)
+
+        # bolds source node and updates display
+        self.bold_node((r, c))
+        sleep(GRAPH_SEARCH_DELAY)
+
+    def new_dfs(self, r, c, ) -> tuple[int, int]:
+        """ Depth first search around coord and returns coord of first wall encountered. """
+        stack = deque([(r, c)])  # use append to push, pop to pop
+        checked = set()  # hashset containing nodes already processed
+        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
+        self.color_exposed((r, c), GREEN)  # marks the source node green
+
+        while len(stack) > 0:  # while stack not empty
+            curr = stack.pop()
+            self.color_exposed(curr, PURPLE)  # sets current node to purple
+
+            if curr not in checked:  # if this node hasn't been checked yet
+                # if we hit a number, return its coords
+                if self.game[curr[0]][curr[1]] != 0:
+                    self.color_exposed(curr, RED)  # sets destination node to red
+                    return curr
+                checked.add(curr)
+
+            self.color_exposed(curr, CYAN)  # sets processed node to cyan
+
+            # checks neighbors
+            for adj in self.adjacent_nodes(curr):
+                # that means this bumped into an already completed wall
+                if not self.bounds(*adj):
+                    continue
+                if self.is_completed(*adj):
+                    input('chick chick, BOOOMMM')
+                    return adj
+                if adj not in checked and adj not in stack:
+                    stack.append(adj)
+
+        # bolds source node and updates display
+        self.bold_node((r, c))
+        sleep(GRAPH_SEARCH_DELAY)
+
+    def dfs_zero_fill(self, r, c) -> tuple[int, int]:
+        """ Breadth first search around coord but fills whole pool with zeros before returning coord. """
+        stack = deque([(r, c)])  # use append to push, popleft to pop
+        checked = set()  # hashset containing nodes already processed
+        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
+        self.color_exposed((r, c), GREEN)  # marks the source node green
+        coord_found = None
+
+        while len(stack) > 0:  # while stack not empty
+            curr = stack.pop()
+            self.color_exposed(curr, PURPLE)  # sets current node to purple
+
+            if curr not in checked:  # if this node hasn't been checked yet
+                # if we hit a number, return its coords
+                if not coord_found and self.game[curr[0]][curr[1]] != 0:
+                    self.color_exposed(curr, RED)  # sets destination node to red
+                    coord_found = curr
+                checked.add(curr)
+
+            if isinstance(self.game[curr[0]][curr[1]], int) and self.game[curr[0]][curr[1]] != 0:
+                self.wipe_color(curr)
+            else:
+                self.color_exposed(curr, CYAN)  # sets processed node to cyan
+
+            # check next breadth of nodes
+            for adj in self.adjacent_nodes(curr):
+                # the bounds makes sure it doesn't try searching outside the board
+                if coord_found and isinstance(self.game[curr[0]][curr[1]], int) and self.game[curr[0]][curr[1]] != 0:
+                    continue
+                elif adj not in checked and adj not in stack and self.bounds(*adj):
+                    stack.append(adj)
+
+        self.color_exposed(coord_found, RED)  # sets destination node to red
+        self.bold_node((r, c))  # bolds the source node
+        return coord_found
+
+    def mark_wall(self, r: int, c: int):
+        """ Runs BFS on given coord and marks the whole wall as checked. """
+        queue = deque([(r, c)])
+        marked = set()
+
+        while len(queue) > 0:
+            curr = queue.popleft()
+
+            if not curr not in marked:
+                marked.add(curr)
+
+            for adj in self.adjacent_nodes(curr):
+                if adj not in queue and adj not in marked:
+                    queue.append(adj)
+
+        return marked
+
+    # SOLVING ALGORITHMS
+    def grind_chain(self, r: int, c: int):
+        """ Keeps running follow chain on number until the chain is completely solved. """
+        last_progress = -1
+        iter_counter = 1
+        updated_progress = self.flag_tracker + self.solved_count
+        # stagnation detector
+        while updated_progress > last_progress:
+            # input(f'last progress: {last_progress}\nupdated progress: {updated_progress}')
+            last_progress = updated_progress
+            self.follow_chain(r, c)
+            updated_progress = self.flag_tracker + self.solved_count
+            # input('finished pass #' + str(iter_counter))
+            iter_counter += 1
+        # input('finished grinding chain')
+        # input(f'last progress: {last_progress}\nupdated progress: {updated_progress}')
+
+    def follow_chain(self, r: int, c: int):
+        """ Follow chain of numbers (using bfs) starting at given coord and process each node. """
+        queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
+        # queue.append()
+        processed = set()  # hashset containing nodes already processed
+
+        while len(queue) > 0:  # while queue not empty
+            curr = queue.popleft()
+            self.color_exposed(curr, PURPLE)  # sets current node to yellow, so while it's being calculated it's yellow
+
+            if curr not in processed:  # if this node hasn't been processed yet
+                # input('solving')
+                if not self.is_completed(*curr):
+                    self.basic_solve(*curr)  # process node by running solving algorithm
+                processed.add(curr)  # mark node as processed
+            # else:
+                # input(f'completion status: {self.is_completed(*curr)}')
+                      #processed: {processed}\n
+            # colors node green if it's completely solved and avoids coloring already green node
+            if not self.is_completed(*curr):
+                # input('not solved yet')
+                self.color_exposed(curr, YELLOW)
+            elif not self.check_mask_color(curr, GREEN):
+                # input('completed but not green')
+                self.color_exposed(curr, GREEN)
+            else:
+                actual_color = color_names[self.mask[curr[0]][curr[1]][:5]]
+                input('huh?:' + actual_color if actual_color else ' blue pilled')
+
+            # add next breadth of nodes to queue
+            for adj in self.adjacent_nodes(curr):
+                if adj in processed:
+                    continue
+                elif self.bounds(*adj) and self.game[adj[0]][adj[1]] != 0 and isinstance(self.game[adj[0]][adj[1]], int) and adj not in processed and adj not in queue and self.mines[adj[0]][adj[1]] is False:
+                    queue.append(adj)
+
+    # TODO
+    # def solve_cell(self, r: int, c: int):
+    #     """ Runs all solving algorithms in order from coarse to granular. """
+    #     self.basic_solve(r, c)
+    #     # run the rest once I code more
+
+    def basic_solve(self, r: int, c: int):
+        """ Runs the basic solving algorithm (clears majority of the board). """
+        empty_count, flag_count = self.count_openNflags(r, c )
+        mines_left = self.game[r][c] - flag_count  # mine count - flag count
+        # input(f'empty: {empty_count}\nflag count: {flag_count}\nmines left: {mines_left}')
+        # mines left and open count match, then we can clear this out
+        if mines_left == empty_count:  # NOTE: mines_left/empty_count is equal to probability that mine is in that cell, which is something I may need to use later
+            # input('clearing out')
+            for sr, sc in self.adjacent_nodes((r, c)):
+                if not self.bounds(sr, sc):
+                    continue
+                print(sr, sc)
+                if self.is_new(sr, sc):
+                    self.flag(sr, sc)
+                    self.flag_tracker += 1
+                    self.color_change((sr, sc), RED)  # marks flag red
+            # input('checking completion')
+            if self.record_completed(r, c):  # NOTE: this was extra
+                self.completed[r][c] = True
+                self.solved_count += 1
+        elif mines_left == 0:  # and open count is not equal to it, then it has to be more
+            for sr, sc in self.adjacent_nodes((r, c)):
+                self.reveal(sr, sc)
+        # else:
+            # input('not enough info')
+        # mines_left == empty_count, or mines_left < empty_count, but mines_left cannot be more than empty_count
+
+    def count_openNflags(self, r: int, c: int) -> tuple[int, int]:
+        """ Returns number of unexplored nodes and number of flags. """
+        unexplored_nodes_count = 0
+        flagged_nodes_count = 0
+        for sr, sc in self.adjacent_nodes((r, c)):
+            if not self.bounds(sr, sc):
+                continue
+            if self.is_new(sr, sc):
+                unexplored_nodes_count += 1
+            elif self.mask[sr][sc] == (RED + self.chars['flag'] + END_COLOR):
+                flagged_nodes_count += 1
+        return unexplored_nodes_count, flagged_nodes_count
+
+    def is_completed(self, r: int, c: int) -> bool:
+        """ Returns whether given coordinate is marked as completed in the hashmap. """
+        return self.completed[r][c] is True
+
+    def record_completed(self, r: int, c: int):
+        """ Determines if node is done being calculated. """
+        unexplored_nodes_count = 0
+        for sr, sc in self.adjacent_nodes((r, c)):
+            if self.bounds(sr, sc) and self.is_new(sr, sc):
+                unexplored_nodes_count += 1
+        return unexplored_nodes_count == 0
+
+    def wipe_color(self, coord: tuple[int, int]):
+        """ Sets node's color back to white (FROM GAME VALUE) and refreshes board. """
+        self.mask[coord[0]][coord[1]] = self.game[coord[0]][coord[1]]  # wipes color
+        self.print_board()  # for visualization purposes
+
+    def drop_effect(self, coord: tuple[int, int]):
+        """ Removes the extra effect but not the color (ex. removes bold). """
+        self.mask[coord[0]][coord[1]] = self.mask[coord[0]][coord[1]][4:]
+
+    def drop_color(self, coord: tuple[int, int]):
+        """ Removes the top color (ex. used for switching colors). """
+        self.mask[coord[0]][coord[1]] = self.mask[coord[0]][coord[1]][4:]
+
+    def switch_color(self, coord: tuple[int, int], new_color: str):
+        """ Drops the top color and adds new color instead. """
+        self.drop_color(coord)
+        self.mask[coord[0]][coord[1]] = new_color + self.mask[coord[0]][coord[1]]
+
     def color_string(self, white_string: str, color: str) -> str:
         """ Converts string to given color. """
         return color + white_string + END_COLOR
 
+    def check_mask_color(self, coord: tuple[int, int], color: str) -> bool:
+        """ Checks if given coord's mask color matches the given color. """
+        return self.mask[coord[0]][coord[1]][:5] == color
+
     def color_cell(self, coord: tuple[int, int], color: str):
         """ Changes the color of a given coord on the board. """
-        self.mask[coord[0]][coord[1]] = self.color_string(str(self.game[coord[0]][coord[1]]), color)
+        self.mask[coord[0]][coord[1]] = self.color_string(str(self.mask[coord[0]][coord[1]]), color)
+
+    def expose(self, coord: tuple[int, int]):
+        """ Sets mask of this node its game board value. """
+        self.mask[coord[0]][coord[1]] = self.game[coord[0]][coord[1]]
 
     def color_change(self, coord: tuple[int, int], color: str):
-        """ Wrapper for color change to also print board and delay graph search. """
+        """ Wrapper for color cell to also print board and delay graph search. """
         self.color_cell(coord, color)  # for visualization purposes
         self.print_board()  # for visualization purposes
         sleep(GRAPH_SEARCH_DELAY)
+
+    def color_exposed(self, coord: tuple[int, int], color: str):
+        """ First exposes node (game board to mask) and changes color. """
+        self.expose(coord)
+        self.color_cell(coord, color)
+        self.color_change(coord, color)
+
+    # def switch_node_color(self, coord: tuple[int, int], color: str):
+    #     """ Drops current color and switches to new color, then refreshes. """
+    #     self.drop_color(coord)
+    #     self.color_change(coord, color)
+
+    def underline_node(self, coord: tuple[int, int]):
+        """ Adds underline on top of given node's existing styling, then refreshes board. """
+        self.mask[coord[0]][coord[1]] = UNDERLINE + str(self.mask[coord[0]][coord[1]])  # underline the node
+        self.print_board()  # refreshes board
+
+    def bold_node(self, coord: tuple[int, int]):
+        """ Adds bold on top of given node's existing styling, then refreshes board. """
+        self.mask[coord[0]][coord[1]] = BOLD + str(self.mask[coord[0]][coord[1]])  # bolds the node
+        self.print_board()  # refreshes board
 
     def round_print(self):
         """ Prints the last move, mask, and input guide for the round. """
@@ -184,10 +501,29 @@ class Solver(Minesweeper):
         self.display_mask()  # displays game to user
         print('\n')
 
+    def check_reveal(self, r: int, c: int):
+        """ Checks if the coord chosen in a win or loss before revealing. """
+        # checks if choice was a mine (and mask is unexplored) and ends game
+        if self.isloss(r, c):
+            self.mask[r][c] = self.color_string(self.chars['mine'], RED)
+            if self.losing_procedure() == 'q':
+                exit()# return 'q'
+            self.start()
+            if self.last_action == 'q':
+                exit()# return 'q'
+        else:  # if no loss, continues revealing tile regularly
+            self.reveal(r, c)
+            if self.iswin():  # if there's nothing more to be explored, it's a win
+                if self.win_procedure() == 'q':
+                    exit()# return 'q'
+                self.start()
+            if self.last_action == 'q':
+                exit()# return 'q'
+
     def losing_procedure(self):
         """ Runs losing procedure (triggered when mine is hit). """
         space()
-        self.display_game()
+        self.display_color_game()
         lose_message()
         if self.end_game_procedure() == 'q':
             return 'q'
@@ -195,7 +531,7 @@ class Solver(Minesweeper):
     def win_procedure(self):
         """ Runs winning procedure (triggered when mine is hit). """
         space()
-        self.display_game()
+        self.display_color_game()
         win_message()
         if self.end_game_procedure() == 'q':
             return 'q'
@@ -217,6 +553,29 @@ class Solver(Minesweeper):
         elif end_choice == 'q':  # quits game
             return 'q'
 
+    def display_color_game(self, border: bool = True):
+        """ Variation of the display_game() function where it prints the color too. """
+        if border:
+            print('-'*(self.cols*2+3))
+        for r in range(self.rows):
+            if border:
+                print('|', end=' ')
+            for c in range(self.cols):
+                tile = self.game[r][c]
+                if tile is True:  # mine
+                    print(self.chars['mine'], end=' ')
+                elif isinstance(self.mask[r][c], str):  # should only happen if altered by solver for color
+                    print(self.mask[r][c], end=' ')
+                elif tile == 0:  # empty tile (zero)
+                    print(self.chars['zero'], end=' ')
+                elif type(tile) is int:  # number tile
+                    print(str(tile), end=' ')
+            if border:
+                print('|', end='')
+            print()
+        if border:
+            print('-'*(self.cols*2+3))
+
     def random_coords(self) -> tuple[int, int]:
         """ Randomly generates coords. """
         return randint(0, self.rows-1), randint(0, self.cols-1)
@@ -232,13 +591,14 @@ class Solver(Minesweeper):
         """ Randomly picks coord to drop onto. """
         self.reveal(row, col)
 
-    def persistent_drop(self):
+    def persistent_drop(self) -> tuple[int, int]:
         """ Keeps dropping until it hits a zero. """
-        row, col = self.random_coords()
-        self.reveal(row, col)
-        while self.mask[row][col] != 0:  # keep going while you're not getting zero
-            row, col = self.random_coords()
-            self.reveal(row, col)
+        while True:  # keep going while you're not getting zero
+            row, col = self.unvisited_random()
+            if self.mask[row][col] != 0:
+                self.reveal(row, col)
+            else:
+                return (row, col)
 
     def decide_delay(self, time_elapsed) -> float:
         """ Returns how much longer to delay move after calculating next move. """
@@ -273,7 +633,7 @@ class Solver(Minesweeper):
 
         # rest is the regen_board() code but without the mine generation part because that's the part we're taking control of
         self.mask = self.gen_mask_board()  # the board as seen by the user
-        self.display_game()
+        # self.display_game()
         self.mask_tile_count = 0
 
 def get_options() -> tuple[int, int, float]:

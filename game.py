@@ -5,8 +5,8 @@ from time import sleep
 import random
 
 
-HELPER_DELAY = 0.005  # this delay is to give the code a 1ms bump after printing the board in hopes of getting rid of the jittery visuals
-VISUAL_DELAY = 0.001#01
+HELPER_DELAY = 0.001  # this delay is to give the code a 1ms bump after printing the board in hopes of getting rid of the jittery visuals
+VISUAL_DELAY = 0.0001
 SPACER = 50  # amount of lines to print to space boards out
 # ADJACENT_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
 ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
@@ -17,7 +17,7 @@ class Minesweeper:
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         # config dictionary that holds the actual character strings mappings
         # for what character to display for each board element; e.g. mine = 'X'
-        self.chars = {'tile': '□',
+        self.chars = {'tile': '▢',#□
                       'mine': '☹',
                       'zero': ' ',
                       'flag': '+',
@@ -157,7 +157,7 @@ class Minesweeper:
         if border:
             print('-'*(self.cols*2+3))
 
-    def display_mask(self):
+    def old_display_mask(self):
         """ Iterates through mask board and prints tiles. (what user sees) """
         print('   ', end='')  # the little corner spacer before the X-axis guide
 
@@ -194,6 +194,45 @@ class Minesweeper:
                 else:  # other chars: flag, maybe, etc.
                     print(tile, end=' ')
             print()
+
+    def display_mask(self):
+        """ Iterates through mask board and prints tiles. (what user sees) """
+
+        # == X-AXIS ==
+        constructed = '   '
+
+        # prints the numbers first
+        for num in self.cguide:
+            constructed += str(num) + ' '
+        constructed += '\n'
+
+        # then prints the little ticks
+        constructed += '   '
+        for i in range(self.cols):
+            constructed += '| '
+        constructed += '\n'
+
+        # == Y-AXIS & BOARD ==
+
+        for r in range(self.rows):
+            constructed += f'{self.rguide[r]}--'  # prints the guide: number + tick
+            # goes through every tile in the row and gets mask symbol
+            for c in range(self.cols):
+                tile = self.mask[r][c]
+                # if tile is True:  # mine
+                #     print(self.chars['mine'], end=' ')
+                if tile is False:  # unexplored tile
+                    constructed += self.chars['tile'] + ' '
+                elif tile == 0:  # empty tile (zero)
+                    constructed += self.chars['zero'] + ' '
+                elif isinstance(tile, int):  # number tile
+                    constructed += str(tile) + ' '
+                elif isinstance(tile, str):  # should only happen if altered by solver for color
+                    constructed += tile + ' '
+                else:  # other chars: flag, maybe, etc.
+                    constructed += tile + ' '
+            constructed += '\n'
+        print(constructed)
 
     def print_board(self):
         """ Prints a space and then the board. """
@@ -243,7 +282,8 @@ class Minesweeper:
     def bfs_fill(self, r, c):
         """ Breadth first search implementation of floodfill. """
         queue = deque([(r, c)])  # use append to enqueue popleft to dequeue
-        processed = set((r, c))  # hashset containing nodes already processed
+        processed = set()  # hashset containing nodes already processed
+        processed.add((r, c))
 
         while len(queue) > 0:  # while queue not empty
             curr = queue.popleft()
