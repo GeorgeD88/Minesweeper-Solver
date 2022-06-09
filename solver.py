@@ -9,7 +9,7 @@ from colors import *
 
 pp = PrettyPrinter().pprint
 MOVE_DELAY = .2  # how long to delay before the bot makes a move
-GRAPH_SEARCH_DELAY = .01  # how long to delay during a graph search step
+GRAPH_SEARCH_DELAY = 0.007  # how long to delay during a graph search step
 SPACER = 50  # amount of lines to print to space boards out
 END_CHOICES = ['r', 'e', 'q']  # the available bot menu options
 REPLAY_MENU = '(R) run bot again (Q) quit (E) edit settings'
@@ -61,9 +61,21 @@ class Solver(Minesweeper):
                 print()
 
                 before = time()  # before main bot algorithm ====
-                # wall = self.bfs_zero_fill(*self.last_move)  # finds nearest number
                 wall = self.dfs(*self.last_move)  # finds nearest number
                 self.grind_chain(*wall)
+                # wall = self.bfs_zero_fill(*self.last_move)  # finds nearest number
+                # last_border_touched = set()
+                # border_touched = self.mark_wall(*wall)
+                # while len(border_touched) > len(last_border_touched):
+                #     if not wall:  # didn't hit any number means board is empty:
+                #         self.win_procedure()
+                #         exit()
+                #     self.grind_chain(*wall)
+                #     last_border_touched = border_touched
+                #     wall = self.new_dfs(*self.last_move, last_border_touched)  # finds nearest number
+                #     border_touched = self.mark_wall(*wall)
+                #     # wall, border_touched = self.bfs_zero_fill(*self.last_move)  # finds nearest number
+
                 """ walls = set()
                 while True:
                     wall = self.bfs(*self.last_move)  # finds nearest number
@@ -95,13 +107,13 @@ class Solver(Minesweeper):
                         if self.last_action == 'q':
                             return 'q'
                     else:  # if no loss, continues revealing tile regularly
-                        self.reveal(row, col)
+                        self.check_reveal(row, col)
                         if self.iswin():  # if there's nothing more to be explored, it's a win
                             if self.win_procedure() == 'q':
                                 return 'q'
                             self.start()
-                        if self.last_action == 'q':
-                            return 'q'
+                            if self.last_action == 'q':
+                                return 'q'
                 elif action == 'f':
                     self.flag(row, col)
                 elif action == 'm':
@@ -217,7 +229,41 @@ class Solver(Minesweeper):
                     input('chick chick, BOOOMMM')
                     return adj
                 if adj not in checked and adj not in stack:
-                    print(adj)
+                    stack.append(adj)
+
+        # bolds source node and updates display
+        self.bold_node((r, c))
+        sleep(GRAPH_SEARCH_DELAY)
+
+    def new_dfs(self, r, c, ) -> tuple[int, int]:
+        """ Depth first search around coord and returns coord of first wall encountered. """
+        stack = deque([(r, c)])  # use append to push, pop to pop
+        checked = set()  # hashset containing nodes already processed
+        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
+        self.color_exposed((r, c), GREEN)  # marks the source node green
+
+        while len(stack) > 0:  # while stack not empty
+            curr = stack.pop()
+            self.color_exposed(curr, PURPLE)  # sets current node to purple
+
+            if curr not in checked:  # if this node hasn't been checked yet
+                # if we hit a number, return its coords
+                if self.game[curr[0]][curr[1]] != 0:
+                    self.color_exposed(curr, RED)  # sets destination node to red
+                    return curr
+                checked.add(curr)
+
+            self.color_exposed(curr, CYAN)  # sets processed node to cyan
+
+            # checks neighbors
+            for adj in self.adjacent_nodes(curr):
+                # that means this bumped into an already completed wall
+                if not self.bounds(*adj):
+                    continue
+                if self.is_completed(*adj):
+                    input('chick chick, BOOOMMM')
+                    return adj
+                if adj not in checked and adj not in stack:
                     stack.append(adj)
 
         # bolds source node and updates display
@@ -260,6 +306,23 @@ class Solver(Minesweeper):
         self.bold_node((r, c))  # bolds the source node
         return coord_found
 
+    def mark_wall(self, r: int, c: int):
+        """ Runs BFS on given coord and marks the whole wall as checked. """
+        queue = deque([(r, c)])
+        marked = set()
+
+        while len(queue) > 0:
+            curr = queue.popleft()
+
+            if not curr not in marked:
+                marked.add(curr)
+
+            for adj in self.adjacent_nodes(curr):
+                if adj not in queue and adj not in marked:
+                    queue.append(adj)
+
+        return marked
+
     # SOLVING ALGORITHMS
     def grind_chain(self, r: int, c: int):
         """ Keeps running follow chain on number until the chain is completely solved. """
@@ -268,27 +331,29 @@ class Solver(Minesweeper):
         updated_progress = self.flag_tracker + self.solved_count
         # stagnation detector
         while updated_progress > last_progress:
-            input(f'last progress: {last_progress}\nupdated progress: {updated_progress}')
+            # input(f'last progress: {last_progress}\nupdated progress: {updated_progress}')
             last_progress = updated_progress
             self.follow_chain(r, c)
             updated_progress = self.flag_tracker + self.solved_count
-            input('finished pass #' + str(iter_counter))
+            # input('finished pass #' + str(iter_counter))
             iter_counter += 1
-        input('finished grinding chain')
-        input(f'last progress: {last_progress}\nupdated progress: {updated_progress}')
+        # input('finished grinding chain')
+        # input(f'last progress: {last_progress}\nupdated progress: {updated_progress}')
 
     def follow_chain(self, r: int, c: int):
         """ Follow chain of numbers (using bfs) starting at given coord and process each node. """
         queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
+        # queue.append()
         processed = set()  # hashset containing nodes already processed
 
         while len(queue) > 0:  # while queue not empty
             curr = queue.popleft()
             self.color_exposed(curr, PURPLE)  # sets current node to yellow, so while it's being calculated it's yellow
 
-            if curr not in processed and self.completed[curr[0]][curr[1]] is False:  # if this node hasn't been processed yet
+            if curr not in processed:  # if this node hasn't been processed yet
                 # input('solving')
-                self.basic_solve(*curr)  # process node by running solving algorithm
+                if not self.is_completed(*curr):
+                    self.basic_solve(*curr)  # process node by running solving algorithm
                 processed.add(curr)  # mark node as processed
             # else:
                 # input(f'completion status: {self.is_completed(*curr)}')
@@ -306,7 +371,9 @@ class Solver(Minesweeper):
 
             # add next breadth of nodes to queue
             for adj in self.adjacent_nodes(curr):
-                if self.bounds(*adj) and self.game[adj[0]][adj[1]] != 0 and isinstance(self.game[adj[0]][adj[1]], int) and adj not in processed and adj not in queue and self.mines[adj[0]][adj[1]] is False:
+                if adj in processed:
+                    continue
+                elif self.bounds(*adj) and self.game[adj[0]][adj[1]] != 0 and isinstance(self.game[adj[0]][adj[1]], int) and adj not in processed and adj not in queue and self.mines[adj[0]][adj[1]] is False:
                     queue.append(adj)
 
     # TODO
@@ -410,6 +477,7 @@ class Solver(Minesweeper):
     def color_exposed(self, coord: tuple[int, int], color: str):
         """ First exposes node (game board to mask) and changes color. """
         self.expose(coord)
+        self.color_cell(coord, color)
         self.color_change(coord, color)
 
     # def switch_node_color(self, coord: tuple[int, int], color: str):
@@ -419,12 +487,12 @@ class Solver(Minesweeper):
 
     def underline_node(self, coord: tuple[int, int]):
         """ Adds underline on top of given node's existing styling, then refreshes board. """
-        self.mask[coord[0]][coord[1]] = UNDERLINE + self.mask[coord[0]][coord[1]]  # underline the node
+        self.mask[coord[0]][coord[1]] = UNDERLINE + str(self.mask[coord[0]][coord[1]])  # underline the node
         self.print_board()  # refreshes board
 
     def bold_node(self, coord: tuple[int, int]):
         """ Adds bold on top of given node's existing styling, then refreshes board. """
-        self.mask[coord[0]][coord[1]] = BOLD + self.mask[coord[0]][coord[1]]  # bolds the node
+        self.mask[coord[0]][coord[1]] = BOLD + str(self.mask[coord[0]][coord[1]])  # bolds the node
         self.print_board()  # refreshes board
 
     def round_print(self):
