@@ -3,7 +3,7 @@
 ## License
 **Minesweeper-Solver** is free software, distributed under the terms of the [GNU General Public License, version 3](https://www.gnu.org/licenses/gpl-3.0.html).
 ## What I Learned
-* Graph algorithms like flood fill and breadth first search
+* Graph algorithms like flood fill, breadth first search, and depth first search
 * Memoization
 * Displaying 2D matrices with coordinate guides
 * Licensing with GNU GPL
