@@ -11,10 +11,10 @@ pp = PrettyPrinter().pprint
 MOVE_DELAY = .2  # how long to delay before the bot makes a move
 GRAPH_SEARCH_DELAY = 0.007  # how long to delay during a graph search step
 SPACER = 50  # amount of lines to print to space boards out
-END_CHOICES = ['r', 'e', 'q']  # the available bot menu options
+END_CHOICES = ('r', 'e', 'q')  # the available bot menu options
 REPLAY_MENU = '(R) run bot again (Q) quit (E) edit settings'
 DEFAULT_MINE_CHANCE = .15 # default mine probability
-ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
+ADJACENT_COORDS = ((r, c) for r in range(-1, 2) for c in range(-1, 2))
 ADJACENT_COORDS.pop(4)
 # CHOICES = ['r', 'f', 'm', 'q']  # the available menu options  // no choices because you can't select anything as it's running
 # FIXME: might need to do file for solver display, and then file for solver algorithms.

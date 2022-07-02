@@ -9,7 +9,7 @@ HELPER_DELAY = 0.001  # this delay is to give the code a 1ms bump after printing
 VISUAL_DELAY = 0.0001
 SPACER = 50  # amount of lines to print to space boards out
 # ADJACENT_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
-ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
+ADJACENT_COORDS = ((r, c) for r in range(-1, 2) for c in range(-1, 2))
 ADJACENT_COORDS.pop(4)
 
 class Minesweeper:
