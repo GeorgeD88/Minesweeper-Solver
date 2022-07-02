@@ -24,7 +24,6 @@ class Minesweeper:
                       'maybe': '?'
                       } if chars_config is None else chars_config
         # █🅱️💥💣
-        #(R, A, D, H, Q respectively to reveal, arm or disarm a tile, to get help or to quit), optionally followed by coordinates
         self.set_up_game(rows, cols, mine_spawn)
 
     def set_up_game(self, rows, cols, prob):
@@ -35,14 +34,14 @@ class Minesweeper:
         self.area = rows * cols
         self.prob = prob
 
-        # board guides
+        # board coord guides
         self.rguide = self.make_guide(rows)
         self.cguide = self.make_guide(cols)
 
         # the different boards (external viewed by player and internal only viewed by code)
         self.mines = self.gen_mine_board()  # just the mines, stored in code form
         self.game = self.gen_game_board()  # internal board, stored in code form
-        self.mask = self.gen_mask_board()  # the board as seen by the user, stored as strings
+        self.mask = self.gen_mask_board()  # the board info available to the user so far
 
         # goes through the newly created mine board and counts number of mines generated
         self.mine_count = 0
@@ -51,15 +50,15 @@ class Minesweeper:
         self.mask_tile_count = 0
 
     def reset_game(self):
-        """ Resets values of the same game. """
-        self.mask = self.gen_mask_board()  # just resets mask board
+        """ Resets mask board of game, without regenerating actual game board. """
+        self.mask = self.gen_mask_board()
 
     def regen_game(self):
-        """ Regenerates game (new board). """
+        """ Regenerates game board, so completely new game basically. """
         # regenerates all the boards
-        self.mines = self.gen_mine_board()  # just the mines
-        self.game = self.gen_game_board()  # internal board
-        self.mask = self.gen_mask_board()  # the board as seen by the user
+        self.mines = self.gen_mine_board()  # regenerates new mine board
+        self.game = self.gen_game_board()  # regenerates game board
+        self.mask = self.gen_mask_board()  # regenerate mask board
 
         # goes through the newly created mine board and counts number of mines generated
         self.mine_count = 0
