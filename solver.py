@@ -27,11 +27,12 @@ class Solver(Minesweeper):
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         super().__init__(rows, cols, mine_spawn, chars_config)
-        self.completed = [[False]*self.cols]*self.rows  # stores a matrix/hashmap of all the fully completed nodes
+        self.solver_mask = self.mask[:]  # visually keeps track of the solver's progress
+        self.completed = self.mask[:]  # stores a matrix of all the fully completed nodes
         self.solved_count = 0  # len of completed matrix
         self.flag_tracker = 0  # keeps count of number of flags
         self.last_action = None
-        self.last_move: tuple[int, int] = (None, None)
+        self.last_move = (None, None)
 
     def solve(self):
         """ Starts solver/game by running start and update function. """
@@ -122,7 +123,7 @@ class Solver(Minesweeper):
                 space()
 
             # except Exception as e:
-            #     with open('solver_error_log.txt', 'a+') as error_file:
+            #     with open('slver_error_log.txt', 'a+') as error_file:
             #         error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
             #         error_file.write(f'\n{str(e)}\n')
             #     print('~~ error logged to file ~~')
