@@ -14,8 +14,9 @@ SPACER = 50  # amount of lines to print to space boards out
 END_CHOICES = ('r', 'e', 'q')  # the available bot menu options
 REPLAY_MENU = '(R) run bot again (Q) quit (E) edit settings'
 DEFAULT_MINE_CHANCE = .15 # default mine probability
-ADJACENT_COORDS = ((r, c) for r in range(-1, 2) for c in range(-1, 2))
+ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
 ADJACENT_COORDS.pop(4)
+
 # CHOICES = ['r', 'f', 'm', 'q']  # the available menu options  // no choices because you can't select anything as it's running
 # FIXME: might need to do file for solver display, and then file for solver algorithms.
 #        cause unlike user, solver is display + other backend.
@@ -44,7 +45,7 @@ class Solver(Minesweeper):
         self.display_mask()  # displays initial mask state
 
         row, col = self.random_coords()
-        print(row, col)
+        # print(row, col)
         self.find_empty_drop(row, col)  # regen board until there's a zero under choice
         self.reveal(row, col)  # reveals spot once the 0 is found
         space()
@@ -129,6 +130,7 @@ class Solver(Minesweeper):
     def adjacent_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
         """ Returns the coords of the surrounding nodes. """
         for offset_c in ADJACENT_COORDS:
+            # yield self.offset_coord(curr, offset_c)
             yield self.offset_coord(curr, offset_c)
 
     def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
