@@ -3,10 +3,11 @@ from collections import deque
 from copy import deepcopy
 from time import sleep
 import random
+import sys
 
 
 HELPER_DELAY = 0.01  # this delay is to give the code a 1ms bump after printing the board in hopes of getting rid of the jittery visuals
-VISUAL_DELAY = 0.12#01
+VISUAL_DELAY = 0.01#12
 SPACER = 50  # amount of lines to print to space boards out
 ADJACENT_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
 # ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
@@ -40,18 +41,6 @@ class Minesweeper:
 
         # the different boards (external viewed by player and internal only viewed by code)
         self.mines = self.gen_mine_board()  # just the mines, stored in code form
-        """ self.mines = [
-            [False, True, True, False, True, False, False, False, True, False, False, False, False, True, False],
-            [False, False, False, False, False, True, False, False, False, False, False, False, True, False, False],
-            [False, True, False, False, False, False, False, False, False, False, False, False, False, False, False],
-            [False, False, True, False, False, False, False, False, False, False, False, False, False, False, False],
-            [False, False, False, False, False, True, False, False, False, False, False, False, True, False, False],
-            [False, True, True, False, False, False, False, False, False, False, True, False, False, False, False],
-            [False, False, False, False, True, False, False, False, False, False, False, False, False, False, False],
-            [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False],
-            [False, False, False, False, False, True, False, False, False, False, False, False, False, False, False],
-            [True, False, False, False, False, False, False, False, False, False, True, False, False, False, True]
-        ] """
         self.game = self.gen_game_board()  # internal board, stored in code form
         self.mask = self.gen_mask_board()  # the board info available to the user so far
 
@@ -89,17 +78,23 @@ class Minesweeper:
 
     def gen_mine_board(self) -> list:
         """ Generates a mine board based on probability given. (just True and False) """
+
         # this way creates the list while counting mines at the same time
-        """ scratch_mine_board = []
-        for j in range(self.rows):
+        scratch_mine_board = []
+
+        for _row in range(self.rows):
             scratch_mine_board.append([])
-            for i in range(self.cols):
-                is_mine = random.random() < self.prob
-                scratch_mine_board.append(is_mine)
-                if is_mine:
-                    self.mine_count += 1 """
-        # this way creates the list and returns it inline
-        return [[random.random() < self.prob for i in range(self.cols)] for j in range(self.rows)]
+            for _col in range(self.cols):
+                if random.random() < self.prob:
+                    scratch_mine_board.append(True)
+                    self.mine_count += 1
+                else:
+                    scratch_mine_board.append(False)
+
+        return scratch_mine_board
+
+        # create list inline
+        # return [[random.random() < self.prob for i in range(self.cols)] for j in range(self.rows)]
 
     def gen_game_board(self) -> list:
         """ Generates a gameboard by overwriting a copy of the mine board. (adds mine counts) """
@@ -246,7 +241,8 @@ class Minesweeper:
 
             constructed += '\n'  # adds new line at end of the row
 
-        print(constructed)
+        # print(constructed)
+        sys.stdout.write(constructed)
 
     def print_board(self):
         """ Prints a space and then the board. """
