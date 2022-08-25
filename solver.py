@@ -4,12 +4,12 @@ from collections import deque
 from game import Minesweeper
 from time import sleep, time
 from random import randint
-from copy import deepcopy
 from colors import *
+import sys
 
 
 pp = PrettyPrinter().pprint
-MOVE_DELAY = .2  # how long to delay before the bot makes a move
+MOVE_DELAY = 0.2  # how long to delay before the bot makes a move
 GRAPH_SEARCH_DELAY = 0.007  # how long to delay during a graph search step
 SPACER = 50  # amount of lines to print to space boards out
 END_CHOICES = ('r', 'e', 'q')  # the available bot menu options
@@ -40,7 +40,7 @@ class Solver(Minesweeper):
         self.start()
         self.update()
 
-    def solve(self):
+    def psolve(self):
         """ MS-Solver Algorithm V2, the whole algorithm is a linear list of operations. """
 
         # [1] 🎲📍 Random drop to open up the board
@@ -584,17 +584,18 @@ class Solver(Minesweeper):
                     constructed += str(tile)
                 elif isinstance(tile, str):  # should only happen if altered by solver for color
                     constructed += tile
-                    print('peepee')
+                    # print('peepee')
 
                 # this shouldn't activate for a solver display because it would've been caught in the solver mask layer
                 else:  # other chars: flag, maybe, etc.
                     constructed += tile
-                    print('poopoo')
+                    # print('poopoo')
                 constructed += ' '  # adds space between every character added
 
             constructed += '\n'  # adds new line at end of the row
 
-        print(constructed)
+        # print(constructed)
+        sys.stdout.write(constructed)
 
     def round_print(self):
         """ Prints the last move, mask, and input guide for the round. """
