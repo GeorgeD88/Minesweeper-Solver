@@ -4,6 +4,7 @@ from collections import deque
 from game import Minesweeper
 from time import sleep, time
 from random import randint
+from copy import deepcopy
 from colors import *
 
 
@@ -19,7 +20,7 @@ ADJACENT_COORDS.pop(4)
 
 # CHOICES = ['r', 'f', 'm', 'q']  # the available menu options  // no choices because you can't select anything as it's running
 # FIXME: might need to do file for solver display, and then file for solver algorithms.
-#        cause unlike user, solver is display + other backend.
+#        cause unlike user, solver is a display overlay + other backend.
 
 
 # NOTE: remember to only give the bot access to what a regular player could see to make it accurate.
@@ -27,8 +28,8 @@ class Solver(Minesweeper):
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         super().__init__(rows, cols, mine_spawn, chars_config)
-        self.solver_mask = self.mask[:]  # visually keeps track of the solver's progress
-        self.completed = self.mask[:]  # stores a matrix of all the fully completed nodes
+        self.solver_mask = self.gen_mask_board()  # visually keeps track of the solver's progress
+        self.completed = self.gen_mask_board()  # stores a matrix/bitmask of all the fully completed nodes
         self.solved_count = 0  # len of completed matrix
         self.flag_tracker = 0  # keeps count of number of flags
         self.last_action = None
@@ -40,10 +41,10 @@ class Solver(Minesweeper):
         self.update()
 
     def start(self):
-        """ Runs startup code for game (first loop of game). """
+        """ Runs startup code for game (first iteration/move of the game). """
         space()
 
-        self.display_mask()  # displays initial mask state
+        self.display_mask()  # dislays initial mask state
 
         row, col = self.random_coords()
         # print(row, col)
@@ -65,6 +66,9 @@ class Solver(Minesweeper):
                 before = time()  # before main bot algorithm ====
                 wall = self.dfs(*self.last_move)  # finds nearest number
                 self.grind_chain(*wall)
+                if self.flag_tracker == self.mine_count:  # if there's nothing more to be explored, it's a win
+                    self.win_procedure()
+                    input('poop')
                 # wall = self.bfs_zero_fill(*self.last_move)  # finds nearest number
                 # last_border_touched = set()
                 # border_touched = self.mark_wall(*wall)
@@ -131,7 +135,6 @@ class Solver(Minesweeper):
     def adjacent_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
         """ Returns the coords of the surrounding nodes. """
         for offset_c in ADJACENT_COORDS:
-            # yield self.offset_coord(curr, offset_c)
             yield self.offset_coord(curr, offset_c)
 
     def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
@@ -437,6 +440,7 @@ class Solver(Minesweeper):
                 unexplored_nodes_count += 1
         return unexplored_nodes_count == 0
 
+    # MASK COLORING  TODO: refactor to color on separate solver mask
     def wipe_color(self, coord: tuple[int, int]):
         """ Sets node's color back to white (FROM GAME VALUE) and refreshes board. """
         self.mask[coord[0]][coord[1]] = self.game[coord[0]][coord[1]]  # wipes color
@@ -497,6 +501,64 @@ class Solver(Minesweeper):
         """ Adds bold on top of given node's existing styling, then refreshes board. """
         self.mask[coord[0]][coord[1]] = BOLD + str(self.mask[coord[0]][coord[1]])  # bolds the node
         self.print_board()  # refreshes board
+
+    # OVERWRITTEN DISPLAY MASK
+    def display_mask(self):
+        """ Overwrites display mask to implement use of separate solver mask. """
+
+        # == X-AXIS ==
+        constructed = '   '
+
+        # prints the numbers first
+        for num in self.cguide:
+            constructed += str(num) + ' '
+        constructed += '\n'
+
+        # then prints the little ticks
+        constructed += '   '
+        for i in range(self.cols):
+            constructed += '| '
+        constructed += '\n'
+
+        # == Y-AXIS & BOARD ==
+
+        for r in range(self.rows):
+
+            constructed += f'{self.rguide[r]}--'  # prints the guide: number + tick
+
+            """ Solver mask is always a subset of mask, it can contain up to as much info as the main mask, but never more
+            Solver Mask: #####1323##212#########1212###########
+                   Mask: ###1213232321223#####23121234#########
+            """
+
+            # goes through every tile in the row and gets mask symbol
+            for c in range(self.cols):
+                # first checks if solver mask has traversed this area
+                if self.solver_mask[r][c] is not False:
+                    constructed += self.solver_mask[r][c]
+                    continue
+
+                # and continues to regular mask if solver mask was empty there
+                tile = self.mask[r][c]
+                if tile is False:  # unexplored tile
+                    constructed += self.chars['tile']
+                elif tile == 0:  # empty tile (zero)
+                    constructed += self.chars['zero']
+                elif isinstance(tile, int):  # number tile
+                    constructed += str(tile)
+                elif isinstance(tile, str):  # should only happen if altered by solver for color
+                    constructed += tile
+                    print('peepee')
+
+                # this shouldn't activate for a solver display because it would've been caught in the solver mask layer
+                else:  # other chars: flag, maybe, etc.
+                    constructed += tile
+                    print('poopoo')
+                constructed += ' '  # adds space between every character added
+
+            constructed += '\n'  # adds new line at end of the row
+
+        print(constructed)
 
     def round_print(self):
         """ Prints the last move, mask, and input guide for the round. """
