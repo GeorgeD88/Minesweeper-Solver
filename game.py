@@ -40,6 +40,18 @@ class Minesweeper:
 
         # the different boards (external viewed by player and internal only viewed by code)
         self.mines = self.gen_mine_board()  # just the mines, stored in code form
+        """ self.mines = [
+            [False, True, True, False, True, False, False, False, True, False, False, False, False, True, False],
+            [False, False, False, False, False, True, False, False, False, False, False, False, True, False, False],
+            [False, True, False, False, False, False, False, False, False, False, False, False, False, False, False],
+            [False, False, True, False, False, False, False, False, False, False, False, False, False, False, False],
+            [False, False, False, False, False, True, False, False, False, False, False, False, True, False, False],
+            [False, True, True, False, False, False, False, False, False, False, True, False, False, False, False],
+            [False, False, False, False, True, False, False, False, False, False, False, False, False, False, False],
+            [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False],
+            [False, False, False, False, False, True, False, False, False, False, False, False, False, False, False],
+            [True, False, False, False, False, False, False, False, False, False, True, False, False, False, True]
+        ] """
         self.game = self.gen_game_board()  # internal board, stored in code form
         self.mask = self.gen_mask_board()  # the board info available to the user so far
 
@@ -214,23 +226,26 @@ class Minesweeper:
         # == Y-AXIS & BOARD ==
 
         for r in range(self.rows):
+
             constructed += f'{self.rguide[r]}--'  # prints the guide: number + tick
+
             # goes through every tile in the row and gets mask symbol
             for c in range(self.cols):
                 tile = self.mask[r][c]
-                # if tile is True:  # mine
-                #     print(self.chars['mine'], end=' ')
                 if tile is False:  # unexplored tile
-                    constructed += self.chars['tile'] + ' '
+                    constructed += self.chars['tile']
                 elif tile == 0:  # empty tile (zero)
-                    constructed += self.chars['zero'] + ' '
+                    constructed += self.chars['zero']
                 elif isinstance(tile, int):  # number tile
-                    constructed += str(tile) + ' '
+                    constructed += str(tile)
                 elif isinstance(tile, str):  # should only happen if altered by solver for color
-                    constructed += tile + ' '
+                    constructed += tile
                 else:  # other chars: flag, maybe, etc.
-                    constructed += tile + ' '
-            constructed += '\n'
+                    constructed += tile
+                constructed += ' '  # adds space between every character added
+
+            constructed += '\n'  # adds new line at end of the row
+
         print(constructed)
 
     def print_board(self):
@@ -246,7 +261,7 @@ class Minesweeper:
             if tile == 0:  # recurses/floodfill if tile is 0
                 self.print_board()
                 sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
-                self.bfs_fill(r, c)  # NOTE: change this to change fill algorithm used for game
+                self.bfs_fill(r, c)  # NOTE: change this to change flood fill algorithm used for game
 
     # FLOOD FILL ALGORITHM
     def floodfill(self, r, c):
