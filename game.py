@@ -6,11 +6,11 @@ import random
 
 
 HELPER_DELAY = 0.01  # this delay is to give the code a 1ms bump after printing the board in hopes of getting rid of the jittery visuals
-VISUAL_DELAY = 0.01
+VISUAL_DELAY = 0.12#01
 SPACER = 50  # amount of lines to print to space boards out
-# ADJACENT_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
-ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
-ADJACENT_COORDS.pop(4)
+ADJACENT_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
+# ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
+# ADJACENT_COORDS.pop(4)
 
 class Minesweeper:
 
@@ -131,7 +131,7 @@ class Minesweeper:
     def find_empty_drop(self, row, col):
         """ Regenerates game board until empty spot is found. """
         while not self.empty_spot(row, col):
-            print('POOUUOOP')
+            # print('POOUUOOP')
             self.regen_game()
 
     def display_mines(self, ascii: bool = False):
@@ -261,7 +261,7 @@ class Minesweeper:
             if tile == 0:  # recurses/floodfill if tile is 0
                 self.print_board()
                 sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
-                self.bfs_fill(r, c)  # NOTE: change this to change flood fill algorithm used for game
+                self.level_order_fill(r, c) #self.bfs_fill(r, c)  # NOTE: change this to change flood fill algorithm used for game
 
     # FLOOD FILL ALGORITHM
     def floodfill(self, r, c):
@@ -289,6 +289,11 @@ class Minesweeper:
         for offset_c in ADJACENT_COORDS:
             yield self.offset_coord(curr, offset_c)
 
+        """ for offset_c in ADJACENT_COORDS:
+            adj_coord = self.offset_coord(curr, offset_c)
+            if self.bounds(*adj_coord):
+                yield adj_coord """
+
     def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
         """ Returns a coord with the given offset. """
         return tuple(x + y for x, y in zip(coord, offset))
@@ -313,13 +318,6 @@ class Minesweeper:
                 if tile != 0:
                     continue
 
-                # else:
-                #     if tile is True:
-                #         print(curr)
-                #         print(queue)
-                #         exit()
-                #     continue
-
             # check next breadth of nodes
             for adj in self.adjacent_nodes(curr):
                 # the bounds makes sure it doesn't try searching outside the board
@@ -327,6 +325,47 @@ class Minesweeper:
                 if adj not in processed and adj not in queue and self.bounds(*adj) and self.is_new(*adj):  # is not bomb, or int?
                     queue.append(adj)
 
+    def level_order_fill(self, r, c):
+        """ Level order traversal (BFS) implementation of floodfill. """
+        queue = deque([(r, c)])  # use append to enqueue popleft to dequeue
+        processed = {(r, c)}  # hashset containing nodes already processed
+
+        # while there are nodes queued up to explore
+        while len(queue) > 0:
+            breadth = len(queue)
+
+            # iterate through breadth
+            for _ in range(breadth):
+                curr = queue.popleft()
+
+                # reveal/process node
+                self.just_reveal(*curr)
+
+                # don't traverse past this tile if it's not a 0 (it's a chain)
+                if self.game[curr[0]][curr[1]] != 0:
+                    continue
+
+                # add next breadth of nodes
+                for adj in self.adjacent_nodes(curr):
+                    # the bounds makes sure it doesn't try searching outside the board
+                    # NOTE: consider checking if adj in queue, but may take O(n) time so could be just as bad as leaving it in queue
+                    # print(adj)
+                    if adj not in processed and self.bounds(*adj):#self.is_new(*adj):  # is not bomb, or int?
+                        queue.append(adj)
+                        processed.add(adj)
+
+            # only show changes visually after the whole breadth has been
+            self.print_board()
+            sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
+
+            """  # if this node hasn't been processed or revealed in the past
+                if curr not in processed and self.is_new(*curr):
+                    tile = self.just_reveal(*curr)  # process node
+                    processed.add(curr)  # add to processed
+
+                    self.print_board()
+                    sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
+            """
     def just_reveal(self, r, c) -> int or bool:
         """ Reveals tile and bfs fills if needed (returns True if number). """
         tile = self.game[r][c]  # gets the tile from the game board
