@@ -40,11 +40,47 @@ class Solver(Minesweeper):
         self.start()
         self.update()
 
+    def solve(self):
+        """ MS-Solver Algorithm V2, the whole algorithm is a linear list of operations. """
+
+        # [1] 🎲📍 Random drop to open up the board
+        """ Simply drop in a random place to open up the board and begin the algorithm. """
+        self.start()
+
+        # [2] 🔎🏝️ Scan initial lake for islands (*island scan*)
+        """ As the algorithm progresses, I will have to make an algorithm to detect
+        when we open up a new lake, and whenever a lake is opened, run island scan on it
+        and keep track of all the islands to make sure we traverse them later. """
+        pass # initial drop will always open up a lake, so need to check for lake
+        pass # self.island_scan()  # this will store islands (maybe in class variable)
+        # make sure to store initial lake chain coords
+
+        # [3] ⛏️⛓️ Phase 1 simple solving: Iterate through the marked chains (lake and island borders) and run *grind chain* on them
+        """ I call this phase 1 because this is the first wave of traversing and solving the board,
+        and you only use simple solving in this phase. Also run *island scan* every time you open up a new lake. """
+        pass # for island in self.islands:
+        pass #     self.grind_chain(island[0])
+
+        # wall = self.dfs(*self.last_move)  # finds nearest number
+        # self.grind_chain(*wall)
+        # because we had island scan fill up the lake, we already have the coords for the lake chain and don't need to dfs for it
+        pass # self.grind_chain(*initial_lake)
+
+        # [4] 🕵️📈 Phase 2 pattern recognition/breaking stagnation: Traverse board looking for patterns to open up new info.
+        """ Traverse the board looking for patterns. If a pattern is recognized, use the info you get from the pattern to reveal/flag more tiles,
+        and then check if you're able to solve any of the surrounding tiles now (meaning stagnation was broken). If so, run grind chain from there
+        and it will BFS out solving more tiles from the information discovered. """
+        pass # find patterns*
+        # within find_patterns, whenever a pattern is found:
+        pass # after revealing/flagging using new info from pattern, check if *stagnation was broken*
+             # by checking if you can simple solve the pattern tiles or surroundings
+             # if you can then stagnation was broken so run a simple solve *grind chain* starting at the pattern.
+
     def start(self):
         """ Runs startup code for game (first iteration/move of the game). """
         space()
 
-        self.display_mask()  # dislays initial mask state
+        self.display_mask()  # displays initial mask state
 
         row, col = self.random_coords()
         # print(row, col)
