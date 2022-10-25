@@ -21,14 +21,12 @@ END_CHOICES = ('r', 'e', 'q')  # the available bot menu options
 REPLAY_MENU = '(R) run bot again (Q) quit (E) edit settings'
 DEFAULT_MINE_CHANCE = .15 # default mine probability
 ADJACENT_COORDS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-""" ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
-ADJACENT_COORDS.pop(4) """
 
 pp = PrettyPrinter().pprint  # for dev stuff
 
-# CHOICES = ['r', 'f', 'm', 'q']  # the available menu options  // no choices because you can't select anything as it's running
-# FIXME: might need to do file for solver display, and then file for solver algorithms.
-#        cause unlike user, solver is a display overlay + other backend.
+""" FIXME: might need to do file for solver display, and then file for solver algorithms.
+        cause unlike user, solver is a display overlay + other backend.
+        This might be fine here but could be important for GUI version. """
 
 
 class Solver(Minesweeper):
@@ -36,19 +34,19 @@ class Solver(Minesweeper):
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         super().__init__(rows, cols, mine_spawn, chars_config)
-        self.solver_mask = self.gen_mask_board()  # visually keeps track of the solver's progress
-        self.completed = self.gen_mask_board()  # stores a matrix/bitmask of all the fully completed nodes
-        self.solved_count = 0  # len of completed matrix
+        self.solver_mask = self.gen_mask_board()  # visual overlay that keeps track of the solver's progress
+        self.completed = self.gen_mask_board()  # stores a boolean matrix of the solved tiles
+        self.solved_count = 0  # keeps count of number of solved tiles
         self.flag_tracker = 0  # keeps count of number of flags
-        self.last_action = None
-        self.last_move = (None, None)
+        self.last_action = None  # holds last action played, NOTE: I don't think this is relevant for solver
+        self.last_move = (None, None)  # keeps track of last coord played
 
     def solve(self):
         """ Starts solver/game by running start and update function. """
         self.start()
         self.update()
 
-    def psolve(self):
+    def solveV2(self):
         """ MS-Solver Algorithm V2, the whole algorithm is a linear list of operations. """
 
         # [1] 🎲📍 Random drop to open up the board
@@ -87,12 +85,11 @@ class Solver(Minesweeper):
     def start(self):
         """ Runs startup code for game (first iteration/move of the game). """
         space()
-
         self.display_mask()  # displays initial mask state
 
-        row, col = self.random_coords()
-        # print(row, col)
-        self.find_empty_drop(row, col)  # regen board until there's a zero under choice
+        # first move
+        row, col = self.random_coords()  # picks random spot for first move
+        self.find_empty_drop(row, col)  # regen board until there's a zero first move
         self.reveal(row, col)  # reveals spot once the 0 is found
         space()
 
@@ -104,71 +101,71 @@ class Solver(Minesweeper):
         while True:
             # catches all errors and logs them to error.txt so game doesn't crash
             # try:
-                self.round_print()
-                print()
+            self.round_print()
+            print()
 
-                before = time()  # before main bot algorithm ====
-                wall = self.dfs(*self.last_move)  # finds nearest number
+            before = time()  # before main bot algorithm ====
+            wall = self.dfs(*self.last_move)  # finds nearest number
+            self.grind_chain(*wall)
+            if self.flag_tracker == self.mine_count:  # if there's nothing more to be explored, it's a win
+                self.win_procedure()
+                input('poop')
+            # wall = self.bfs_zero_fill(*self.last_move)  # finds nearest number
+            # last_border_touched = set()
+            # border_touched = self.mark_wall(*wall)
+            # while len(border_touched) > len(last_border_touched):
+            #     if not wall:  # didn't hit any number means board is empty:
+            #         self.win_procedure()
+            #         exit()
+            #     self.grind_chain(*wall)
+            #     last_border_touched = border_touched
+            #     wall = self.new_dfs(*self.last_move, last_border_touched)  # finds nearest number
+            #     border_touched = self.mark_wall(*wall)
+            #     # wall, border_touched = self.bfs_zero_fill(*self.last_move)  # finds nearest number
+
+            """ walls = set()
+            while True:
+                wall = self.bfs(*self.last_move)  # finds nearest number
+                if wall in walls:  # break if all numbers connected to this one have been solved
+                    break
+                walls.add(wall)  # adds wall to visited walls
                 self.grind_chain(*wall)
-                if self.flag_tracker == self.mine_count:  # if there's nothing more to be explored, it's a win
-                    self.win_procedure()
-                    input('poop')
-                # wall = self.bfs_zero_fill(*self.last_move)  # finds nearest number
-                # last_border_touched = set()
-                # border_touched = self.mark_wall(*wall)
-                # while len(border_touched) > len(last_border_touched):
-                #     if not wall:  # didn't hit any number means board is empty:
-                #         self.win_procedure()
-                #         exit()
-                #     self.grind_chain(*wall)
-                #     last_border_touched = border_touched
-                #     wall = self.new_dfs(*self.last_move, last_border_touched)  # finds nearest number
-                #     border_touched = self.mark_wall(*wall)
-                #     # wall, border_touched = self.bfs_zero_fill(*self.last_move)  # finds nearest number
+                print('chain: GRINDED')
+                # exit() """
+            after = time()  # after main bot algorithm ======
+            # print(after-before)
 
-                """ walls = set()
-                while True:
-                    wall = self.bfs(*self.last_move)  # finds nearest number
-                    if wall in walls:  # break if all numbers connected to this one have been solved
-                        break
-                    walls.add(wall)  # adds wall to visited walls
-                    self.grind_chain(*wall)
-                    print('chain: GRINDED')
-                    # exit() """
-                after = time()  # after main bot algorithm ======
-                # print(after-before)
+            # TODO: run solving algorithm choose row and col here
+            row, col = self.persistent_drop()  # temporary random choice
 
-                # TODO: run solving algorithm choose row and col here
-                row, col = self.persistent_drop()  # temporary random choice
+            self.last_move = (row, col)  # NOTE: remember to always save last move
+            action = self.last_action = 'r'  # TODO: decide if to reveal or flag
 
-                self.last_move = (row, col)  # NOTE: remember to always save last move
-                action = self.last_action = 'r'  # TODO: decide if to reveal or flag
+            sleep(self.decide_delay(after-before))  # delay before next move
 
-                sleep(self.decide_delay(after-before))  # delay before next move
-
-                # executes choices: r | f | m
-                if action == 'r':
-                    # checks if choice was a mine (and mask is unexplored) and ends game
-                    if self.isloss(row, col):
-                        self.mask[row][col] = self.color_string(self.chars['mine'], RED)
-                        if self.losing_procedure() == 'q':
+            # executes choices: r | f | m
+            if action == 'r':
+                # checks if choice was a mine (and mask is unexplored) and ends game
+                if self.isloss(row, col):
+                    self.mask[row][col] = self.color_string(self.chars['mine'], RED)
+                    if self.losing_procedure() == 'q':
+                        return 'q'
+                    self.start()
+                    if self.last_action == 'q':
+                        return 'q'
+                else:  # if no loss, continues revealing tile regularly
+                    self.check_reveal(row, col)
+                    if self.iswin():  # if there's nothing more to be explored, it's a win
+                        if self.win_procedure() == 'q':
                             return 'q'
                         self.start()
                         if self.last_action == 'q':
                             return 'q'
-                    else:  # if no loss, continues revealing tile regularly
-                        self.check_reveal(row, col)
-                        if self.iswin():  # if there's nothing more to be explored, it's a win
-                            if self.win_procedure() == 'q':
-                                return 'q'
-                            self.start()
-                            if self.last_action == 'q':
-                                return 'q'
-                elif action == 'f':
-                    self.flag(row, col)
-                elif action == 'm':
-                    self.maybe(row, col)
-                space()
+            elif action == 'f':
+                self.flag(row, col)
+            elif action == 'm':
+                self.maybe(row, col)
+            space()
 
             # except Exception as e:
             #     with open('slver_error_log.txt', 'a+') as error_file:
