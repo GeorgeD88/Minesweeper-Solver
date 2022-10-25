@@ -386,15 +386,20 @@ class Solver(Minesweeper):
     def follow_chain(self, r: int, c: int):
         """ Follow chain of numbers (using bfs) starting at given coord and process each node. """
         queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
-        processed = set()  # hashset containing nodes already processed
+        discovered = {(r, c)}  # hashset containing nodes already discovered
 
-        while len(queue) > 0:  # while queue not empty
-            curr = queue.popleft()
-            self.color_exposed(curr, PURPLE)  # sets current node to yellow, so while it's being calculated it's yellow
+        # while queue not empty (there's still nodes to traverse)
+        while len(queue) > 0:
+            curr = queue.popleft()  # pop next node to process
+            self.color_exposed(curr, PURPLE)  # colors current node purple when it's first popped from the queue
 
-            if curr not in processed:  # if this node hasn't been processed yet
-                # input('solving')
-                if not self.is_completed(*curr):
+            """ when processing a node, we will be traversing nodes that have been processed before
+            in past calls of the follow chain function. those nodes may or may not have been fully solved.
+            so first we have to check for that before we try to solving. """
+            # process node ===
+
+            # if tile hasn't already been solved, try solving it
+            if not self.is_completed(*curr):
                     self.basic_solve(*curr)  # process node by running solving algorithm
                 processed.add(curr)  # mark node as processed
             # else:
@@ -413,20 +418,21 @@ class Solver(Minesweeper):
 
             # add next breadth of nodes to queue
             for adj in self.adjacent_nodes(curr):
-                if adj in processed:
-                    continue
-                elif self.bounds(*adj) and self.game[adj[0]][adj[1]] != 0 and isinstance(self.game[adj[0]][adj[1]], int) and adj not in processed and adj not in queue and self.mines[adj[0]][adj[1]] is False:
+                """ NOTE in our floodfill algorithms, we avoid tiles that aren't new because we don't want to reveal again,
+                but here we're not doing anything with revealing and we're actually traversing revealed nodes.
+                now, the reason we don't avoid solved nodes is because we need to traverse over them to reach nodes
+                that haven't been solved. we only want to avoid nodes that have already been added to the queue,
+                which is the only condition for BFS, and then we are adding a few conditions to make sure we only traverse
+                over numbers, so that we're staying on a chain of numbers. """
+                if adj not in discovered and self.is_chain(*adj) and not self.is_new(*adj): # and is not a mine (not necessary to check if it's already confirmed to be an integer)
+                    # TODO: maybe check to make sure you're traversing only revealed numbers, I think that may be a problem.
+                # this is different than regular BFS because we're only gonna BFS over certain nodes (ints over 0)
+                    discovered.add(adj)
                     queue.append(adj)
 
-    # TODO
-    # def solve_cell(self, r: int, c: int):
-    #     """ Runs all solving algorithms in order from coarse to granular. """
-    #     self.basic_solve(r, c)
-    #     # run the rest once I code more
-
-    def basic_solve(self, r: int, c: int):
-        """ Runs the basic solving algorithm (clears majority of the board). """
-        empty_count, flag_count = self.count_openNflags(r, c )
+    def simple_solve(self, r: int, c: int):
+        """ Runs the simple solving algorithm. """
+        unrevealed_count, flag_count = self.count_unrevealedNflags(r, c)
         mines_left = self.game[r][c] - flag_count  # mine count - flag count
         # input(f'empty: {empty_count}\nflag count: {flag_count}\nmines left: {mines_left}')
         # mines left and open count match, then we can clear this out
@@ -475,6 +481,15 @@ class Solver(Minesweeper):
             if self.bounds(sr, sc) and self.is_new(sr, sc):
                 unexplored_nodes_count += 1
         return unexplored_nodes_count == 0
+
+    def is_chain(self, r: int, c: int) -> bool:
+        """ Returns whether given tile is an integer that's not 0 (chain tile). """
+        return isinstance(self.game[r][c], int) and not self.empty_spot(r, c)
+
+    def is_flag(self, r: int, c: int) -> bool:
+        """ Returns whether given tile was flagged by the bot. """
+        return self.mask[r][c] == RED + Solver.chars['flag'] + END_COLOR
+        # TODO: maybe try to store concatenated string somewhere instead of concatenating every time you wanna check
 
     # MASK COLORING  TODO: refactor to color on separate solver mask
     def wipe_color(self, coord: tuple[int, int]):
