@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from pprint import PrettyPrinter
 from collections import deque
 from copy import deepcopy
 from time import sleep
@@ -6,131 +7,134 @@ import random
 import sys
 
 
+# == VISUALIZATION CONSTANTS ==
 HELPER_DELAY = 0.01  # this delay is to give the code a 1ms bump after printing the board in hopes of getting rid of the jittery visuals
-VISUAL_DELAY = 0.01#12
+VISUAL_DELAY = 0.08#12
 SPACER = 50  # amount of lines to print to space boards out
-ADJACENT_COORDS = [(1, 0), (-1 , 0), (0, 1), (0, -1)]
-# ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
-# ADJACENT_COORDS.pop(4)
+
+# == GAME CONSTANTS ==
+ADJACENT_COORDS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+""" ADJACENT_COORDS = [(r, c) for r in range(-1, 2) for c in range(-1, 2)]
+ADJACENT_COORDS.pop(4) """
+
+pp = PrettyPrinter().pprint  # for dev purposes
+
 
 class Minesweeper:
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
-        # config dictionary that holds the actual character strings mappings
-        # for what character to display for each board element; e.g. mine = 'X'
+        """ config dictionary that holds the character strings
+        that map to each game/board element; e.g. mine = 'X' """
         self.chars = {'tile': '▢',#□
                       'mine': '☹',
                       'zero': ' ',
                       'flag': '+',
                       'maybe': '?'
-                      } if chars_config is None else chars_config
-        # █🅱️💥💣
+                      } if chars_config is None else chars_config  # if custom characters are provided
+        # other chars I might use: █🅱️💥💣
+
         self.set_up_game(rows, cols, mine_spawn)
 
     def set_up_game(self, rows, cols, prob):
         """ Sets up new game. """
-        # settings for the game board
+        # settings/properties for the game board
         self.rows = rows
         self.cols = cols
-        self.area = rows * cols
-        self.prob = prob
+        self.area = rows * cols  # number of total tiles
+        self.prob = prob  # probability of mine spawn
 
-        # board coord guides
+        # board coordinate guides
         self.rguide = self.make_guide(rows)
         self.cguide = self.make_guide(cols)
 
-        # the different boards (external viewed by player and internal only viewed by code)
-        self.mines = self.gen_mine_board()  # just the mines, stored in code form
-        self.game = self.gen_game_board()  # internal board, stored in code form
-        self.mask = self.gen_mask_board()  # the board info available to the user so far
+        # NOTE: I started initializing mine_count and mask_tile_count in their respective board generation functions
 
-        # goes through the newly created mine board and counts number of mines generated
-        self.mine_count = 0
-        for mine_row in self.mines:
-            self.mine_count += mine_row.count(True)
-        self.mask_tile_count = 0
+        # the different boards (external viewed by player and internal only viewed by code)
+        self.mines = self.gen_mine_board()  # boolean matrix representing the board's mines
+        self.game = self.gen_game_board()  # internal board, stores the mines and numbers
+        self.mask = self.gen_mask_board()  # keeps track of what the player has revealed/flagged so far
 
     def reset_game(self):
-        """ Resets mask board of game, without regenerating actual game board. """
+        """ Resets mask board, without regenerating game board.
+            Essentially resetting same game back to beginning. """
         self.mask = self.gen_mask_board()
 
     def regen_game(self):
-        """ Regenerates game board, so completely new game basically. """
-        # regenerates all the boards
-        self.mines = self.gen_mine_board()  # regenerates new mine board
-        self.game = self.gen_game_board()  # regenerates game board
-        self.mask = self.gen_mask_board()  # regenerate mask board
-
-        # goes through the newly created mine board and counts number of mines generated
-        self.mine_count = 0
-        for mine_row in self.mines:
-            self.mine_count += mine_row.count(True)
-        self.mask_tile_count = 0
+        """ Regenerates all boards, completely new game.
+            Since we're regenerating the mines and recounting on the mine board,
+            it's a whole different game (not same as reset_game()). """
+        self.mines = self.gen_mine_board()
+        self.game = self.gen_game_board()
+        self.mask = self.gen_mask_board()
 
     def iswin(self) -> bool:
-        """ Checks if the player won. """
-        return self.area - self.mask_tile_count == self.mine_count
+        """ Checks if the player won by comparing mine count to unrevealed count. """
+        return self.area - self.revealed_count == self.mine_count
 
     def isloss(self, row: int, col: int) -> bool:
-        """ Checks if coord choice is a loss. """
-        # lack of bomb is more likely, we use that as a shortcircuit
+        """ Checks if coord choice is a loss (mine). """
+
+        """ NOTE: checks if the tile is unrevealed first because if you're still
+        playing the game and the tile is already revealed then there's no way it's a loss now.
+        also you can't reveal already revealed tiles. """
+
         return self.is_new(row, col) and self.game[row][col] is True
 
-    def gen_mine_board(self) -> list:
-        """ Generates a mine board based on probability given. (just True and False) """
+    def gen_mine_board(self) -> list[list]:
+        """ Generates a mine board (boolean matrix) based on given probability. """
+        self.mine_count = 0  # stores total number of mines
+        mine_board = []
 
-        # this way creates the list while counting mines at the same time
-        scratch_mine_board = []
-
+        # NOTE: using underscore to signify that this value isn't actually used and is just for iterating
         for _row in range(self.rows):
-            scratch_mine_board.append([])
+            mine_board.append([])  # append new row list
             for _col in range(self.cols):
+                # randomly generates bomb
                 if random.random() < self.prob:
-                    scratch_mine_board.append(True)
+                    mine_board[-1].append(True)
                     self.mine_count += 1
                 else:
-                    scratch_mine_board.append(False)
+                    mine_board[-1].append(False)
 
-        return scratch_mine_board
+        return mine_board
 
-        # create list inline
-        # return [[random.random() < self.prob for i in range(self.cols)] for j in range(self.rows)]
-
-    def gen_game_board(self) -> list:
-        """ Generates a gameboard by overwriting a copy of the mine board. (adds mine counts) """
+    def gen_game_board(self) -> list[list]:
+        """ Generates a game board by traversing copy of mine board and writing mine counts. """
         game_board = deepcopy(self.mines)  # deep copies mine board to write over it
 
+        """ m is main tile and n are the adjacent tiles to tile m
+        N N N
+        N M N
+        N N N
+        """
+
+        # loops for M tile
         for r in range(self.rows):
             for c in range(self.cols):
-                # for non-mine tiles (number tiles)
+                # non-mine tiles are replaced with their mine count
                 if game_board[r][c] is False:
                     game_board[r][c] = 0  # sets counter to 0
-                    # (rr, cc) indexes neighboring tiles and counts mines
-                    for rr in range(r-1, r+2):
-                        for cc in range(c-1, c+2):
-                            if self.bounds(rr, cc):  # if cell is within bounds
-                                # increments main tile if that surrounding tile has a mine
-                                if self.mines[rr][cc]:
-                                    game_board[r][c] += 1
+                    # indexes neighboring tiles (N tiles of M) and counts mines
+                    for rr, cc in self.adjacent_nodes((r, c)):
+                        # increments tile mine count if adjacent tile contains a mine
+                        if self.bounds(rr, cc):  # ensures tile is within bounds first
+                            if self.mines[rr][cc] is True:
+                                game_board[r][c] += 1
 
         return game_board
 
-    def gen_mask_board(self) -> list:
-        """ Generates a mask board to display to the user: tiles, armed flags, maybe flags, etc. (strings) """
-        return [[False for i in range(self.cols)] for j in range(self.rows)]
-
-    def empty_spot(self, row, col):
-        """ Checks if given coords is an empty tile (0) or not. """
-        return self.game[row][col] == 0
+    def gen_mask_board(self) -> list[list]:
+        """ Generates a mask board to display to the user (tiles, flags, etc.). """
+        self.revealed_count = 0  # keeps count of how many tiles were revealed (not flagged)
+        return [[False for c in range(self.cols)] for r in range(self.rows)]
 
     def find_empty_drop(self, row, col):
         """ Regenerates game board until empty spot is found. """
         while not self.empty_spot(row, col):
-            # print('POOUUOOP')
             self.regen_game()
 
     def display_mines(self, ascii: bool = False):
-        """ Iterates through mine board and prints mine status. """
+        """ Iterates through mine board and prints mine status (dev function). """
         if ascii:  # prints mines as their mask symbol
             for r in range(self.rows):
                 for c in range(self.cols):
@@ -143,68 +147,37 @@ class Minesweeper:
                 print()
 
     def display_game(self, border: bool = True):
-        """ Iterates through game board and prints tiles. (so numbers and mines) """
-        if border:
+        """ Iterates through game board and prints contents (mines and numbers). """
+        # prints border around board
+        if border:  # top border
             print('-'*(self.cols*2+3))
+
         for r in range(self.rows):
-            if border:
+            if border:  # left border
                 print('|', end=' ')
+
             for c in range(self.cols):
                 tile = self.game[r][c]
+
                 if tile is True:  # mine
                     print(self.chars['mine'], end=' ')
                 elif tile == 0:  # empty tile (zero)
                     print(self.chars['zero'], end=' ')
                 elif type(tile) is int:  # number tile
                     print(str(tile), end=' ')
-            if border:
+
+            if border:  # right border
                 print('|', end='')
+
             print()
-        if border:
+
+        if border:  # bottom border
             print('-'*(self.cols*2+3))
 
-    def old_display_mask(self):
-        """ Iterates through mask board and prints tiles. (what user sees) """
-        print('   ', end='')  # the little corner spacer before the X-axis guide
-
-        # == X-AXIS ==
-
-        # prints the numbers first
-        for num in self.cguide:
-            print(str(num), end=' ')
-        print()
-
-        # then prints the little ticks
-        print('   ', end='')
-        for i in range(self.cols):
-            print('| ', end='')
-        print()
-
-        # == Y-AXIS & BOARD ==
-
-        for r in range(self.rows):
-            print(f'{self.rguide[r]}--', end='')  # prints the guide: number + tick
-            # goes through every tile in the row and gets mask symbol
-            for c in range(self.cols):
-                tile = self.mask[r][c]
-                # if tile is True:  # mine
-                #     print(self.chars['mine'], end=' ')
-                if tile is False:  # unexplored tile
-                    print(self.chars['tile'], end=' ')
-                elif tile == 0:  # empty tile (zero)
-                    print(self.chars['zero'], end=' ')
-                elif isinstance(tile, int):  # number tile
-                    print(str(tile), end=' ')
-                elif isinstance(tile, str):  # should only happen if altered by solver for color
-                    print(tile, end=' ')
-                else:  # other chars: flag, maybe, etc.
-                    print(tile, end=' ')
-            print()
-
     def display_mask(self):
-        """ Iterates through mask board and prints tiles. (what user sees) """
+        """ Iterates through mask board and prints tiles (what user sees). """
 
-        # == X-AXIS ==
+        # == horizontal guide ==
         constructed = '   '
 
         # prints the numbers first
@@ -214,11 +187,11 @@ class Minesweeper:
 
         # then prints the little ticks
         constructed += '   '
-        for i in range(self.cols):
+        for _ in range(self.cols):
             constructed += '| '
         constructed += '\n'
 
-        # == Y-AXIS & BOARD ==
+        # == vertical guide + board contents ==
 
         for r in range(self.rows):
 
@@ -242,24 +215,32 @@ class Minesweeper:
             constructed += '\n'  # adds new line at end of the row
 
         # print(constructed)
+        # NOTE: trying stdout instead of print to try to speed up printing
         sys.stdout.write(constructed)
 
     def print_board(self):
-        """ Prints a space and then the board. """
+        """ Prints a space to clear the output, prints mask, then delays. """
         space()
         self.display_mask()
         sleep(HELPER_DELAY)
 
     def reveal(self, r, c):
-        """ Helper function to reveal without starting a recursion. """
-        if self.bounds(r, c) and self.is_new(r, c):  # only runs if within bounds and not already explored (memoization)
-            tile = self.just_reveal(r, c)
-            if tile == 0:  # recurses/floodfill if tile is 0
-                self.print_board()
-                sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
-                self.level_order_fill(r, c) #self.bfs_fill(r, c)  # NOTE: change this to change flood fill algorithm used for game
+        """ Helper function to reveal and floodfill if needed. """
+        # only runs if within bounds and not already explored/opened
+        if self.bounds(r, c) and self.is_new(r, c):
+            tile = self.just_reveal(r, c)  # reveal the tile first
 
-    # FLOOD FILL ALGORITHM
+            """ NOTE: prints board because for cases where floodfill isn't run,
+            you won't see this reveal until the next floodfill """
+            self.print_board()
+            sleep(VISUAL_DELAY)
+
+            # then checks if floodfill is needed
+            if tile == 0:
+                # NOTE: change this to change which flood fill algorithm is used for the game
+                self.level_order_fill(r, c) #self.bfs_fill(r, c)
+
+    # FLOOD FILL ALGORITHMS
     def floodfill(self, r, c):
         """ Flood fill algorithm: recursively reveals tiles on the board. """
         for rr in range(r-1, r+2):
@@ -268,151 +249,136 @@ class Minesweeper:
 
     def flood_reveal(self, r, c):
         """ Reveals tile and flood fills if needed. """
-        if self.bounds(r, c) and self.is_new(r, c):  # only runs if within bounds and not already explored (memoization)
-            tile = self.game[r][c]  # gets the tile from the game board
-            if tile is True:
-                return False
-            self.mask[r][c] = tile  # reveals tile on mask
-            self.mask_tile_count += 1  # increments counter of mask tiles
+        if self.bounds(r, c) and self.is_new(r, c):  # only runs if within bounds and not already explored (to prevent cycles)
+            tile = self.just_reveal(r, c)
+
             if tile == 0:  # recurses/floodfill if tile is 0
                 self.print_board()
                 sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
                 self.floodfill(r, c)
 
-    # BREADTH FIRST SEARCH ALGORITHM RELATED CODE
-    def adjacent_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
-        """ Returns the coords of the surrounding nodes. """
-        for offset_c in ADJACENT_COORDS:
-            yield self.offset_coord(curr, offset_c)
-
-        """ for offset_c in ADJACENT_COORDS:
-            adj_coord = self.offset_coord(curr, offset_c)
-            if self.bounds(*adj_coord):
-                yield adj_coord """
-
-    def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
-        """ Returns a coord with the given offset. """
-        return tuple(x + y for x, y in zip(coord, offset))
-
     def bfs_fill(self, r, c):
         """ Breadth first search implementation of floodfill. """
-        queue = deque([(r, c)])  # use append to enqueue popleft to dequeue
-        processed = set()  # hashset containing nodes already processed
-        processed.add((r, c))
+        queue = deque([(r, c)])  # append (enqueue) and popleft (dequeue)
+        discovered = {(r, c)}  # hashset containing nodes already discovered
 
-        while len(queue) > 0:  # while queue not empty
-            curr = queue.popleft()
+        # while queue not empty (there's still nodes to traverse)
+        while len(queue) > 0:
+            curr = queue.popleft()  # pop next node to process
 
-            # if this node hasn't been processed or revealed in the past
-            if curr not in processed and self.is_new(*curr):
-                tile = self.just_reveal(*curr)  # process node
-                processed.add(curr)  # add to processed
+            # process node
+            tile = self.just_reveal(*curr)
+            # displays changes after every tile reveal
+            self.print_board()
+            sleep(VISUAL_DELAY)
 
-                self.print_board()
-                sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
+            # don't traverse past this tile if it's not a 0 (you hit a chain, you wanna stay within the lake)
+            if tile != 0:
+                continue
 
-                if tile != 0:
-                    continue
-
-            # check next breadth of nodes
+            # add adjacent nodes to queue
             for adj in self.adjacent_nodes(curr):
-                # the bounds makes sure it doesn't try searching outside the board
-                # NOTE: consider checking if adj in queue, but may take O(n) time so could be just as bad as leaving it in queue
-                if adj not in processed and adj not in queue and self.bounds(*adj) and self.is_new(*adj):  # is not bomb, or int?
+                """ NOTE: only adds node if it isn't already queued to process,
+                and if node isn't new then it was processed during a different run of this function. """
+                if adj not in discovered and self.is_new(*adj):
+                    discovered.add(adj)
                     queue.append(adj)
 
     def level_order_fill(self, r, c):
         """ Level order traversal (BFS) implementation of floodfill. """
         queue = deque([(r, c)])  # use append to enqueue popleft to dequeue
-        processed = {(r, c)}  # hashset containing nodes already processed
+        discovered = {(r, c)}  # hashset containing nodes already discovered
 
-        # while there are nodes queued up to explore
+        # while queue not empty (there's still nodes to traverse)
         while len(queue) > 0:
-            breadth = len(queue)
+            breadth = len(queue)  # get length of next breadth of nodes
 
-            # iterate through breadth
+            # iterate through nodes one breadth at a time
             for _ in range(breadth):
-                curr = queue.popleft()
+                curr = queue.popleft()  # pop next node to process
 
                 # reveal/process node
-                self.just_reveal(*curr)
+                tile = self.just_reveal(*curr)
+                # NOTE: doesn't display changes until whole breadth as been processed
 
-                # don't traverse past this tile if it's not a 0 (it's a chain)
-                if self.game[curr[0]][curr[1]] != 0:
+                # don't traverse past this tile if it's not a 0 (you hit a chain, you wanna stay within the lake)
+                if tile != 0:
                     continue
 
-                # add next breadth of nodes
+                # add next breadth of nodes to queue
                 for adj in self.adjacent_nodes(curr):
-                    # the bounds makes sure it doesn't try searching outside the board
-                    # NOTE: consider checking if adj in queue, but may take O(n) time so could be just as bad as leaving it in queue
-                    # print(adj)
-                    if adj not in processed and self.bounds(*adj):#self.is_new(*adj):  # is not bomb, or int?
+                    """ NOTE: only adds node if it isn't already queued to process,
+                    and if node isn't new then it was processed during a different run of this function. """
+                    if adj not in discovered and self.is_new(*adj):
+                        discovered.add(adj)
                         queue.append(adj)
-                        processed.add(adj)
 
-            # only show changes visually after the whole breadth has been
+            # only show changes visually after the whole breadth has been processed
             self.print_board()
-            sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
+            sleep(VISUAL_DELAY)
 
-            """  # if this node hasn't been processed or revealed in the past
-                if curr not in processed and self.is_new(*curr):
-                    tile = self.just_reveal(*curr)  # process node
-                    processed.add(curr)  # add to processed
+    def adjacent_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
+        """ Returns the coords of the adjacent nodes (sides and corners). """
+        for offset_c in ADJACENT_COORDS:
+            adj_coord = self.offset_coord(curr, offset_c)
+            if self.bounds(*adj_coord) is True:
+                yield adj_coord
 
-                    self.print_board()
-                    sleep(VISUAL_DELAY)  # NOTE: this is purely cosmetic so that I could see the game recursing
-            """
+    def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
+        """ Returns a coord with the given offset. """
+        return tuple(crd + ofst for crd, ofst in zip(coord, offset))
+
     def just_reveal(self, r, c) -> int or bool:
-        """ Reveals tile and bfs fills if needed (returns True if number). """
+        """ Only reveal tile and returns tile's content. """
         tile = self.game[r][c]  # gets the tile from the game board
-        self.mask[r][c] = tile  # reveals tile on mask
-        self.mask_tile_count += 1  # increments counter of mask tiles
+        self.mask[r][c] = tile  # reveals the tile on mask
+        self.revealed_count += 1  # increments counter of mask tiles
         return tile
 
     def flag(self, r, c):
-        """ Sets tile to flag so users can mark tiles as mines. """
+        """ Sets tile to flag so users can mark suspected mine tiles. """
         if self.mask[r][c] == self.chars['flag']:  # unflags if already flagged
             self.mask[r][c] = False
         elif self.is_new(r, c):  # can only flag unexplored tiles
             self.mask[r][c] = self.chars['flag']  # flags
-        else:
-            # can't flag already revealed tiles
-            pass
+        # else: can't flag already revealed tiles
 
     def maybe(self, r, c):
         """ Sets tile to maybe so users can mark tiles as possible mines. """
-        if self.mask[r][c] == self.chars['maybe']:  # unmaybes if already maybeged
+        if self.mask[r][c] == self.chars['maybe']:  # unmaybes if already maybed
             self.mask[r][c] = False
         elif self.is_new(r, c):  # can only maybe unexplored tiles
             self.mask[r][c] = self.chars['maybe']  # maybes
-        else:
-            # can't maybe already revealed tiles
-            pass
+        # else: can't maybe already revealed tiles
 
-    def make_guide(self, length: int):
-        """ Makes board guide based on given length. """
+    def make_guide(self, length: int) -> list:
+        """ Builds board guide string based on given length. """
         repeat = [1, 2, 3, 4, 5, 6, 7, 8, 9, '█']  # █ is the 10s marker
         rem = length % 10
         guide = []
 
-        for i in range(length//10):  # extends the guide by 10 everytime
+        # extends the guide by 10 every time
+        for i in range(length//10):
             guide.extend(repeat)
-        for i in range(rem):  # extends the last bit that doesn't quite make 10
-            guide.append(repeat[i])
+
+        # extends the last bit that doesn't quite make 10
+        guide.extend(repeat[:rem])
 
         return guide
 
     def bounds(self, r, c) -> bool:
         """ Checks if given coord is within board bounds. """
-        if r < 0 or r >= self.rows or c < 0 or c >= self.cols:  # ripped from Guha's water.c floodfill function
-            return False  # meaning the coord is outside of the board
-        else:
-            return True  # coord is within the board
+        return 0 <= r < self.rows and 0 <= c < self.cols
 
     def is_new(self, r, c) -> bool:
-        """ Checks if given tile has not been explored. """
+        """ Checks if given tile has not been explored/revealed on the mask. """
         return self.mask[r][c] is False
+
+    def empty_spot(self, row, col) -> bool:
+        """ Checks if given coords is an empty tile (0) or not. """
+        return self.game[row][col] == 0
 
 
 def space():
+    """ Prints huge block of newlines to "flush" the console output. """
     print('\n'*SPACER)
