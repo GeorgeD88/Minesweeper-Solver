@@ -1,4 +1,4 @@
-import solver
+import cli_solver
 import user
 
 
@@ -7,5 +7,5 @@ import user
 # game.play()  # user + game
 
 # Minesweeper bot
-bot = solver.init_solver()
+bot = cli_solver.init_solver()
 bot.solve()  # solver + game
