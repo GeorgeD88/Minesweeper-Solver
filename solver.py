@@ -395,7 +395,7 @@ class Solver(Minesweeper):
             if curr not in processed:  # if this node hasn't been processed yet
                 # input('solving')
                 if not self.is_completed(*curr):
-                    self.basic_solve(*curr)  # process node by running solving algorithm
+                    self.simple_solve(*curr)  # process node by running solving algorithm
                 processed.add(curr)  # mark node as processed
             # else:
                 # input(f'completion status: {self.is_completed(*curr)}')
@@ -421,10 +421,10 @@ class Solver(Minesweeper):
     # TODO
     # def solve_cell(self, r: int, c: int):
     #     """ Runs all solving algorithms in order from coarse to granular. """
-    #     self.basic_solve(r, c)
+    #     self.simple_solve(r, c)
     #     # run the rest once I code more
 
-    def basic_solve(self, r: int, c: int):
+    def simple_solve(self, r: int, c: int):
         """ Runs the basic solving algorithm (clears majority of the board). """
         empty_count, flag_count = self.count_openNflags(r, c )
         mines_left = self.game[r][c] - flag_count  # mine count - flag count
