@@ -168,14 +168,14 @@ class Solver(Minesweeper):
             #         error_file.write(f'\n{str(e)}\n')
             #     print('~~ error logged to file ~~')
 
-    def adjacent_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
-        """ Returns the coords of the surrounding nodes. """
-        for offset_c in ADJACENT_COORDS:
-            yield self.offset_coord(curr, offset_c)
+    # def adjacent_nodes(self, curr: tuple[int, int]) -> Generator[tuple[int, int]]:
+    #     """ Returns the coords of the surrounding nodes. """
+    #     for offset_c in ADJACENT_COORDS:
+    #         yield self.offset_coord(curr, offset_c)
 
-    def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
-        """ Returns a coord with the given offset. """
-        return tuple(x + y for x, y in zip(coord, offset))
+    # def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
+    #     """ Returns a coord with the given offset. """
+    #     return tuple(x + y for x, y in zip(coord, offset))
 
     # BREADTH FIRST SEARCH ALGORITHM
     def bfs(self, r, c) -> tuple[int, int]:
@@ -736,7 +736,7 @@ class Solver(Minesweeper):
         # rest is the regen_board() code but without the mine generation part because that's the part we're taking control of
         self.mask = self.gen_mask_board()  # the board as seen by the user
         # self.display_game()
-        self.mask_tile_count = 0
+        self.revealed_count = 0
 
 def get_options() -> tuple[int, int, float]:
     """ Gets game options: rows, columns, and mine probability. """
