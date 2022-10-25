@@ -321,6 +321,12 @@ class Minesweeper:
         """ Returns the coords of the adjacent nodes (sides and corners). """
         for offset_c in ADJACENT_COORDS:
             adj_coord = self.offset_coord(curr, offset_c)
+            """ NOTE: a reason I may not want to check if adjacent nodes are within bounds
+            is because I simply want this function to return adjacent coordinates,
+            and not alter that in any way like checking if they're within bounds.
+            that may also be why I had this function overwritten in the solver file
+            to not check for bounds, maybe I needed that functionality for some algorithm.
+            NOTE: I'm making descriptive note of this incase some bug comes up later that could be related to this. """
             if self.bounds(*adj_coord) is True:
                 yield adj_coord
 
