@@ -104,10 +104,14 @@ class Solver(Minesweeper):
             self.round_print()
             print()
 
-            before = time()  # before main bot algorithm ====
-            wall = self.dfs(*self.last_move)  # finds nearest number
-            self.grind_chain(*wall)
-            if self.flag_tracker == self.mine_count:  # if there's nothing more to be explored, it's a win
+            before = time()  # times how long the round takes =====
+
+            # finds nearest number/chain and start grinding the chain
+            chain = self.dfs(*self.last_move)
+            self.grind_chain(*chain)
+
+            # if there's nothing more to be explored, it's a win
+            if self.flag_tracker == self.mine_count:
                 self.win_procedure()
                 input('poop')
             # wall = self.bfs_zero_fill(*self.last_move)  # finds nearest number
@@ -132,10 +136,10 @@ class Solver(Minesweeper):
                 self.grind_chain(*wall)
                 print('chain: GRINDED')
                 # exit() """
-            after = time()  # after main bot algorithm ======
-            # print(after-before)
 
-            # TODO: run solving algorithm choose row and col here
+            after = time()  # ends round timer =====
+
+            # TODO: run solving algorithm choose next row and col here
             row, col = self.persistent_drop()  # temporary random choice
 
             self.last_move = (row, col)  # NOTE: remember to always save last move
@@ -361,27 +365,27 @@ class Solver(Minesweeper):
 
         return marked
 
-    # SOLVING ALGORITHMS
+    # ===== MAIN SOLVING ALGORITHMS =====
     def grind_chain(self, r: int, c: int):
         """ Keeps running follow chain on number until the chain is completely solved. """
         last_progress = -1
-        iter_counter = 1
-        updated_progress = self.flag_tracker + self.solved_count
+        total_progress = self.flag_tracker + self.solved_count
+        # iter_counter = 1 DELETE
+
         # stagnation detector
-        while updated_progress > last_progress:
-            # input(f'last progress: {last_progress}\nupdated progress: {updated_progress}')
-            last_progress = updated_progress
+        while total_progress > last_progress:
+            last_progress = total_progress  # current total progress becomes last progress
             self.follow_chain(r, c)
-            updated_progress = self.flag_tracker + self.solved_count
-            # input('finished pass #' + str(iter_counter))
-            iter_counter += 1
+            total_progress = self.flag_tracker + self.solved_count  # current total progress is calculated
+
+            # DELETE --,
+            # iter_counter += 1
         # input('finished grinding chain')
-        # input(f'last progress: {last_progress}\nupdated progress: {updated_progress}')
+        # input(f'last progress: {last_progress}\nupdated progress: {total_progress}')
 
     def follow_chain(self, r: int, c: int):
         """ Follow chain of numbers (using bfs) starting at given coord and process each node. """
         queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
-        # queue.append()
         processed = set()  # hashset containing nodes already processed
 
         while len(queue) > 0:  # while queue not empty
