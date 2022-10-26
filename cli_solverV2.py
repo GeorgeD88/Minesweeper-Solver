@@ -8,7 +8,8 @@ from colors import *
 import sys
 
 """ CLI solver V2 is the refactored solver file but now converted
-to use a separate solver mask that overlays over the regular mask. """
+to use a separate solver mask that overlays over the regular mask.
+(also made everything use r, c instead of coord[0], coord[1]). """
 
 # == VISUALIZATION CONSTANTS ==
 MOVE_DELAY = 0.02#2  # how long to delay before the bot makes a move
