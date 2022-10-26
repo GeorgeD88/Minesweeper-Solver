@@ -155,23 +155,22 @@ class Solver(Minesweeper):
     def bfs_for_chain(self, r, c) -> tuple[int, int]:
         """ Breadth first search around coord and returns coord of first wall encountered. """
         queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
-        checked = set()  # hashset containing nodes already processed
-        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
-        self.color_exposed((r, c), GREEN)  # marks the source node green
+        checked = {(r, c)}  # hashset containing nodes already processed
+        self.color_exposed(r, c, GREEN)  # marks the source node green
 
         while len(queue) > 0:  # while queue not empty
             curr = queue.popleft()
-            self.color_exposed(curr, PURPLE)  # sets current node to purple
+            self.color_exposed(*curr, PURPLE)  # sets current node to purple
 
             if curr not in checked:  # if this node hasn't been checked yet
                 # if we hit a number, return its coords
                 if self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(curr, RED)  # sets destination node to red
-                    self.bold_node((r, c))  # bolds the source node
+                    self.color_exposed(*curr, RED)  # sets destination node to red
+                    self.bold_node(r, c)  # bolds the source node
                     return curr
                 checked.add(curr)
 
-            self.color_exposed(curr, CYAN)  # sets processed node to cyan
+            self.color_exposed(*curr, CYAN)  # sets processed node to cyan
 
             # check next breadth of nodes
             for adj in self.adjacent_nodes(curr):
@@ -182,26 +181,25 @@ class Solver(Minesweeper):
     def bfs_zero_fill(self, r, c) -> tuple[int, int]:
         """ Breadth first search around coord but fills whole pool with zeros before returning coord. """
         queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
-        checked = set()  # hashset containing nodes already processed
-        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
-        self.color_exposed((r, c), GREEN)  # marks the source node green
+        checked = {(r, c)}  # hashset containing nodes already processed
+        self.color_exposed(r, c, GREEN)  # marks the source node green
         coord_found = None
 
         while len(queue) > 0:  # while queue not empty
             curr = queue.popleft()
-            self.color_exposed(curr, PURPLE)  # sets current node to purple
+            self.color_exposed(*curr, PURPLE)  # sets current node to purple
 
             if curr not in checked:  # if this node hasn't been checked yet
                 # if we hit a number, return its coords
                 if not coord_found and self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(curr, RED)  # sets destination node to red
+                    self.color_exposed(*curr, RED)  # sets destination node to red
                     coord_found = curr
                 checked.add(curr)
 
             if isinstance(self.game[curr[0]][curr[1]], int) and self.game[curr[0]][curr[1]] != 0:
-                self.wipe_color(curr)
+                self.wipe_color(*curr)
             else:
-                self.color_exposed(curr, CYAN)  # sets processed node to cyan
+                self.color_exposed(*curr, CYAN)  # sets processed node to cyan
 
             # check next breadth of nodes
             for adj in self.adjacent_nodes(curr):
@@ -211,29 +209,28 @@ class Solver(Minesweeper):
                 elif adj not in checked and adj not in queue and self.bounds(*adj):
                     queue.append(adj)
 
-        self.color_exposed(coord_found, RED)  # sets destination node to red
-        self.bold_node((r, c))  # bolds the source node
+        self.color_exposed(*coord_found, RED)  # sets destination node to red
+        self.bold_node(r, c)  # bolds the source node
         return coord_found
 
     def find_nearest_chain(self, r, c) -> tuple[int, int]:
         """ Depth first search around coord and returns coord of first wall encountered. """
         stack = deque([(r, c)])  # use append to push, pop to pop
-        checked = set()  # hashset containing nodes already processed
-        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
-        self.color_exposed((r, c), GREEN)  # marks the source node green
+        checked = {(r, c)}  # hashset containing nodes already processed
+        self.color_exposed(r, c, GREEN)  # marks the source node green
 
         while len(stack) > 0:  # while stack not empty
             curr = stack.pop()
-            self.color_exposed(curr, PURPLE)  # sets current node to purple
+            self.color_exposed(*curr, PURPLE)  # sets current node to purple
 
             if curr not in checked:  # if this node hasn't been checked yet
                 # if we hit a number, return its coords
                 if self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(curr, RED)  # sets destination node to red
+                    self.color_exposed(*curr, RED)  # sets destination node to red
                     return curr
                 checked.add(curr)
 
-            self.color_exposed(curr, CYAN)  # sets processed node to cyan
+            self.color_exposed(*curr, CYAN)  # sets processed node to cyan
 
             # checks neighbors
             for adj in self.adjacent_nodes(curr):
@@ -247,28 +244,27 @@ class Solver(Minesweeper):
                     stack.append(adj)
 
         # bolds source node and updates display
-        self.bold_node((r, c))
+        self.bold_node(r, c)
         sleep(GRAPH_SEARCH_DELAY)
 
     def new_dfs(self, r, c, ) -> tuple[int, int]:
         """ Depth first search around coord and returns coord of first wall encountered. """
         stack = deque([(r, c)])  # use append to push, pop to pop
         checked = set()  # hashset containing nodes already processed
-        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
-        self.color_exposed((r, c), GREEN)  # marks the source node green
+        self.color_exposed(r, c, GREEN)  # marks the source node green
 
         while len(stack) > 0:  # while stack not empty
             curr = stack.pop()
-            self.color_exposed(curr, PURPLE)  # sets current node to purple
+            self.color_exposed(*curr, PURPLE)  # sets current node to purple
 
             if curr not in checked:  # if this node hasn't been checked yet
                 # if we hit a number, return its coords
                 if self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(curr, RED)  # sets destination node to red
+                    self.color_exposed(*curr, RED)  # sets destination node to red
                     return curr
                 checked.add(curr)
 
-            self.color_exposed(curr, CYAN)  # sets processed node to cyan
+            self.color_exposed(*curr, CYAN)  # sets processed node to cyan
 
             # checks neighbors
             for adj in self.adjacent_nodes(curr):
@@ -282,32 +278,31 @@ class Solver(Minesweeper):
                     stack.append(adj)
 
         # bolds source node and updates display
-        self.bold_node((r, c))
+        self.bold_node(r, c)
         sleep(GRAPH_SEARCH_DELAY)
 
     def dfs_zero_fill(self, r, c) -> tuple[int, int]:
         """ Depth first search around coord but fills whole pool with zeros before returning coord. """
         stack = deque([(r, c)])  # use append to push, popleft to pop
-        checked = set()  # hashset containing nodes already processed
-        checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
-        self.color_exposed((r, c), GREEN)  # marks the source node green
+        checked = {(r, c)}  # hashset containing nodes already processed
+        self.color_exposed(r, c, GREEN)  # marks the source node green
         coord_found = None
 
         while len(stack) > 0:  # while stack not empty
             curr = stack.pop()
-            self.color_exposed(curr, PURPLE)  # sets current node to purple
+            self.color_exposed(*curr, PURPLE)  # sets current node to purple
 
             if curr not in checked:  # if this node hasn't been checked yet
                 # if we hit a number, return its coords
                 if not coord_found and self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(curr, RED)  # sets destination node to red
+                    self.color_exposed(*curr, RED)  # sets destination node to red
                     coord_found = curr
                 checked.add(curr)
 
             if self.game[curr[0]][curr[1]] is int and self.game[curr[0]][curr[1]] != 0:
-                self.wipe_color(curr)
+                self.wipe_color(*curr)
             else:
-                self.color_exposed(curr, CYAN)  # sets processed node to cyan
+                self.color_exposed(*curr, CYAN)  # sets processed node to cyan
 
             # check next breadth of nodes
             for adj in self.adjacent_nodes(curr):
@@ -317,8 +312,8 @@ class Solver(Minesweeper):
                 elif adj not in checked and adj not in stack and self.bounds(*adj):
                     stack.append(adj)
 
-        self.color_exposed(coord_found, RED)  # sets destination node to red
-        self.bold_node((r, c))  # bolds the source node
+        self.color_exposed(*coord_found, RED)  # sets destination node to red
+        self.bold_node(r, c)  # bolds the source node
         return coord_found
 
     def mark_wall(self, r: int, c: int):
@@ -364,7 +359,7 @@ class Solver(Minesweeper):
         # while queue not empty (there's still nodes to traverse)
         while len(queue) > 0:
             curr = queue.popleft()  # pop next node to process
-            self.color_exposed(curr, PURPLE)  # colors current node purple when it's first popped from the queue
+            self.color_exposed(*curr, PURPLE)  # colors current node purple when it's first popped from the queue
 
             """ when processing a node, we will be traversing nodes that have been processed before
             in past calls of the follow chain function. those nodes may or may not have been fully solved.
@@ -380,11 +375,11 @@ class Solver(Minesweeper):
                 so make note of that and try to include that when considering efficiency. """
 
                 # colors node green if simple solve says it was able to fully solve, else colors yellow
-                self.color_exposed(curr, GREEN if self.simple_solve(*curr) else YELLOW)
+                self.color_exposed(*curr, GREEN if self.simple_solve(*curr) else YELLOW)
 
             # else tile was already solved so colors it back to green (cause it was turned purple when popped from queue)
             else:
-                self.color_exposed(curr, GREEN)
+                self.color_exposed(*curr, GREEN)
                 # I think I specifically called this function 'exposed' so that I color the original value from scratch and don't add color around an already colored node and end up storing a long string for no reason.
 
             # add adjacent nodes to queue ===
@@ -431,7 +426,7 @@ class Solver(Minesweeper):
                 if self.is_new(sr, sc):
                     self.flag(sr, sc)
                     self.flag_tracker += 1
-                    self.color_change((sr, sc), RED)  # marks flag red
+                    self.color_change(sr, sc, RED)  # marks flag red
 
             # NOTE: I think this conditional is completely useless, because we just determined that we know the rest of the tiles just need to be flagged
             # if self.determine_if_solved(r, c):  # NOTE: this was extra
@@ -487,77 +482,77 @@ class Solver(Minesweeper):
 
     def is_flag(self, r: int, c: int) -> bool:
         """ Returns whether given tile was flagged by the bot. """
-        return self.solver_mask[r][c] == RED + self.chars['flag'] + END_COLOR
+        return self.mask[r][c] == RED + self.chars['flag'] + END_COLOR
         # TODO: maybe try to store concatenated string somewhere instead of concatenating every time you wanna check
 
     # COLORING FUNCTIONS  TODO: refactor to color on separate solver mask
-    def wipe_color(self, coord: tuple[int, int]):
+    def wipe_color(self, r: int, c: int):
         """ Sets node's color back to white (FROM GAME VALUE) and refreshes board. """
-        self.mask[coord[0]][coord[1]] = self.game[coord[0]][coord[1]]  # wipes color
+        self.mask[r][c] = self.game[r][c]  # wipes color
         self.print_board()  # for visualization purposes
 
-    def drop_effect(self, coord: tuple[int, int]):
+    def drop_effect(self, r: int, c: int):
         """ Removes the extra effect but not the color (ex. removes bold). """
-        self.mask[coord[0]][coord[1]] = self.mask[coord[0]][coord[1]][4:]
+        self.mask[r][c] = self.mask[r][c][4:]
 
-    def drop_color(self, coord: tuple[int, int]):
+    def drop_color(self, r: int, c: int):
         """ Removes the top color (ex. used for switching colors). """
-        self.mask[coord[0]][coord[1]] = self.mask[coord[0]][coord[1]][4:]
+        self.mask[r][c] = self.mask[r][c][4:]
 
-    def switch_color(self, coord: tuple[int, int], new_color: str):
+    def switch_color(self, r: int, c: int, new_color: str):
         """ Drops the top color and adds new color instead. """
-        self.drop_color(coord)
-        self.mask[coord[0]][coord[1]] = new_color + self.mask[coord[0]][coord[1]]
+        self.drop_color(r, c)
+        self.mask[r][c] = new_color + self.mask[r][c]
 
     def color_string(self, white_string: str, color: str) -> str:
         """ Converts string to given color. """
         return color + white_string + END_COLOR
 
-    def check_mask_color(self, coord: tuple[int, int], color: str) -> bool:
+    def check_mask_color(self, r: int, c: int, color: str) -> bool:
         """ Checks if given coord's mask color matches the given color. """
-        return self.mask[coord[0]][coord[1]][:5] == color
+        return self.mask[r][c][:5] == color
 
-    def color_cell(self, coord: tuple[int, int], color: str):
+    def color_cell(self, r: int, c: int, color: str):
         """ Changes the color of a given coord on the board. """
-        self.mask[coord[0]][coord[1]] = self.color_string(str(self.mask[coord[0]][coord[1]]), color)
+        self.mask[r][c] = self.color_string(str(self.mask[r][c]), color)
 
-    def expose(self, coord: tuple[int, int]):
+    def expose(self, r: int, c: int):
         """ Sets mask of this node its game board value. """
-        self.mask[coord[0]][coord[1]] = self.game[coord[0]][coord[1]]
+        self.mask[r][c] = self.game[r][c]
 
-    def color_change(self, coord: tuple[int, int], color: str):
+    def color_change(self, r: int, c: int, color: str):
         """ Wrapper for color cell to also print board and delay graph search. """
         # FIXME: should this be color_exposed????
-        self.color_cell(coord, color)  # for visualization purposes
+        self.color_cell(r, c, color)  # for visualization purposes
         self.print_board()  # for visualization purposes
         sleep(GRAPH_SEARCH_DELAY)
 
     # NOTE: changed function
-    def color_exposed(self, coord: tuple[int, int], color: str):
+    def color_exposed(self, r: int, c: int, color: str):
         """ First exposes node (game board to mask) and changes color. """
-        self.expose(coord)
-        self.color_change(coord, color)
+        self.expose(r, c)
+        self.color_change(r, c, color)
 
     # NOTE: OG
-    # def color_exposed(self, coord: tuple[int, int], color: str):
+    # def color_exposed(self, r: int, c: int, color: str):
     #     """ First exposes node (game board to mask) and changes color. """
-    #     self.expose(coord)
-    #     self.color_cell(coord, color)
-    #     self.color_change(coord, color)
+    #     self.expose(r, c)
+    #     self.color_cell(r, c, color)
+    #     self.color_change(r, c, color)
 
-    # def switch_node_color(self, coord: tuple[int, int], color: str):
+    # def switch_node_color(self, r: int, c: int, color: str):
     #     """ Drops current color and switches to new color, then refreshes. """
-    #     self.drop_color(coord)
-    #     self.color_change(coord, color)
+    #     self.drop_color(r, c)
+    #     self.color_change(r, c, color)
 
-    def underline_node(self, coord: tuple[int, int]):
+    def underline_node(self, r: int, c: int):
         """ Adds underline on top of given node's existing styling, then refreshes board. """
-        self.mask[coord[0]][coord[1]] = UNDERLINE + str(self.mask[coord[0]][coord[1]])  # underline the node
+        self.mask[r][c] = UNDERLINE + str(self.mask[r][c])  # underline the node
         self.print_board()  # refreshes board
 
-    def bold_node(self, coord: tuple[int, int]):
+    def bold_node(self, r: int, c: int):
         """ Adds bold on top of given node's existing styling, then refreshes board. """
-        self.mask[coord[0]][coord[1]] = BOLD + str(self.mask[coord[0]][coord[1]])  # bolds the node
+        self.mask[r][c] = BOLD + str(self.mask[r][c])  # bolds the node
         self.print_board()  # refreshes board
 
     # OVERWRITTEN DISPLAY MASK
