@@ -11,6 +11,10 @@ import sys
     but once it's completely clean and refactored I'm gonna make it into a GUI,
     so this will become solver, but CLI version. """
 
+""" Before removing all big comments, save a copy of this with all the descriptive comments
+and name it "annotated" cli_solver, because these comments could be really important
+and absolutely save my ass when I'm really stuck and save me from wasting my life debugging. """
+
 # == VISUALIZATION CONSTANTS ==
 MOVE_DELAY = 0.02#2  # how long to delay before the bot makes a move
 GRAPH_SEARCH_DELAY = 0.007  # how long to delay during a graph search step
@@ -67,7 +71,7 @@ class Solver(Minesweeper):
         pass # for island in self.islands:
         pass #     self.grind_chain(island[0])
 
-        # wall = self.dfs(*self.last_move)  # finds nearest number
+        # wall = self.find_nearest_chain(*self.last_move)  # finds nearest number
         # self.grind_chain(*wall)
         # because we had island scan fill up the lake, we already have the coords for the lake chain and don't need to dfs for it
         pass # self.grind_chain(*initial_lake)
@@ -107,7 +111,7 @@ class Solver(Minesweeper):
             before = time()  # times how long the round takes =====
 
             # finds nearest number/chain and start grinding the chain
-            chain = self.dfs(*self.last_move)
+            chain = self.find_nearest_chain(*self.last_move)
             self.grind_chain(*chain)
 
             # if there's nothing more to be explored, it's a win
@@ -129,7 +133,7 @@ class Solver(Minesweeper):
 
             """ walls = set()
             while True:
-                wall = self.bfs(*self.last_move)  # finds nearest number
+                wall = self.bfs_for_chain(*self.last_move)  # finds nearest number
                 if wall in walls:  # break if all numbers connected to this one have been solved
                     break
                 walls.add(wall)  # adds wall to visited walls
@@ -177,8 +181,8 @@ class Solver(Minesweeper):
             #         error_file.write(f'\n{str(e)}\n')
             #     print('~~ error logged to file ~~')
 
-    # BREADTH FIRST SEARCH ALGORITHM
-    def bfs(self, r, c) -> tuple[int, int]:
+    # CHAIN SEARCH ALGORITHMS, for finding the nearest wall/number
+    def bfs_for_chain(self, r, c) -> tuple[int, int]:
         """ Breadth first search around coord and returns coord of first wall encountered. """
         queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
         checked = set()  # hashset containing nodes already processed
@@ -241,8 +245,7 @@ class Solver(Minesweeper):
         self.bold_node((r, c))  # bolds the source node
         return coord_found
 
-    # DEPTH FIRST SEARCH ALGORITHM
-    def dfs(self, r, c) -> tuple[int, int]:
+    def find_nearest_chain(self, r, c) -> tuple[int, int]:
         """ Depth first search around coord and returns coord of first wall encountered. """
         stack = deque([(r, c)])  # use append to push, pop to pop
         checked = set()  # hashset containing nodes already processed
@@ -313,7 +316,7 @@ class Solver(Minesweeper):
         sleep(GRAPH_SEARCH_DELAY)
 
     def dfs_zero_fill(self, r, c) -> tuple[int, int]:
-        """ Breadth first search around coord but fills whole pool with zeros before returning coord. """
+        """ Depth first search around coord but fills whole pool with zeros before returning coord. """
         stack = deque([(r, c)])  # use append to push, popleft to pop
         checked = set()  # hashset containing nodes already processed
         checked.add((r, c))  # we already know this node is gonna be a 0 so no need to check it
@@ -517,7 +520,7 @@ class Solver(Minesweeper):
         return self.mask[r][c] == RED + self.chars['flag'] + END_COLOR
         # TODO: maybe try to store concatenated string somewhere instead of concatenating every time you wanna check
 
-    # MASK COLORING  TODO: refactor to color on separate solver mask
+    # COLORING FUNCTIONS  TODO: refactor to color on separate solver mask
     def wipe_color(self, coord: tuple[int, int]):
         """ Sets node's color back to white (FROM GAME VALUE) and refreshes board. """
         self.mask[coord[0]][coord[1]] = self.game[coord[0]][coord[1]]  # wipes color
@@ -762,31 +765,6 @@ class Solver(Minesweeper):
     def str_lmove(self) -> str:
         """ Returns last move but stringified. """
         return f'{self.last_action} {self.last_move[0]} {self.last_move[1]}'
-
-    def test_board(self):
-        """ Regenerates game board to same very empty board (allows repeated testing on constant board). """
-        self.mines = [[False]*self.cols]*self.rows  # base list, all False
-        # handles left and right sides
-        for r in range(self.rows):
-            self.mines[r][0] = True
-            self.mines[r][self.cols-1] = True
-        # handles top and bottom sides
-        self.mines[0] = [True]*self.cols
-        self.mines[self.cols-1] = [True]*self.cols
-        self.mine_count = self.area - ((self.rows-2)*(self.cols-2))
-
-        self.game = [[True, 5, 3, *[0]*(self.cols-6), 3, 5, True] for rowwwewaew in range(self.rows)]
-        self.game[1] = [True, *[5]*(self.cols-2), True]
-        self.game[self.cols-2] = [True, *[5]*(self.cols-2), True]
-        self.game[2] = [True, 5, *[3]*(self.cols-4), 5, True]
-        self.game[self.cols-3] = [True, 5, *[3]*(self.cols-4), 5, True]
-        self.game[0] = [True]*self.cols
-        self.game[self.cols-1] = [True]*self.cols
-
-        # rest is the regen_board() code but without the mine generation part because that's the part we're taking control of
-        self.mask = self.gen_mask_board()  # the board as seen by the user
-        # self.display_game()
-        self.revealed_count = 0
 
 def get_options() -> tuple[int, int, float]:
     """ Gets game options: rows, columns, and mine probability. """
