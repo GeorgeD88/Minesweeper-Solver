@@ -143,6 +143,10 @@ class Minesweeper:
     def gen_mask_board(self) -> list[list]:
         """ Generates a mask board to display to the user (tiles, flags, etc.). """
         self.revealed_count = 0  # keeps count of how many tiles were revealed (not flagged)
+        return self.gen_boolean_matrix()
+
+    def gen_boolean_matrix(self) -> list[list]:
+        """ Generates a boolean matrix of False values. """
         return [[False for c in range(self.cols)] for r in range(self.rows)]
 
     def find_empty_drop(self, row, col):
