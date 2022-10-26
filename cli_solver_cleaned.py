@@ -110,6 +110,7 @@ class Solver(Minesweeper):
                 self.maybe(row, col)
             space()
 
+    # ===== MAIN SOLVING ALGORITHMS =====
     def find_nearest_chain(self, r, c) -> tuple[int, int]:
         """ Depth first search from given coord and returns coord of first number/chain encountered. """
         stack = deque([(r, c)])  # use append to push, pop to pop
@@ -129,74 +130,21 @@ class Solver(Minesweeper):
 
             # add adjacent nodes
             for adj in self.adjacent_nodes(curr):
-                """ that means we bumped into an already completed chain,
+                """ NOTE: that means we bumped into an already completed chain,
                 which is something we're gonna have to deal with in V2,
                 maybe it gets fixed with lake scan. """
-                if self.is_solved(*adj):
+                if self.is_solved(*adj):  # NOTE: temp to catch the error but doesn't fix it!!
                     print('chain already solved, avoiding')
                     continue
+
                 if adj not in discovered:
                     discovered.add(adj)
                     stack.append(adj)
 
-    def dfs_zero_fill(self, r, c) -> tuple[int, int]:
-        """ Depth first search around coord but fills whole pool with zeros before returning coord. """
-        stack = deque([(r, c)])  # use append to push, popleft to pop
-        checked = {(r, c)}  # hashset containing nodes already processed
-        self.color_exposed(r, c, GREEN)  # marks the source node green
-        coord_found = None
-
-        while len(stack) > 0:  # while stack not empty
-            curr = stack.pop()
-            self.color_exposed(*curr, PURPLE)  # sets current node to purple
-
-            if curr not in checked:  # if this node hasn't been checked yet
-                # if we hit a number, return its coords
-                if not coord_found and self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(*curr, RED)  # sets destination node to red
-                    coord_found = curr
-                checked.add(curr)
-
-            if self.game[curr[0]][curr[1]] is int and self.game[curr[0]][curr[1]] != 0:
-                self.wipe_color(*curr)
-            else:
-                self.color_exposed(*curr, CYAN)  # sets processed node to cyan
-
-            # check next breadth of nodes
-            for adj in self.adjacent_nodes(curr):
-                # the bounds makes sure it doesn't try searching outside the board
-                if coord_found and self.game[curr[0]][curr[1]] is int and self.game[curr[0]][curr[1]] != 0:
-                    continue
-                elif adj not in checked and adj not in stack and self.bounds(*adj):
-                    stack.append(adj)
-
-        self.color_exposed(*coord_found, RED)  # sets destination node to red
-        self.bold_node(r, c)  # bolds the source node
-        return coord_found
-
-    def mark_wall(self, r: int, c: int):
-        """ Runs BFS on given coord and marks the whole wall as checked. """
-        queue = deque([(r, c)])
-        marked = set()
-
-        while len(queue) > 0:
-            curr = queue.popleft()
-
-            if not curr not in marked:
-                marked.add(curr)
-
-            for adj in self.adjacent_nodes(curr):
-                if adj not in queue and adj not in marked:
-                    queue.append(adj)
-
-        return marked
-
-    # ===== MAIN SOLVING ALGORITHMS =====
     def grind_chain(self, r: int, c: int):
         """ Keeps running follow chain on number until the chain is completely solved. """
         last_progress = -1
         total_progress = self.flag_tracker + self.solved_count
-        # iter_counter = 1  # DELETE
 
         # stagnation detector
         while total_progress > last_progress:
@@ -204,13 +152,8 @@ class Solver(Minesweeper):
             self.follow_chain(r, c)
             total_progress = self.flag_tracker + self.solved_count  # current total progress is calculated
 
-            # DELETE --,
-            # iter_counter += 1
-        # input(f'last progress: {last_progress}\nupdated progress: {total_progress}')
-        input('finished grinding chain')
-
     def follow_chain(self, r: int, c: int):
-        """ Follow chain of numbers (using bfs) starting at given coord and process each node. """
+        """ Follow chain of numbers (using bfs) starting at given coord and simple solve each node. """
         queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
         discovered = {(r, c)}  # hashset containing nodes already discovered
 
@@ -219,61 +162,29 @@ class Solver(Minesweeper):
             curr = queue.popleft()  # pop next node to process
             self.color_exposed(*curr, PURPLE)  # colors current node purple when it's first popped from the queue
 
-            """ when processing a node, we will be traversing nodes that have been processed before
-            in past calls of the follow chain function. those nodes may or may not have been fully solved.
-            so first we have to check for that before we try to solving. """
-            # process node ===
-
-            # if tile hasn't already been (marked as) solved, try solving it
+            # if tile hasn't already been solved, try solving it
             if not self.is_solved(*curr):
-                """ NOTE: we ensure tile isn't solved prior to running simple solve,
-                so don't check that within simple solve and that function should only be
-                to solve a tile further towards completion.
-                remember tho, this tile could've been solved by the actions of a tile next to it but not marked as solved,
-                so make note of that and try to include that when considering efficiency. """
-
                 # colors node green if simple solve says it was able to fully solve, else colors yellow
                 self.color_exposed(*curr, GREEN if self.simple_solve(*curr) else YELLOW)
-
             # else tile was already solved so colors it back to green (cause it was turned purple when popped from queue)
             else:
+                # this happens because the tile was solved during a previous run of follow chain
                 self.color_exposed(*curr, GREEN)
-                # I think I specifically called this function 'exposed' so that I color the original value from scratch and don't add color around an already colored node and end up storing a long string for no reason.
 
-            # add adjacent nodes to queue ===
             for adj in self.adjacent_nodes(curr):
-                """ NOTE in our floodfill algorithms, we avoid tiles that aren't new because we don't want to reveal again,
-                but here we're not doing anything with revealing and we're actually traversing revealed nodes.
-                now, the reason we don't avoid solved nodes is because we need to traverse over them to reach nodes
-                that haven't been solved. we only want to avoid nodes that have already been added to the queue,
-                which is the only condition for BFS, and then we are adding a few conditions to make sure we only traverse
-                over numbers, so that we're staying on a chain of numbers. """
-                if adj not in discovered and self.is_chain(*adj) and not self.is_new(*adj):# and self.mines[adj[0]][adj[1]] == False: # and is not a mine (not necessary to check if it's already confirmed to be an integer)
-                    # if self.mines[adj[0]][adj[1]] is True:
-                    #     input('mine slipped through: ' + str(self.offset_coord(adj, (1, 1))))
                 # this is different than regular BFS because we're only gonna BFS over certain nodes (ints over 0)
+                if adj not in discovered and self.is_chain(*adj) and not self.is_new(*adj):
                     discovered.add(adj)
                     queue.append(adj)
 
     def simple_solve(self, r: int, c: int) -> bool:
         """ Runs the simple solving algorithm and returns whether tile was solved. """
-        # NOTE: traverse adjacent nodes here to count crucial info (necessary operation/computation)
-        unrevealed_count, flag_count = self.count_unrevealedNflags(r, c)
-        # mine count - flag count = the actual number of mines left to find
-        mines_left = self.game[r][c] - flag_count
-
-        """ NOTE: should only traverse adjacent nodes once more in this function,
-        any more would be extra unnecessary computation and an inefficiency that should be fixed. """
-
-        """ NOTE: if there are both no mines left and no more unrevealed tiles,
-        then this is fully solved but was not marked on the solved boolean matrix.
-        This can only happen (I think) if it was solved by the actions of an adjacent tile,
-        so it would not have been marked as solved by the current tile.
-        I MOVED THIS CASE NESTED UNDER THE FIRST CONDITIONAL BUT THIS BLOCK COMMENT TOO BIG TO MOVE DOWN TOO. """
+        unrevealed_count, flag_count = self.count_tiles(r, c)
+        mines_left = self.game[r][c] - flag_count  # the actual number of mines left to find
 
         # if mines left and unrevealed count match, then we know all unrevealed tiles are mines
         if mines_left == unrevealed_count:  # OLD NOTE: mines_left/unrevealed_count is equal to probability that mine is in that cell, which is something I may need to use later
-            # if they're both 0, then they're finished and just need to be marked as solved
+            # if they're both 0, then it was already solved and just need to be marked as solved
             if mines_left == 0:
                 self.solved[r][c] = True
                 self.solved_count += 1
@@ -286,9 +197,6 @@ class Solver(Minesweeper):
                     self.flag_tracker += 1
                     self.color_change(sr, sc, RED)  # marks flag red
 
-            # NOTE: I think this conditional is completely useless, because we just determined that we know the rest of the tiles just need to be flagged
-            # if self.determine_if_solved(r, c):  # NOTE: this was extra
-
         # no more mines left but still some unrevealed tiles, then reveals all unrevealed
         elif mines_left == 0:
             for sr, sc in self.adjacent_nodes((r, c)):
@@ -298,12 +206,12 @@ class Solver(Minesweeper):
         else:
             return False
 
-        # returns True here cause most cases are for being able to solve, and for the one that can't be solved, it returns False on its own
+        # returns True here for all the cases that were able to solve
         self.solved[r][c] = True
         self.solved_count += 1
         return True
 
-    def count_unrevealedNflags(self, r: int, c: int) -> tuple[int, int]:
+    def count_tiles(self, r: int, c: int) -> tuple[int, int]:
         # TODO: try to find better name for this function
         """ Returns number of unrevealed tiles and flags. """
         unrevealed_count = 0
@@ -315,11 +223,11 @@ class Solver(Minesweeper):
                 unrevealed_count += 1
             # increments flagged counter
             elif self.is_flag(sr, sc):
-                # FIXME: considering making a boolean matrix that keeps track of tiles flagged by the bot
                 flagged_count += 1
 
         return unrevealed_count, flagged_count
 
+    # ===== SOLVING ALGORITHMS HELPER FUNCTIONS =====
     def is_solved(self, r: int, c: int) -> bool:
         """ Returns whether given coordinate is marked as solved. """
         return self.solved[r][c]
@@ -340,10 +248,10 @@ class Solver(Minesweeper):
 
     def is_flag(self, r: int, c: int) -> bool:
         """ Returns whether given tile was flagged by the bot. """
-        return self.solver_mask[r][c] == RED + self.chars['flag'] + END_COLOR
-        # TODO: maybe try to store concatenated string somewhere instead of concatenating every time you wanna check
+        # return self.solver_mask[r][c] == RED + self.chars['flag'] + END_COLOR
+        return self.mask[r][c] == self.chars['flag']  # checks for flag in the game mask
 
-    # COLORING FUNCTIONS  TODO: refactor to color on separate solver mask
+    # ===== COLORING/SOLVER MASK FUNCTIONS =====
     def wipe_color(self, r: int, c: int):
         """ Sets node's color back to white (FROM GAME VALUE) and refreshes board. """
         self.solver_mask[r][c] = self.game[r][c]  # wipes color
@@ -385,23 +293,10 @@ class Solver(Minesweeper):
         self.print_board()  # for visualization purposes
         sleep(GRAPH_SEARCH_DELAY)
 
-    # NOTE: changed function
     def color_exposed(self, r: int, c: int, color: str):
         """ First exposes node (game board to mask) and changes color. """
         self.expose(r, c)
         self.color_change(r, c, color)
-
-    # NOTE: OG
-    # def color_exposed(self, r: int, c: int, color: str):
-    #     """ First exposes node (game board to mask) and changes color. """
-    #     self.expose(r, c)
-    #     self.color_cell(r, c, color)
-    #     self.color_change(r, c, color)
-
-    # def switch_node_color(self, r: int, c: int, color: str):
-    #     """ Drops current color and switches to new color, then refreshes. """
-    #     self.drop_color(r, c)
-    #     self.color_change(r, c, color)
 
     def underline_node(self, r: int, c: int):
         """ Adds underline on top of given node's existing styling, then refreshes board. """
@@ -413,10 +308,9 @@ class Solver(Minesweeper):
         self.solver_mask[r][c] = BOLD + str(self.solver_mask[r][c])  # bolds the node
         self.print_board()  # refreshes board
 
-    # OVERWRITTEN DISPLAY MASK
+    # DISPLAY MASK (overwrites display mask from Minesweeper parent class)
     def display_mask(self):
         """ Overwrites display mask to implement use of separate solver mask. """
-
         # == X-AXIS ==
         constructed = '   '
 
@@ -432,7 +326,6 @@ class Solver(Minesweeper):
         constructed += '\n'
 
         # == Y-AXIS & BOARD ==
-
         for r in range(self.rows):
 
             constructed += f'{self.rguide[r]}--'  # prints the guide: number + tick
@@ -457,20 +350,20 @@ class Solver(Minesweeper):
                 elif tile == 0:  # empty tile (zero)
                     constructed += self.chars['zero']
                 elif isinstance(tile, int):  # number tile
-                    # REMEMBER, boolean also gets called an int
+                    # NOTE: REMEMBER, boolean also gets called an int in isinstance
                     constructed += str(tile)
                 elif isinstance(tile, str):  # should only happen if altered by solver for color
                     constructed += tile
-                    # print('peepee')
 
                 # this shouldn't activate for a solver display because it would've been caught in the solver mask layer
                 else:  # other chars: flag, maybe, etc.
                     constructed += tile
-                    # print('poopoo')
+                    input('poopoo')
                 constructed += ' '  # adds space between every character added
 
             constructed += '\n'  # adds new line at end of the row
 
+        # NOTE: trying stdout incase it prints faster and stutters less
         # print(constructed)
         sys.stdout.write(constructed)
 
@@ -596,7 +489,6 @@ def get_options() -> tuple[int, int, float]:
     # use default probability if it wasn't given
     probability = DEFAULT_MINE_CHANCE if len(options_input) < 3 else float(options_input[2])
     # ensures mine probability isn't too high and causes errors with empty drop
-    # FIX: ERROR
     while probability > 0.28:
         print('\nmine probability too high, may cause errors\n')
         options_input = input('format: rows  columns  probability(optional, max 0.28)\n').split()
@@ -674,7 +566,6 @@ def lose_message():
 """)
 
 def init_solver():
-    # welcome_message()
     print_bot_title()  # for dev testing
     print('           ', end='')  # prints a spacer to push get options message under welcome message
     rows, cols, prob = get_options()
