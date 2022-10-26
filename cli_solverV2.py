@@ -482,27 +482,27 @@ class Solver(Minesweeper):
 
     def is_flag(self, r: int, c: int) -> bool:
         """ Returns whether given tile was flagged by the bot. """
-        return self.mask[r][c] == RED + self.chars['flag'] + END_COLOR
+        return self.solver_mask[r][c] == RED + self.chars['flag'] + END_COLOR
         # TODO: maybe try to store concatenated string somewhere instead of concatenating every time you wanna check
 
     # COLORING FUNCTIONS  TODO: refactor to color on separate solver mask
     def wipe_color(self, r: int, c: int):
         """ Sets node's color back to white (FROM GAME VALUE) and refreshes board. """
-        self.mask[r][c] = self.game[r][c]  # wipes color
+        self.solver_mask[r][c] = self.game[r][c]  # wipes color
         self.print_board()  # for visualization purposes
 
     def drop_effect(self, r: int, c: int):
         """ Removes the extra effect but not the color (ex. removes bold). """
-        self.mask[r][c] = self.mask[r][c][4:]
+        self.solver_mask[r][c] = self.solver_mask[r][c][4:]
 
     def drop_color(self, r: int, c: int):
         """ Removes the top color (ex. used for switching colors). """
-        self.mask[r][c] = self.mask[r][c][4:]
+        self.solver_mask[r][c] = self.solver_mask[r][c][4:]
 
     def switch_color(self, r: int, c: int, new_color: str):
         """ Drops the top color and adds new color instead. """
         self.drop_color(r, c)
-        self.mask[r][c] = new_color + self.mask[r][c]
+        self.solver_mask[r][c] = new_color + self.solver_mask[r][c]
 
     def color_string(self, white_string: str, color: str) -> str:
         """ Converts string to given color. """
@@ -510,15 +510,15 @@ class Solver(Minesweeper):
 
     def check_mask_color(self, r: int, c: int, color: str) -> bool:
         """ Checks if given coord's mask color matches the given color. """
-        return self.mask[r][c][:5] == color
+        return self.solver_mask[r][c][:5] == color
 
     def color_cell(self, r: int, c: int, color: str):
         """ Changes the color of a given coord on the board. """
-        self.mask[r][c] = self.color_string(str(self.mask[r][c]), color)
+        self.solver_mask[r][c] = self.color_string(str(self.mask[r][c]), color)
 
     def expose(self, r: int, c: int):
         """ Sets mask of this node its game board value. """
-        self.mask[r][c] = self.game[r][c]
+        self.solver_mask[r][c] = self.game[r][c]
 
     def color_change(self, r: int, c: int, color: str):
         """ Wrapper for color cell to also print board and delay graph search. """
@@ -547,12 +547,12 @@ class Solver(Minesweeper):
 
     def underline_node(self, r: int, c: int):
         """ Adds underline on top of given node's existing styling, then refreshes board. """
-        self.mask[r][c] = UNDERLINE + str(self.mask[r][c])  # underline the node
+        self.solver_mask[r][c] = UNDERLINE + str(self.solver_mask[r][c])  # underline the node
         self.print_board()  # refreshes board
 
     def bold_node(self, r: int, c: int):
         """ Adds bold on top of given node's existing styling, then refreshes board. """
-        self.mask[r][c] = BOLD + str(self.mask[r][c])  # bolds the node
+        self.solver_mask[r][c] = BOLD + str(self.solver_mask[r][c])  # bolds the node
         self.print_board()  # refreshes board
 
     # OVERWRITTEN DISPLAY MASK
@@ -589,6 +589,7 @@ class Solver(Minesweeper):
                 # first checks if solver mask has traversed this area
                 if self.solver_mask[r][c] is not False:
                     constructed += self.solver_mask[r][c]
+                    constructed += ' '  # adds space between every character added
                     continue
 
                 # and continues to regular mask if solver mask was empty there
@@ -625,7 +626,7 @@ class Solver(Minesweeper):
         """ Checks if the coord chosen in a win or loss before revealing. """
         # checks if choice was a mine (and mask is unexplored) and ends game
         if self.isloss(r, c):
-            self.mask[r][c] = self.color_string(self.chars['mine'], RED)
+            self.solver_mask[r][c] = self.color_string(self.chars['mine'], RED)
             if self.losing_procedure() == 'q':
                 exit()# return 'q'
             self.start()
@@ -684,8 +685,8 @@ class Solver(Minesweeper):
                 tile = self.game[r][c]
                 if tile is True:  # mine
                     print(self.chars['mine'], end=' ')
-                elif isinstance(self.mask[r][c], str):  # should only happen if altered by solver for color
-                    print(self.mask[r][c], end=' ')
+                elif isinstance(self.solver_mask[r][c], str):  # should only happen if altered by solver for color
+                    print(self.solver_mask[r][c], end=' ')
                 elif tile == 0:  # empty tile (zero)
                     print(self.chars['zero'], end=' ')
                 elif type(tile) is int:  # number tile
