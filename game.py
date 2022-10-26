@@ -98,6 +98,23 @@ class Minesweeper:
 
         return mine_board
 
+    # TODO: mine board generation by number of mines
+    # def gen_mine_board_by_count(self, mines: int) -> list[list]:
+    #     """ Generates a mine board (boolean matrix) based on desired mine count. """
+    #     self.mine_count = mines  # stores total number of mines
+    #     mine_board = [[False for c in range(self.cols)] for r in range(self.rows)]
+
+    #     # generate 'mines' number of random coords
+    #     for _ in range(mines):
+    #         # NOTE: this is a do while. you write the do code, then you exit when it becomes opposite of your desire while
+    #         while True:
+    #             rr, cc = random.randrange(self.rows), random.randrange(self.cols)
+    #             if mine_board[rr][cc] is False:
+    #                 mine_board[rr][cc] = True
+    #                 break
+
+    #     return mine_board
+
     def gen_game_board(self) -> list[list]:
         """ Generates a game board by traversing copy of mine board and writing mine counts. """
         game_board = deepcopy(self.mines)  # deep copies mine board to write over it
