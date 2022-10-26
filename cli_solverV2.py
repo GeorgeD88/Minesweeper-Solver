@@ -29,8 +29,8 @@ class Solver(Minesweeper):
 
     def __init__(self, rows: int, cols: int, mine_spawn: float, chars_config: dict = None):
         super().__init__(rows, cols, mine_spawn, chars_config)
-        self.solver_mask = self.gen_mask_board()  # visual overlay that keeps track of the solver's progress
-        self.solved = self.gen_mask_board()  # stores a boolean matrix of the solved tiles
+        self.solver_mask = self.gen_boolean_matrix()  # visual overlay that keeps track of the solver's progress
+        self.solved = self.gen_boolean_matrix()  # stores a boolean matrix of the solved tiles
         self.solved_count = 0  # keeps count of number of solved tiles
         self.flag_tracker = 0  # keeps count of number of flags
         self.last_action = None  # holds last action played, NOTE: I don't think this is relevant for solver
@@ -109,28 +109,6 @@ class Solver(Minesweeper):
             if self.flag_tracker == self.mine_count:
                 self.win_procedure()
                 input('poop')
-            # wall = self.bfs_zero_fill(*self.last_move)  # finds nearest number
-            # last_border_touched = set()
-            # border_touched = self.mark_wall(*wall)
-            # while len(border_touched) > len(last_border_touched):
-            #     if not wall:  # didn't hit any number means board is empty:
-            #         self.win_procedure()
-            #         exit()
-            #     self.grind_chain(*wall)
-            #     last_border_touched = border_touched
-            #     wall = self.new_dfs(*self.last_move, last_border_touched)  # finds nearest number
-            #     border_touched = self.mark_wall(*wall)
-            #     # wall, border_touched = self.bfs_zero_fill(*self.last_move)  # finds nearest number
-
-            """ walls = set()
-            while True:
-                wall = self.bfs_for_chain(*self.last_move)  # finds nearest number
-                if wall in walls:  # break if all numbers connected to this one have been solved
-                    break
-                walls.add(wall)  # adds wall to visited walls
-                self.grind_chain(*wall)
-                print('chain: GRINDED')
-                # exit() """
 
             after = time()  # ends round timer =====
 
@@ -146,7 +124,8 @@ class Solver(Minesweeper):
             if action == 'r':
                 # checks if choice was a mine (and mask is unexplored) and ends game
                 if self.isloss(row, col):
-                    self.mask[row][col] = self.color_string(self.chars['mine'], RED)
+                    # NOTE: this might cause errors, cause it won't run for a long time so it won't be tested.
+                    self.solver_mask[row][col] = self.color_string(self.chars['mine'], RED)
                     if self.losing_procedure() == 'q':
                         return 'q'
                     self.start()
@@ -508,7 +487,7 @@ class Solver(Minesweeper):
 
     def is_flag(self, r: int, c: int) -> bool:
         """ Returns whether given tile was flagged by the bot. """
-        return self.mask[r][c] == RED + self.chars['flag'] + END_COLOR
+        return self.solver_mask[r][c] == RED + self.chars['flag'] + END_COLOR
         # TODO: maybe try to store concatenated string somewhere instead of concatenating every time you wanna check
 
     # COLORING FUNCTIONS  TODO: refactor to color on separate solver mask
