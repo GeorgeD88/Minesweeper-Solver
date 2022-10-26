@@ -36,11 +36,12 @@ class Solver(Minesweeper):
         self.solved = self.gen_boolean_matrix()  # stores a boolean matrix of the solved tiles
         self.solved_count = 0  # keeps count of number of solved tiles
         self.flag_tracker = 0  # keeps count of number of flags
-        self.last_action = None  # holds last action played, NOTE: I don't think this is relevant for solver
+        self.last_action = None  # holds last action played
         self.last_move = (None, None)  # keeps track of last coord played
 
     def solve(self):
         """ Starts solver/game by running start and update function. """
+        self.starting = time()
         self.start()
         self.update()
 
@@ -89,7 +90,6 @@ class Solver(Minesweeper):
             if action == 'r':
                 # checks if choice was a mine (and mask is unexplored) and ends game
                 if self.isloss(row, col):
-                    # NOTE: this might cause errors, cause it won't run for a long time so it won't be tested.
                     self.solver_mask[row][col] = self.color_string(self.chars['mine'], RED)
                     if self.losing_procedure() == 'q':
                         return 'q'
@@ -288,7 +288,6 @@ class Solver(Minesweeper):
 
     def color_change(self, r: int, c: int, color: str):
         """ Wrapper for color cell to also print board and delay graph search. """
-        # FIXME: should this be color_exposed????
         self.color_cell(r, c, color)  # for visualization purposes
         self.print_board()  # for visualization purposes
         sleep(GRAPH_SEARCH_DELAY)
@@ -395,7 +394,9 @@ class Solver(Minesweeper):
     def losing_procedure(self):
         """ Runs losing procedure (triggered when mine is hit). """
         space()
+        duration = time() - self.starting
         self.display_color_game()
+        print(f'algorithm took {duration} seconds to run, nice 😈 genius')
         lose_message()
         if self.end_game_procedure() == 'q':
             return 'q'
@@ -403,7 +404,9 @@ class Solver(Minesweeper):
     def win_procedure(self):
         """ Runs winning procedure (triggered when mine is hit). """
         space()
+        duration = time() - self.starting
         self.display_color_game()
+        print(f'algorithm took {duration} seconds to run, nice 😈 genius')
         win_message()
         if self.end_game_procedure() == 'q':
             return 'q'
