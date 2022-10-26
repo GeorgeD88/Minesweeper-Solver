@@ -44,42 +44,6 @@ class Solver(Minesweeper):
         self.start()
         self.update()
 
-    def solveV2(self):
-        """ MS-Solver Algorithm V2, the whole algorithm is a linear list of operations. """
-
-        # [1] 🎲📍 Random drop to open up the board
-        """ Simply drop in a random place to open up the board and begin the algorithm. """
-        self.start()
-
-        # [2] 🔎🏝️ Scan initial lake for islands (*island scan*)
-        """ As the algorithm progresses, I will have to make an algorithm to detect
-        when we open up a new lake, and whenever a lake is opened, run island scan on it
-        and keep track of all the islands to make sure we traverse them later. """
-        pass # initial drop will always open up a lake, so need to check for lake
-        pass # self.island_scan()  # this will store islands (maybe in class variable)
-        # make sure to store initial lake chain coords
-
-        # [3] ⛏️⛓️ Phase 1 simple solving: Iterate through the marked chains (lake and island borders) and run *grind chain* on them
-        """ I call this phase 1 because this is the first wave of traversing and solving the board,
-        and you only use simple solving in this phase. Also run *island scan* every time you open up a new lake. """
-        pass # for island in self.islands:
-        pass #     self.grind_chain(island[0])
-
-        # wall = self.find_nearest_chain(*self.last_move)  # finds nearest number
-        # self.grind_chain(*wall)
-        # because we had island scan fill up the lake, we already have the coords for the lake chain and don't need to dfs for it
-        pass # self.grind_chain(*initial_lake)
-
-        # [4] 🕵️📈 Phase 2 pattern recognition/breaking stagnation: Traverse board looking for patterns to open up new info.
-        """ Traverse the board looking for patterns. If a pattern is recognized, use the info you get from the pattern to reveal/flag more tiles,
-        and then check if you're able to solve any of the surrounding tiles now (meaning stagnation was broken). If so, run grind chain from there
-        and it will BFS out solving more tiles from the information discovered. """
-        pass # find patterns*
-        # within find_patterns, whenever a pattern is found:
-        pass # after revealing/flagging using new info from pattern, check if *stagnation was broken*
-             # by checking if you can simple solve the pattern tiles or surroundings
-             # if you can then stagnation was broken so run a simple solve *grind chain* starting at the pattern.
-
     def start(self):
         """ Runs startup code for game (first iteration/move of the game). """
         space()
@@ -97,8 +61,6 @@ class Solver(Minesweeper):
     def update(self):
         """ Runs solving loop. """
         while True:
-            # catches all errors and logs them to error.txt so game doesn't crash
-            # try:
             self.round_print()
             print()
 
@@ -148,141 +110,34 @@ class Solver(Minesweeper):
                 self.maybe(row, col)
             space()
 
-            # except Exception as e:
-            #     with open('slver_error_log.txt', 'a+') as error_file:
-            #         error_file.write('LINE NUMBER: ' + str(e.__traceback__.tb_lineno))
-            #         error_file.write(f'\n{str(e)}\n')
-            #     print('~~ error logged to file ~~')
-
-    # CHAIN SEARCH ALGORITHMS, for finding the nearest wall/number
-    def bfs_for_chain(self, r, c) -> tuple[int, int]:
-        """ Breadth first search around coord and returns coord of first wall encountered. """
-        queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
-        checked = {(r, c)}  # hashset containing nodes already processed
-        self.color_exposed(r, c, GREEN)  # marks the source node green
-
-        while len(queue) > 0:  # while queue not empty
-            curr = queue.popleft()
-            self.color_exposed(*curr, PURPLE)  # sets current node to purple
-
-            if curr not in checked:  # if this node hasn't been checked yet
-                # if we hit a number, return its coords
-                if self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(*curr, RED)  # sets destination node to red
-                    self.bold_node(r, c)  # bolds the source node
-                    return curr
-                checked.add(curr)
-
-            self.color_exposed(*curr, CYAN)  # sets processed node to cyan
-
-            # check next breadth of nodes
-            for adj in self.adjacent_nodes(curr):
-                # the bounds makes sure it doesn't try searching outside the board
-                if adj not in checked and adj not in queue and self.bounds(*adj):
-                    queue.append(adj)
-
-    def bfs_zero_fill(self, r, c) -> tuple[int, int]:
-        """ Breadth first search around coord but fills whole pool with zeros before returning coord. """
-        queue = deque([(r, c)])  # use append to enqueue, popleft to dequeue
-        checked = {(r, c)}  # hashset containing nodes already processed
-        self.color_exposed(r, c, GREEN)  # marks the source node green
-        coord_found = None
-
-        while len(queue) > 0:  # while queue not empty
-            curr = queue.popleft()
-            self.color_exposed(*curr, PURPLE)  # sets current node to purple
-
-            if curr not in checked:  # if this node hasn't been checked yet
-                # if we hit a number, return its coords
-                if not coord_found and self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(*curr, RED)  # sets destination node to red
-                    coord_found = curr
-                checked.add(curr)
-
-            if isinstance(self.game[curr[0]][curr[1]], int) and self.game[curr[0]][curr[1]] != 0:
-                self.wipe_color(*curr)
-            else:
-                self.color_exposed(*curr, CYAN)  # sets processed node to cyan
-
-            # check next breadth of nodes
-            for adj in self.adjacent_nodes(curr):
-                # the bounds makes sure it doesn't try searching outside the board
-                if coord_found and self.game[curr[0]][curr[1]] is int and self.game[curr[0]][curr[1]] != 0:
-                    continue
-                elif adj not in checked and adj not in queue and self.bounds(*adj):
-                    queue.append(adj)
-
-        self.color_exposed(*coord_found, RED)  # sets destination node to red
-        self.bold_node(r, c)  # bolds the source node
-        return coord_found
-
     def find_nearest_chain(self, r, c) -> tuple[int, int]:
-        """ Depth first search around coord and returns coord of first wall encountered. """
+        """ Depth first search from given coord and returns coord of first number/chain encountered. """
         stack = deque([(r, c)])  # use append to push, pop to pop
-        checked = {(r, c)}  # hashset containing nodes already processed
+        discovered = set((r, c))  # hashset containing nodes already processed
         self.color_exposed(r, c, GREEN)  # marks the source node green
 
         while len(stack) > 0:  # while stack not empty
             curr = stack.pop()
             self.color_exposed(*curr, PURPLE)  # sets current node to purple
 
-            if curr not in checked:  # if this node hasn't been checked yet
-                # if we hit a number, return its coords
-                if self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(*curr, RED)  # sets destination node to red
-                    return curr
-                checked.add(curr)
+            # process node
+            # NOTE: we don't check if it's integer cause the first thing we'll see after 0 HAS to be an integer
+            if self.game[curr[0]][curr[1]] != 0:  # if we hit a number (chain), return its coords
+                self.color_exposed(*curr, RED)  # sets destination node to red
+                return curr
+            self.color_exposed(*curr, CYAN)  # sets node to cyan once it's finished processing
 
-            self.color_exposed(*curr, CYAN)  # sets processed node to cyan
-
-            # checks neighbors
+            # add adjacent nodes
             for adj in self.adjacent_nodes(curr):
-                # that means this bumped into an already completed wall
-                if not self.bounds(*adj):
-                    continue
+                """ that means we bumped into an already completed chain,
+                which is something we're gonna have to deal with in V2,
+                maybe it gets fixed with lake scan. """
                 if self.is_solved(*adj):
-                    input('chick chick, BOOOMMM')
-                    return adj
-                if adj not in checked and adj not in stack:
-                    stack.append(adj)
-
-        # bolds source node and updates display
-        self.bold_node(r, c)
-        sleep(GRAPH_SEARCH_DELAY)
-
-    def new_dfs(self, r, c, ) -> tuple[int, int]:
-        """ Depth first search around coord and returns coord of first wall encountered. """
-        stack = deque([(r, c)])  # use append to push, pop to pop
-        checked = set()  # hashset containing nodes already processed
-        self.color_exposed(r, c, GREEN)  # marks the source node green
-
-        while len(stack) > 0:  # while stack not empty
-            curr = stack.pop()
-            self.color_exposed(*curr, PURPLE)  # sets current node to purple
-
-            if curr not in checked:  # if this node hasn't been checked yet
-                # if we hit a number, return its coords
-                if self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(*curr, RED)  # sets destination node to red
-                    return curr
-                checked.add(curr)
-
-            self.color_exposed(*curr, CYAN)  # sets processed node to cyan
-
-            # checks neighbors
-            for adj in self.adjacent_nodes(curr):
-                # that means this bumped into an already completed wall
-                if not self.bounds(*adj):
+                    print('chain already solved, avoiding')
                     continue
-                if self.is_solved(*adj):
-                    input('chick chick, BOOOMMM')
-                    return adj
-                if adj not in checked and adj not in stack:
+                if adj not in discovered:
+                    discovered.add(adj)
                     stack.append(adj)
-
-        # bolds source node and updates display
-        self.bold_node(r, c)
-        sleep(GRAPH_SEARCH_DELAY)
 
     def dfs_zero_fill(self, r, c) -> tuple[int, int]:
         """ Depth first search around coord but fills whole pool with zeros before returning coord. """
