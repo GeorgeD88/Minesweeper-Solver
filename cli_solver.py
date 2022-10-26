@@ -15,6 +15,9 @@ import sys
 and name it "annotated" cli_solver, because these comments could be really important
 and absolutely save my ass when I'm really stuck and save me from wasting my life debugging. """
 
+""" Actually since after this file we still have the cli_solverV2,
+this file could be the annotated version. """
+
 # == VISUALIZATION CONSTANTS ==
 MOVE_DELAY = 0.02#2  # how long to delay before the bot makes a move
 GRAPH_SEARCH_DELAY = 0.007  # how long to delay during a graph search step
