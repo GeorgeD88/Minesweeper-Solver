@@ -1,4 +1,4 @@
-from game import Minesweeper
+from cli_game import Minesweeper
 from random import randint
 import math
 
