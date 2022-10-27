@@ -142,6 +142,11 @@ class Minesweeper:
                 # NOTE: change this to change which flood fill algorithm is used for the game
                 self.level_order_fill(r, c) #self.bfs_fill(r, c)
 
+    def reveal_procedure(self, r, c):
+        """ Tries revealing and handles win/loss logic here. """
+        # NOTE: would only be used by user input versions, not solver, because solver makes moves that won't lose
+        pass
+
     # FLOOD FILL ALGORITHMS
     def floodfill(self, r, c):
         """ Flood fill algorithm: recursively reveals tiles on the board. """
