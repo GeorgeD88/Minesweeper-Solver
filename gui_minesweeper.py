@@ -1,5 +1,6 @@
 # interface
 import pygame
+import ptext
 from gui_colors import *
 from constants import *
 
@@ -43,11 +44,23 @@ class Node:
 
     def is_unrevealed(self) -> bool:
         """ Returns whether node is unrevealed/unexplored. """
-        return self.state == self.parent.UNREVEALED
+        return self.state == self.parent.UNREVEALED or self.state == self.parent.FLAG
+
+    def is_revealed(self) -> bool:
+        """ Returns whether node is revealed. """
+        return self.state == self.parent.REVEALED
 
     def is_mine(self) -> bool:
         """ Returns whether node is a mine. """
         return self.value is True
+
+    def is_flagged(self) -> bool:
+        """ Returns whether node is flagged. """
+        return self.state == self.parent.FLAG
+
+    def flag(self) -> bool:
+        """ Flags node. """
+        self.state = self.parent.FLAG
 
     def is_empty(self) -> bool:
         """ Returns whether node is an empty area (zero). """
@@ -57,7 +70,7 @@ class Node:
 class Minesweeper:
     """ Game logic + visual (graphical), NOT INPUT. From here, we add the user input through a subclass (in another file) to play the game. """
 
-    def __init__(self, rows: int = 50, cols: int = 80, mine_spawn: float = 0.15, win_height: int = WIN_HEIGHT, win_title: str = 'Minesweeper 💣🧹', color_mappings: dict = None):
+    def __init__(self, rows: int = 25, cols: int = 40, mine_spawn: float = 0.15, win_height: int = WIN_HEIGHT, win_title: str = 'Minesweeper 💣🧹', color_mappings: dict = None):
         # TODO: add option to generate mines by mine count, not just probability
 
         # pygame window dimensions
@@ -78,13 +91,15 @@ class Minesweeper:
             self.REVEALED = DARK_GRAY  # tile background color (behind number)
             self.UNREVEALED = VIOLET  # color theme
             self.MINE = DARK_RED
+            self.FLAG = ORANGE
         # else color mappings were provided so sets values of provided colors
         else:
             self.GRID_LINE = GRAY if 'GRID_LINE' not in color_mappings else color_mappings['GRID_LINE']
             self.TILE_NUMBER = WHITE if 'TILE_NUMBER' not in color_mappings else color_mappings['TILE_NUMBER']
             self.REVEALED = DARK_GRAY if 'REVEALED' not in color_mappings else color_mappings['REVEALED']
-            self.UNREVEALED = VIOLET if 'UNREVEALED' not in color_mappings else color_mappings['UNREVEALED']
+            self.UNREVEALED = PURPLE if 'UNREVEALED' not in color_mappings else color_mappings['UNREVEALED']
             self.MINE = DARK_RED if 'MINE' not in color_mappings else color_mappings['MINE']
+            self.FLAG = ORANGE if 'FLAG' not in color_mappings else color_mappings['FLAG']
 
         # board properties
         self.rows, self.cols = rows, cols  # board dimensions
@@ -95,6 +110,7 @@ class Minesweeper:
         self.revealed_count = 0  # keeps track of how many tiles were revealed (not flagged)
         # mine count is initialized in self.generate_mine_matrix()
         self.initialize_board()
+        self.draw()
 
     # === GAME SETUP FUNCTIONS ===
     def generate_mine_matrix(self) -> list[list]:
@@ -208,21 +224,27 @@ class Minesweeper:
         # NOTE: it's important to remember that you win by revealing all open spaces and not by flagging all the mines
         return self.area - self.revealed_count == self.mine_count
 
-    def is_loss(self, row: int, col: int) -> bool:
+    def is_loss(self, node: Node) -> bool:
         """ Checks if coord choice is a loss (mine). """
         # NOTE: I should remove the is new and have that checked externally, because really the input should be sanitized before.
-        return self.is_new(row, col) and self.get_node is True
+        return node.state == self.UNREVEALED and node.value is True
+
+    """
+def poop(r, c):
+    ms.reveal(ms.get_node(r,c))
+    print(ms.get_node(r,c).value)
+"""
 
     # === PYGAME FUNCTIONS ===
-    # NOTE: when drawing unrevealed nodes, draw without grid so it's one seamless pool of color.
-    def draw_node(self, node):
+    def draw_number(self, node: Node):
+        """ Draws node's number onto pygame window. """
+        ptext.draw(str(node.value), centerx=node.x+self.cell_size//2, centery=node.y+self.cell_size//2, fontsize=int(self.cell_size/4*3))#3:2
+
+    def draw_node(self, node: Node):
         """ Draws given node onto pygame window. """
         pygame.draw.rect(self.win, node.state, (node.x, node.y, self.cell_size, self.cell_size))
-        # draw the node's number/value if the node is revealed and not a 0
-        if not node.is_unrevealed() and node.value > 0:
-            pass
 
-    def draw_node_grid(self, node):
+    def draw_node_grid(self, node: Node):
         """ Only given node's grid lines. """
         # draw top line
         pygame.draw.line(self.win, self.GRID_LINE, (node.x+self.grid_space, node.y), (node.x+self.cell_size-self.grid_space, node.y))
@@ -240,17 +262,21 @@ class Minesweeper:
         """ Delay some amount of time, for animation/visual purposes. """
         pygame.time.delay(int(wait*1000))
 
-    def reveal_node(self, node):
+    def reveal_node(self, node: Node):
         """ Reveals and draws given node. NOTE: reveal + draw + _ """
         node.reveal()
         self.draw_node(node)
-        if not node.is_unrevealed():
+        if node.is_revealed():
+            if node.value > 0:
+                self.draw_number(node)
             self.draw_node_grid(node)
 
     def update_node(self, node: Node, wait: float = WAIT):
         """ Draws given node and draws grid based on state, then updates display. NOTE: _ + draw + update """
         self.draw_node(node)
-        if not node.is_unrevealed():
+        if node.is_revealed() or node.is_flagged():
+            if not node.is_flagged() and node.value > 0:
+                self.draw_number(node)
             self.draw_node_grid(node)
         if wait is not None:
             self.delay(wait)
@@ -259,6 +285,8 @@ class Minesweeper:
     def update_revealed(self, node: Node, wait: float = WAIT):
         """ Draws given node and its grid, then updates display. NOTE: _ + draw + update """
         self.draw_node(node)
+        if node.value > 0:
+            self.draw_number(node)
         self.draw_node_grid(node)
         if wait is not None:
             self.delay(wait)
@@ -267,6 +295,14 @@ class Minesweeper:
     def update_unrevealed(self, node: Node, wait: float = WAIT):
         """ Draws given node w/o grid, then updates display. NOTE: _ + draw + update"""
         self.draw_node(node)
+        if wait is not None:
+            self.delay(wait)
+        pygame.display.update()
+
+    def update_flagged(self, node: Node, wait: float = WAIT):
+        """ Draws given node w/o grid, then updates display. NOTE: _ + draw + update"""
+        self.draw_node(node)
+        self.draw_node_grid(node)
         if wait is not None:
             self.delay(wait)
         pygame.display.update()
@@ -280,7 +316,7 @@ class Minesweeper:
         for row in self.board:
             for node in row:
                 self.draw_node(node)
-                if not node.is_unrevealed():
+                if node.is_revealed():
                     self.draw_node_grid(node)
 
         pygame.display.update()
@@ -298,8 +334,12 @@ class Minesweeper:
             self.update_revealed(node)
 
     def flag(self, node: Node):
-        """  """
-        pass
+        """ Flags node, or unflags if node was already flagged. """
+        if node.is_flagged():  # unflag if node is already flagged
+            node.unreveal()
+        else:  # node is unrevealed, flag it
+            node.flag()
+        self.update_node(node, None)
 
     # TODO: implement maybe flag later
     # def maybe(self, node: Node):
@@ -330,6 +370,7 @@ class Minesweeper:
                         discovered.add(adj)
                         queue.append(adj)
 
+            self.delay()
             pygame.display.update()
 
     def initialize_game(self):
