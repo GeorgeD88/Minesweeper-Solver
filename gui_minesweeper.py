@@ -7,8 +7,8 @@ from constants import *
 from collections import deque
 
 # dev stuff
-from typing import Generator
 from pprint import PrettyPrinter
+from typing import Generator
 
 # miscellaneous
 import random
@@ -70,7 +70,6 @@ class Minesweeper:
         # pygame window (everything is drawn here)
         self.win = pygame.display.set_mode((self.win_width, self.win_height))
         pygame.display.set_caption(win_title)
-        self.reveal_state = True  # whether clicking will reveal or flag (true = reveal, false = flag)
 
         # sets each color mapping to default value if custom color aren't provided
         if color_mappings is None:
@@ -93,6 +92,8 @@ class Minesweeper:
         self.prob = mine_spawn  # probability of mine spawn
 
         # game setup
+        self.revealed_count = 0  # keeps track of how many tiles were revealed (not flagged)
+        # mine count is initialized in self.generate_mine_matrix()
         self.initialize_board()
 
     # === GAME SETUP FUNCTIONS ===
@@ -113,7 +114,7 @@ class Minesweeper:
 
         return mine_board
 
-    def write_mine_counts(self):
+    def count_adjacent_mines(self):
         """ Adds the mine counts to a board with already initialized nodes and mines. """
         for r in range(self.rows):
             for c in range(self.cols):
@@ -163,6 +164,11 @@ class Minesweeper:
             for c in range(self.cols):
                 self.get_node(r, c).unreveal()
 
+    def generate_empty_drop(self, node: Node):
+        """ Regenerates board until given node is an empty spot. """
+        while not node.is_empty():
+            self.new_game()
+
     # === HELPER FUNCTIONS ===
     def gen_matrix(self, default=None) -> list[list]:
         """ Generates a 2D array the size of the board consisting of the given default value. """
@@ -173,14 +179,14 @@ class Minesweeper:
         """ Returns the node at the given coord. """
         return self.board[r][c]
 
-    def adjacent_coords(self, r: int, c: int) -> Generator[tuple[int, int]]:
+    def adjacent_coords(self, r: int, c: int) -> Generator[tuple[int, int], None, None]:
         """ Returns the coords adjacent to the given coord. """
         for offset in ADJACENT_COORDS:
             adj_coord = self.offset_coord((r, c), offset)
             if self.bounds(*adj_coord) is True:
                 yield adj_coord
 
-    def adjacent_nodes(self, node: Node) -> Generator[Node]:
+    def adjacent_nodes(self, node: Node) -> Generator[Node, None, None]:
         """ Generates the nodes adjacent to the given node. """
         for offset in ADJACENT_COORDS:
             adj = self.offset_coord(node.get_coord(), offset)  # gets coord from node and offsets
@@ -212,6 +218,9 @@ class Minesweeper:
     def draw_node(self, node):
         """ Draws given node onto pygame window. """
         pygame.draw.rect(self.win, node.state, (node.x, node.y, self.cell_size, self.cell_size))
+        # draw the node's number/value if the node is revealed and not a 0
+        if not node.is_unrevealed() and node.value > 0:
+            pass
 
     def draw_node_grid(self, node):
         """ Only given node's grid lines. """
@@ -231,8 +240,15 @@ class Minesweeper:
         """ Delay some amount of time, for animation/visual purposes. """
         pygame.time.delay(int(wait*1000))
 
-    def update_node(self, node, wait: float = WAIT):
-        """ Draws given node and draws grid based on state, then updates display. """
+    def reveal_node(self, node):
+        """ Reveals and draws given node. NOTE: reveal + draw + _ """
+        node.reveal()
+        self.draw_node(node)
+        if not node.is_unrevealed():
+            self.draw_node_grid(node)
+
+    def update_node(self, node: Node, wait: float = WAIT):
+        """ Draws given node and draws grid based on state, then updates display. NOTE: _ + draw + update """
         self.draw_node(node)
         if not node.is_unrevealed():
             self.draw_node_grid(node)
@@ -240,16 +256,16 @@ class Minesweeper:
             self.delay(wait)
         pygame.display.update()
 
-    def update_revealed(self, node, wait: float = WAIT):
-        """ Draws given node and its grid, then updates display. """
+    def update_revealed(self, node: Node, wait: float = WAIT):
+        """ Draws given node and its grid, then updates display. NOTE: _ + draw + update """
         self.draw_node(node)
         self.draw_node_grid(node)
         if wait is not None:
             self.delay(wait)
         pygame.display.update()
 
-    def update_unrevealed(self, node, wait: float = WAIT):
-        """ Draws given node w/o grid, then updates display. """
+    def update_unrevealed(self, node: Node, wait: float = WAIT):
+        """ Draws given node w/o grid, then updates display. NOTE: _ + draw + update"""
         self.draw_node(node)
         if wait is not None:
             self.delay(wait)
@@ -257,21 +273,29 @@ class Minesweeper:
 
     def draw(self):
         """ Redraws all elements onto window (updates display). """
-        # fill with with white
+        # fill window with white
         self.win.fill(WHITE)
 
         # goes through every node in the grid and draws it
-        for row in self.grid:
+        for row in self.board:
             for node in row:
                 self.draw_node(node)
-                self.draw_node_grid(node)
+                if not node.is_unrevealed():
+                    self.draw_node_grid(node)
 
         pygame.display.update()
 
     # === GAME FUNCTIONS ===
     def reveal(self, node: Node):
-        """  """
-        pass
+        """ Reveals given node and flood fills area if needed. """
+        # NOTE: I'm not doing any checks before I reveal because input should already be sanitized
+        # is in bounds and is new
+        self.reveal_node(node)
+        # flood fill if revealed node is empty (zero)
+        if node.value == 0:
+            self.level_order_floodfill(node)  # NOTE: change this function to change the type of flood fill you use
+        else:
+            self.update_revealed(node)
 
     def flag(self, node: Node):
         """  """
@@ -285,7 +309,29 @@ class Minesweeper:
     # flood fill algorithms
     def level_order_floodfill(self, start: Node):
         """ Flood fills board using level order traversal starting at given node """
-        pass
+        queue = deque([start])  # append to enqueue and popleft to dequeue
+        discovered = {start}  # hashset keeping track of alread discovered nodes
+
+        while len(queue) > 0:
+            breadth = len(queue)  # get length of current breadth of nodes
+
+            # iterate breadth of nodes
+            for _ in range(breadth):
+                curr = queue.popleft()  # pop node to process
+
+                self.reveal_node(curr)  # reveal node
+                if curr.value != 0:  # stops traversing if it hits edge of empty pool
+                    continue
+
+                # add adjacent nodes
+                for adj in self.adjacent_nodes(curr):
+                    # NOTE: if node isn't new then it was processed during a different run of this function.
+                    if adj not in discovered and adj.is_unrevealed():
+                        discovered.add(adj)
+                        queue.append(adj)
+
+            pygame.display.update()
+
     def initialize_game(self):
         """ Startup code for game. """
         pass
