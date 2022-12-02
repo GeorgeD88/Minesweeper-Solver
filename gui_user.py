@@ -8,10 +8,6 @@ from collections import deque
 
 # dev stuff
 from pprint import PrettyPrinter
-from typing import Generator
-
-# miscellaneous
-import random
 
 
 pp = PrettyPrinter().pprint  # for dev purposes
@@ -19,7 +15,7 @@ pp = PrettyPrinter().pprint  # for dev purposes
 
 class User(Minesweeper):
 
-    def __init__(self, rows: int = 25, cols: int = 40, mine_spawn: float = 0.15, win_height: int = WIN_HEIGHT, win_title: str = 'Minesweeper 💣🧹', color_mappings: dict = None):
+    def __init__(self, rows: int = ROWS, cols: int = COLS, mine_spawn: float = MINE_SPAWN, win_height: int = WIN_HEIGHT, win_title: str = WIN_TITLE, color_mappings: dict = None):
         super().__init__(rows, cols, mine_spawn, win_height, win_title, color_mappings)
         # pygame.event.set_blocked(pygame.MOUSEMOTION)
 
