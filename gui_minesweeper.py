@@ -89,7 +89,7 @@ class Minesweeper:
             self.GRID_LINE = GRAY
             self.TILE_NUMBER = WHITE  # tile foreground color (tile number)
             self.REVEALED = DARK_GRAY  # tile background color (behind number)
-            self.UNREVEALED = VIOLET  # color theme
+            self.UNREVEALED = PURPLE  # color theme
             self.MINE = DARK_RED
             self.FLAG = ORANGE
         # else color mappings were provided so sets values of provided colors
