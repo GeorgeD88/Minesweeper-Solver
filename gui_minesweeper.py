@@ -76,8 +76,6 @@ class Minesweeper:
     """ Game logic + visual (graphical), NOT INPUT. From here, we add the user input through a subclass (in another file) to play the game. """
 
     def __init__(self, rows: int = 25, cols: int = 40, mine_spawn: float = 0.15, win_height: int = WIN_HEIGHT, win_title: str = 'Minesweeper 💣🧹', color_mappings: dict = None):
-        # TODO: add option to generate mines by mine count, not just probability
-
         # pygame window dimensions
         self.win_height = win_height  # window height
         self.cell_size = self.win_height // rows  # visual cell size
@@ -291,7 +289,6 @@ class Minesweeper:
     def draw_unrevealed(self, node: Node):
         """ Draws unrevealed node. """
         self.draw_node(node)
-        # TODO: decide if I wanna also draw grid for flags
         if node.is_flagged():
             self.draw_node_grid(node)
 
@@ -306,7 +303,7 @@ class Minesweeper:
                 self.draw_number(node)  # draws tile number, aka fg
 
     """ NOTE: we're drawing mines with revealed nodes, just keep that in mind
-    if there are errors in the future and you might want to separate them. """
+    incase there are errors in the future and you might want to separate them. """
 
     # wrap drawing functions w/ display updating too ==
     def update_unrevealed(self, node: Node):
@@ -485,17 +482,3 @@ class Minesweeper:
             # displays whole breadth of newly drawn nodes together
             self.delay()
             self.update_display()
-
-
-    def initialize_game(self):
-        """ Startup code for game. """
-        pass
-
-    def game_loop(self):
-        """ Update loop for game. """
-        # TODO: you can press a button at any time similar to the visualizer, and it runs the solver, regardless of where you are in the game
-        pass
-
-    def run_game(self):
-        """ Runs startup code and starts update loop. """
-        pass
