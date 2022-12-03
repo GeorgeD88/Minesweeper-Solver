@@ -4,7 +4,7 @@ from collections import deque
 from cli_game import Minesweeper
 from time import sleep, time
 from random import randint
-from colors import *
+from cli_colors import *
 import sys
 
 """ This is the OG solver file I wrote when I first did the solver. """

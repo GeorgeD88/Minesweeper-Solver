@@ -1,5 +1,5 @@
 import cli_solver
-import user
+import cli_user
 
 
 # Minesweeper game
