@@ -13,7 +13,7 @@
 The project was originally implemented with a command line interface (CLI), but is currently in the process of being implemented with a GUI. I've converted the game's logic and user interface to use a GUI, yet still have to convert the solver to work in the GUI.
 
 ### Running CLI Versions (deprecated)
-The project has 2 parts, the game itself and the bot, spread across 3 files. `cli_game.py` contains the backend of the game (no user input), while `cli_user.py` and `cli_solver.py` each connects the game to their own interface. `cli_user.py` connects the game to a user interface with inputs to allow the user to play, while `cli_solver.py` connects the game to solving algorithms as well as a visualization to show the user what's going on. *The code below can be found in the file `cli_ms.py`.*<br>
+The project has 2 parts, the game itself and the bot, spread across 3 files. `cli_game.py` contains the backend of the game (no user input), while `cli_user.py` and `cli_solver.py` each connects the game to their own interface. `cli_user.py` connects the game to a user interface with inputs to allow the user to play, while `cli_solver.py` connects the game to solving algorithms as well as a visualization to show the user what's going on.<br>*The code below can be found in the file `cli_ms.py`.*<br>
 ```python
 import cli_user
 import cli_solver
@@ -33,7 +33,7 @@ bot.solve()  # solver + game
 <img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/ms_solver_demo.gif" alt="Minesweeper demo" width="400">
 
 ### Running GUI Versions
-The solver component is currently not ready in the GUI version, but game itself is ready to play. To play the game, import the class `User` from the module `gui_user.py`, initialize it, and run the method `.play()`. You can initialize the `User` object with different parameters if you want to change the board dimensions, number of mines, etc. Set the mine spawn to a value below 1 to generate mines by probability, or a value over 1 to generate mines by number of mines. *The code below can be found in the file `gui_ms.py`.*<br>
+The solver component is currently not ready in the GUI version, but game itself is ready to play. To play the game, import the class `User` from the module `gui_user.py`, initialize it, and run the method `.play()`. You can initialize the `User` object with different parameters if you want to change the board dimensions, number of mines, etc. Set the mine spawn to a value below 1 to generate mines by probability, or a value over 1 to generate mines by number of mines.<br>*The code below can be found in the file `gui_ms.py`.*<br>
 ```python
 from gui_user import User
 
