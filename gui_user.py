@@ -161,13 +161,3 @@ def lose_message():
                ===============
 
 """)
-
-
-def main():
-    # TODO: make different size presets
-    ms = User()
-    ms.play()
-
-
-if __name__ == "__main__":
-    main()
