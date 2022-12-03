@@ -15,12 +15,12 @@ pp = PrettyPrinter().pprint  # for dev purposes
 
 class User(Minesweeper):
 
-    def __init__(self, rows: int = ROWS, cols: int = COLS, mine_spawn: float = MINE_SPAWN, win_height: int = WIN_HEIGHT, win_title: str = WIN_TITLE, color_mappings: dict = None):
+    def __init__(self, rows: int = ROWS, cols: int = COLS, mine_spawn: float or int = MINE_SPAWN, win_height: int = WIN_HEIGHT, win_title: str = WIN_TITLE, color_mappings: dict = None):
         super().__init__(rows, cols, mine_spawn, win_height, win_title, color_mappings)
-        # pygame.event.set_blocked(pygame.MOUSEMOTION)
+        pygame.event.set_blocked(pygame.MOUSEMOTION)
 
-    def get_clicked_coord(self, pos):
-        """ Gets the coord of node clicked based on position clicked in window. """
+    def coord_from_pos(self, pos):
+        """ Gets the grid coord of node clicked based on position clicked in window. """
         x, y = pos
 
         # divides window position by cell width to see row/col number
@@ -29,29 +29,11 @@ class User(Minesweeper):
 
         return row, col
 
-    def get_clicked_node(self, pos):
+    def get_clicked_node(self):
         """ Gets the node clicked based on position in window clicked. """
-        return self.get_node(*self.get_clicked_coord(pos))
-
-    def count_flags(self, node: Node):
-        """ Counts number of adjacent flags. """
-        flag_count = 0
-
-        for adj in self.adjacent_nodes(node):
-            if adj.is_flagged():
-                flag_count += 1
-
-        return flag_count
-
-        # flag count matches mine count, reveal surrounding unrevealed nodes
-
-
-    def chord(self, node: Node):
-        """ Chords given node. """
-        if self.count_flags(node) == node.value:
-            for adj in self.adjacent_nodes(node):
-                if adj == self.UNREVEALED:
-                    adj.reveal()
+        pos = pygame.mouse.get_pos()  # get mouse position
+        coord = self.coord_from_pos(pos)  # convert position to coord
+        return self.get_node(*coord)  # get node at coord
 
     # === MAIN ===
     def play(self):
@@ -77,8 +59,7 @@ class User(Minesweeper):
                 # left click, reveal tile
                 if pygame.mouse.get_pressed()[0]:
                     # get position on window clicked and then get node at position
-                    pos = pygame.mouse.get_pos()
-                    node = self.get_clicked_node(pos)
+                    node = self.get_clicked_node()
 
                     self.generate_empty_drop(node)  # regen board until there's a zero under choice
                     self.reveal(node)  # reveals spot once the 0 is found
@@ -101,40 +82,44 @@ class User(Minesweeper):
                     running = False
                     break  # breaks event loop, not main loop
 
-                # left click, reveal tile
-                if pygame.mouse.get_pressed()[0]:
-                    # get position on window clicked and then get node at position
-                    pos = pygame.mouse.get_pos()
-                    node = self.get_clicked_node(pos)
+                # mouse click
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    # left click, reveal tile
+                    if event.button == 1:#pygame.mouse.get_pressed()[0]:
+                        # get position on window clicked and then get node at position
+                        node = self.get_clicked_node()
 
-                    if node.is_revealed():  # can't reveal already revealed node
-                        self.chord(node)
-                    elif node.is_flagged():
-                        continue
-                    elif node.is_mine():  # run lose procedure if node is a mine
-                        lose_message()
-                        input()
-                        exit()
-                    else:  # node is safe, reveal it
-                        self.reveal(node)
-                        if self.is_win():
-                            win_message()
-                            input()
-                            exit()
+                        # sanitize input before trying to reveal
+                        if node.is_revealed() and not node.is_empty():  # chord node
+                            # chord returns false if you incorrectly flagged
+                            if self.chord(node) is False:
+                                # end_procedure(lose_message)
+                                self.level_order_loss(node)
+                        elif node.is_flagged():  # can't reveal flagged node
+                            continue
+                        elif node.is_mine():  # run lose procedure if node is a mine
+                            node.reveal()  # reveal node (mine), without incrementing revealed count
+                            self.update_revealed(node)  # update revealed mine
+                            # end_procedure(lose_message)
+                            self.level_order_loss(node)
+                        else:  # node is safe, reveal it
+                            self.reveal(node)
+                            if self.is_win():
+                                end_procedure(win_message)
 
-                # right click, flag tile
-                elif pygame.mouse.get_pressed()[2]:
-                    # get position on window clicked and then get node at position
-                    pos = pygame.mouse.get_pos()
-                    node = self.get_clicked_node(pos)
+                    # right click, flag tile
+                    elif event.button == 3:#pygame.mouse.get_pressed()[2]:
+                        # get position on window clicked and then get node at position
+                        node = self.get_clicked_node()
 
-                    if node.is_revealed():  # can't flag revealed node
-                        continue
-                    else:  # toggle flog
-                        self.flag(node)
+                        # sanitize input before trying to flag
+                        if node.is_revealed():  # can't flag revealed node
+                            continue
+                        else:  # as long as it's not revealed, then run flag()
+                            self.flag(node)  # toggle flag
 
                 # key press
-                if event.type == pygame.KEYDOWN:
+                elif event.type == pygame.KEYDOWN:
                     # R, resets game but keeps same board
                     if event.key == pygame.K_r:
                         self.reset_game()
@@ -143,7 +128,7 @@ class User(Minesweeper):
                     # N, starts new game so board is wiped
                     elif event.key == pygame.K_n:
                         self.new_game()
-                        self.draw()
+                        self.start()
 
                     # S, run solver
                     elif event.key == pygame.K_s:
@@ -153,6 +138,11 @@ class User(Minesweeper):
 
         pygame.quit()
 
+def end_procedure(end_message):
+    end_message()
+    input()
+    # TODO: need to make it where it just exits the input loop and you can only exit
+    exit()
 
 def win_message():
     print("""
@@ -177,7 +167,7 @@ def lose_message():
 
 def main():
     # TODO: make different size presets
-    ms = User()
+    ms = User(16, 30)
     ms.play()
 
 
