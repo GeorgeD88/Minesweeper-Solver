@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from pprint import PrettyPrinter
 from collections import deque
-from game import Minesweeper
+from cli_game import Minesweeper
 from time import sleep, time
 from random import randint
 from colors import *

@@ -1,0 +1,17 @@
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRAY = (64, 64, 64)
+LIGHT_GRAY = (128, 128, 128)
+DARK_GRAY = (18, 18, 18)
+DARK_GRAY_LOSS = (46, 46, 46)
+GREEN = (60, 240, 90)
+RED = (224, 20, 20)
+DARK_RED = (163, 18, 8)
+VIOLET = (195, 59, 219)  # not soft purple
+PURPLE = (235, 191, 255)  # nice soft purple
+CYAN = (131, 252, 224)  # softish cyan
+SOFT_BLUE = (171, 215, 235)  # nice soft blue
+TURQUOISE = (49, 208, 232)
+ORANGE = (255, 165, 0)
+SOFT_ORANGE = (255, 179, 71)
+YELLOW = (242, 252, 131)
