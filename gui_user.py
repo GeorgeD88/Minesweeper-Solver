@@ -1,6 +1,6 @@
 # interface
 import pygame
-from gui_minesweeper import Minesweeper, Node
+from gui_game import Minesweeper, Node
 from constants import *
 
 # data structures
