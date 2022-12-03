@@ -14,9 +14,12 @@ from typing import Generator
 # miscellaneous
 import random
 
+""" The input sanitization will be kept to a minimum or likely none, because remember
+this is just the backend mechanics, these are the strings of a piano that do shit.
+The backend is simply the gears that do shit, they aren't expected to handle
+odd instructions and shit, that's the job of the frontend that feeds to the backend. """
 
 pp = PrettyPrinter().pprint  # for dev purposes
-
 
 class Node:
 
@@ -24,7 +27,7 @@ class Node:
         self.parent = visualizer  # visualizer class that holds these nodes
         self.size = visualizer.cell_size  # side length of the cell
 
-        self.x, self.y = col * self.size, row * self.size  # coord in the pygame window
+        self.x, self.y = col * self.size, row * self.size  # pixel coord in the pygame window
         self.row, self.col = row, col  # coord of node on the board
 
         self.state = self.parent.UNREVEALED  # current state/color of the node
@@ -34,18 +37,20 @@ class Node:
         """ Returns node's coordinate. """
         return (self.row, self.col)
 
+    # FIXME: trying to decide if this should automatically reveal to mine
     def reveal(self):
         """ Set node state to revealed, or to mine if its value is a mine. """
-        self.state = self.parent.REVEALED if self.value is not None else self.parent.MINE
+        self.state = self.parent.REVEALED if self.value is not True else self.parent.MINE
 
     def unreveal(self):
         """ Set node state to unrevealed. """
         self.state = self.parent.UNREVEALED
 
     def is_unrevealed(self) -> bool:
-        """ Returns whether node is unrevealed/unexplored. """
-        return self.state == self.parent.UNREVEALED or self.state == self.parent.FLAG
+        """ Returns whether node is unrevealed. """
+        return self.state == self.parent.UNREVEALED
 
+    # NOTE: to check if node is unrevealed OR flagged, then do !is_revealed()
     def is_revealed(self) -> bool:
         """ Returns whether node is revealed. """
         return self.state == self.parent.REVEALED
@@ -83,23 +88,26 @@ class Minesweeper:
         # pygame window (everything is drawn here)
         self.win = pygame.display.set_mode((self.win_width, self.win_height))
         pygame.display.set_caption(win_title)
+        # self.mine_icon = pygame.image.load('mine-icon.png')
 
         # sets each color mapping to default value if custom color aren't provided
         if color_mappings is None:
             self.GRID_LINE = GRAY
             self.TILE_NUMBER = WHITE  # tile foreground color (tile number)
             self.REVEALED = DARK_GRAY  # tile background color (behind number)
+            self.LOSS_REVEALED = DARK_GRAY_LOSS  # tile background color (behind number)
             self.UNREVEALED = PURPLE  # color theme
-            self.MINE = DARK_RED
-            self.FLAG = ORANGE
+            self.MINE = RED
+            self.FLAG = SOFT_BLUE
         # else color mappings were provided so sets values of provided colors
         else:
             self.GRID_LINE = GRAY if 'GRID_LINE' not in color_mappings else color_mappings['GRID_LINE']
             self.TILE_NUMBER = WHITE if 'TILE_NUMBER' not in color_mappings else color_mappings['TILE_NUMBER']
             self.REVEALED = DARK_GRAY if 'REVEALED' not in color_mappings else color_mappings['REVEALED']
+            self.LOSS_REVEALED = DARK_GRAY_LOSS if 'LOSS_REVEALED' not in color_mappings else color_mappings['LOSS_REVEALED']
             self.UNREVEALED = PURPLE if 'UNREVEALED' not in color_mappings else color_mappings['UNREVEALED']
-            self.MINE = DARK_RED if 'MINE' not in color_mappings else color_mappings['MINE']
-            self.FLAG = ORANGE if 'FLAG' not in color_mappings else color_mappings['FLAG']
+            self.MINE = RED if 'MINE' not in color_mappings else color_mappings['MINE']
+            self.FLAG = SOFT_BLUE if 'FLAG' not in color_mappings else color_mappings['FLAG']
 
         # board properties
         self.rows, self.cols = rows, cols  # board dimensions
@@ -164,6 +172,7 @@ class Minesweeper:
     def new_game(self):
         """ Generates new game by regenerating mines/counts and unrevealing all nodes. """
         mines = self.generate_mine_matrix()  # regenerates mines
+        self.revealed_count = 0
 
         # traverse board and set values according to new mines
         for r in range(self.rows):
@@ -176,6 +185,7 @@ class Minesweeper:
 
     def reset_game(self):
         """ Sets all tiles back to unrevealed but doesn't regenerate game board values. """
+        self.revealed_count = 0
         for r in range(self.rows):
             for c in range(self.cols):
                 self.get_node(r, c).unreveal()
@@ -229,32 +239,31 @@ class Minesweeper:
         # NOTE: I should remove the is new and have that checked externally, because really the input should be sanitized before.
         return node.state == self.UNREVEALED and node.value is True
 
-    """
-def poop(r, c):
-    ms.reveal(ms.get_node(r,c))
-    print(ms.get_node(r,c).value)
-"""
-
     # === PYGAME FUNCTIONS ===
+    def update_display(self):
+        """ Simple wrapper for pygame.display.update() function. """
+        pygame.display.update()
+
     def draw_number(self, node: Node):
         """ Draws node's number onto pygame window. """
         ptext.draw(str(node.value), centerx=node.x+self.cell_size//2, centery=node.y+self.cell_size//2, fontsize=int(self.cell_size/4*3))#3:2
+
+    def draw_mine(self, node: Node):
+        """ Draws node's mine symbol onto pygame window. """
+        ptext.draw('X', centerx=node.x+self.cell_size//2, centery=node.y+self.cell_size//2, fontsize=int(self.cell_size/4*3))#3:2
 
     def draw_node(self, node: Node):
         """ Draws given node onto pygame window. """
         pygame.draw.rect(self.win, node.state, (node.x, node.y, self.cell_size, self.cell_size))
 
     def draw_node_grid(self, node: Node):
-        """ Only given node's grid lines. """
+        """ Draws given node's grid lines onto pygame window. """
         # draw top line
         pygame.draw.line(self.win, self.GRID_LINE, (node.x+self.grid_space, node.y), (node.x+self.cell_size-self.grid_space, node.y))
-
         # draw left line
         pygame.draw.line(self.win, self.GRID_LINE, (node.x, node.y+self.grid_space), (node.x, node.y+self.cell_size-self.grid_space))
-
         # draw bottom line
         pygame.draw.line(self.win, self.GRID_LINE, (node.x+self.grid_space, node.y+self.cell_size-1), (node.x+self.cell_size-self.grid_space, node.y+self.cell_size-1))
-
         # draw right line
         pygame.draw.line(self.win, self.GRID_LINE, (node.x+self.cell_size-1, node.y+self.grid_space), (node.x+self.cell_size-1, node.y+self.cell_size-self.grid_space))
 
@@ -262,53 +271,57 @@ def poop(r, c):
         """ Delay some amount of time, for animation/visual purposes. """
         pygame.time.delay(int(wait*1000))
 
-    def reveal_node(self, node: Node):
-        """ Reveals and draws given node. NOTE: reveal + draw + _ """
-        node.reveal()
+    # just drawing functions ==
+    # NOTE: WE ARE USING THIS FOR DRAWING FLAGS TOO, DON'T FORGET !!
+    def draw_unrevealed(self, node: Node):
+        """ Draws unrevealed node. """
         self.draw_node(node)
+        # TODO: decide if I wanna also draw grid for flags
+        if node.is_flagged():
+            self.draw_node_grid(node)
+
+    def draw_revealed(self, node: Node):
+        """ Draws revealed node. """
+        self.draw_node(node)  # draws tile color, aka bg
+        self.draw_node_grid(node)  # draws grid lines
+        if not node.is_empty():  # draws number if value over 0
+            if node.is_mine():
+                self.draw_mine(node)
+            else:
+                self.draw_number(node)  # draws tile number, aka fg
+
+    """ NOTE: we're drawing mines with revealed nodes, just keep that in mind
+    if there are errors in the future and you might want to separate them. """
+
+    # wrap drawing functions w/ display updating too ==
+    def update_unrevealed(self, node: Node):
+        """ Draws unrevealed node and updates display. """
+        self.draw_unrevealed(node)
+        self.update_display()
+
+    def update_revealed(self, node: Node):
+        """ Draws revealed node and updates display. """
+        self.draw_revealed(node)
+        self.update_display()
+
+    def update_node(self, node: Node):
+        """ Draws unrevealed/revealed node and updates display. """
         if node.is_revealed():
-            if node.value > 0:
-                self.draw_number(node)
-            self.draw_node_grid(node)
+            self.draw_revealed(node)  # directly using the draw functions
+        else:  # this will run for flags and specifically unrevealed
+            self.draw_unrevealed(node)
+        self.update_display()  # and updating here. instead of just running the update functions
 
-    def update_node(self, node: Node, wait: float = WAIT):
-        """ Draws given node and draws grid based on state, then updates display. NOTE: _ + draw + update """
-        self.draw_node(node)
-        if node.is_revealed() or node.is_flagged():
-            if not node.is_flagged() and node.value > 0:
-                self.draw_number(node)
-            self.draw_node_grid(node)
-        if wait is not None:
-            self.delay(wait)
-        pygame.display.update()
-
-    def update_revealed(self, node: Node, wait: float = WAIT):
-        """ Draws given node and its grid, then updates display. NOTE: _ + draw + update """
-        self.draw_node(node)
-        if node.value > 0:
-            self.draw_number(node)
-        self.draw_node_grid(node)
-        if wait is not None:
-            self.delay(wait)
-        pygame.display.update()
-
-    def update_unrevealed(self, node: Node, wait: float = WAIT):
-        """ Draws given node w/o grid, then updates display. NOTE: _ + draw + update"""
-        self.draw_node(node)
-        if wait is not None:
-            self.delay(wait)
-        pygame.display.update()
-
-    def update_flagged(self, node: Node, wait: float = WAIT):
-        """ Draws given node w/o grid, then updates display. NOTE: _ + draw + update"""
-        self.draw_node(node)
-        self.draw_node_grid(node)
-        if wait is not None:
-            self.delay(wait)
-        pygame.display.update()
+    # wrap drawing revealed w/ reveal, no updating ==
+    # NOTE: this is for floodfills where I want to reveal and draw a group of nodes, then display the group together
+    def reveal_node(self, node: Node):
+        """ Reveals and draws node without updating, and increments revealed counter. """
+        node.reveal()  # reveals node
+        self.draw_revealed(node)  # draws node onto window
+        self.revealed_count += 1  # increments revealed counter
 
     def draw(self):
-        """ Redraws all elements onto window (updates display). """
+        """ Draws the whole board then updates display. """
         # fill window with white
         self.win.fill(WHITE)
 
@@ -316,41 +329,64 @@ def poop(r, c):
         for row in self.board:
             for node in row:
                 self.draw_node(node)
-                if node.is_revealed():
+                if node.is_revealed():  # only draws grid for revealed nodes
                     self.draw_node_grid(node)
 
-        pygame.display.update()
+        self.update_display()
 
     # === GAME FUNCTIONS ===
-    def reveal(self, node: Node):
-        """ Reveals given node and flood fills area if needed. """
-        # NOTE: I'm not doing any checks before I reveal because input should already be sanitized
-        # is in bounds and is new
-        self.reveal_node(node)
-        # flood fill if revealed node is empty (zero)
-        if node.value == 0:
-            self.level_order_floodfill(node)  # NOTE: change this function to change the type of flood fill you use
-        else:
-            self.update_revealed(node)
-
     def flag(self, node: Node):
         """ Flags node, or unflags if node was already flagged. """
         if node.is_flagged():  # unflag if node is already flagged
             node.unreveal()
         else:  # node is unrevealed, flag it
             node.flag()
-        self.update_node(node, None)
+        self.update_node(node)  # draws node and updates display
 
-    # TODO: implement maybe flag later
-    # def maybe(self, node: Node):
-    #     """  """
-    #     pass
+    def reveal(self, node: Node):
+        """ Reveals given node and flood fills area if needed. """
+        # flood fill if revealed node is empty (zero)
+        if node.value == 0:
+            # NOTE: to change the type of flood fill you use, change this function
+            self.level_order_floodfill(node)
+        else:
+            # NOTE: IMPORTANT TO USE THIS SPECIFIC REVEAL FUNCTION AS IT INCREMENTS REVEALED COUNTER TOO
+            self.reveal_node(node)  # reveals and draws node
+            self.update_display()  # updates revealed node
 
-    # flood fill algorithms
+    # NOTE: helper function for chording, will also be used for solver
+    def count_flags(self, node: Node):
+        """ Counts number of adjacent flags. """
+        flag_count = 0
+        for adj in self.adjacent_nodes(node):
+            if adj.is_flagged():
+                flag_count += 1
+        return flag_count
+
+    def chord(self, node: Node):
+        """ Chords given node. """
+        flag_count = 0
+        # counts flags and checks for incorrect placement as it counts
+        for adj in self.adjacent_nodes(node):
+            if adj.is_flagged():
+                if not adj.is_mine():  # incorrect flag, exits function
+                    return False
+                flag_count += 1
+
+        # if flags are correct, reveals all unrevealed tiles
+        if flag_count == node.value:
+            for adj in self.adjacent_nodes(node):
+                if adj.is_unrevealed():  # specifically unrevealed, not also flagged
+                    self.reveal(adj)  # reveals and draws node
+
+        # updates all newly drawn nodes at once
+        self.update_display()
+
+    # flood fill algorithms ==
     def level_order_floodfill(self, start: Node):
         """ Flood fills board using level order traversal starting at given node """
         queue = deque([start])  # append to enqueue and popleft to dequeue
-        discovered = {start}  # hashset keeping track of alread discovered nodes
+        discovered = {start}  # hashset keeping track of already discovered nodes
 
         while len(queue) > 0:
             breadth = len(queue)  # get length of current breadth of nodes
@@ -359,9 +395,10 @@ def poop(r, c):
             for _ in range(breadth):
                 curr = queue.popleft()  # pop node to process
 
-                self.reveal_node(curr)  # reveal node
-                if curr.value != 0:  # stops traversing if it hits edge of empty pool
-                    continue
+                # process node
+                self.reveal_node(curr)  # reveal and draw node (doesn't update) also increments revealed counter
+                if curr.value != 0:  # stops traversing this point if it hits edge of empty pool
+                    continue         # empty pool is contained by edge of number tiles (above 0)
 
                 # add adjacent nodes
                 for adj in self.adjacent_nodes(curr):
@@ -370,8 +407,41 @@ def poop(r, c):
                         discovered.add(adj)
                         queue.append(adj)
 
+            # displays whole breadth of newly drawn nodes together
             self.delay()
-            pygame.display.update()
+            self.update_display()
+
+    def level_order_loss(self, start: Node):
+        """ Traverses the whole board and reveals everything, loss procedure.
+        NOTE: If the way I implemented any of this confuses you, the reason for all of it is that the animation
+        should be a level order traversal across the whole board, ignoring any already revealed tiles and
+        traversing across them as if they don't exist, and revealing everything in its path, even mines. """
+
+        queue = deque([start])  # append to enqueue and popleft to dequeue
+        discovered = {start}  # hashset keeping track of already discovered nodes
+
+        while len(queue) > 0:
+            breadth = len(queue)  # get length of current breadth of nodes
+
+            # iterate breadth of nodes
+            for _ in range(breadth):
+                curr = queue.popleft()  # pop node to process
+
+                # process node
+                if curr.is_unrevealed() and not curr.is_flagged():  # ignores already revealed or flagged tiles
+                    # reveal (modified reveal)
+                    curr.state = self.LOSS_REVEALED if curr.value is not True else self.MINE
+                    self.draw_revealed(curr)
+
+                # add adjacent nodes
+                for adj in self.adjacent_nodes(curr):
+                    if adj not in discovered:
+                        discovered.add(adj)
+                        queue.append(adj)
+
+            # displays whole breadth of newly drawn nodes together
+            self.delay()
+            self.update_display()
 
     def initialize_game(self):
         """ Startup code for game. """
