@@ -98,6 +98,7 @@ class Minesweeper:
             self.LOSS_REVEALED = DARK_GRAY_LOSS  # tile background color (behind number)
             self.UNREVEALED = PURPLE  # color theme
             self.MINE = RED
+            self.WIN_MINE = GREEN
             self.FLAG = SOFT_BLUE
         # else color mappings were provided so sets values of provided colors
         else:
@@ -107,12 +108,13 @@ class Minesweeper:
             self.LOSS_REVEALED = DARK_GRAY_LOSS if 'LOSS_REVEALED' not in color_mappings else color_mappings['LOSS_REVEALED']
             self.UNREVEALED = PURPLE if 'UNREVEALED' not in color_mappings else color_mappings['UNREVEALED']
             self.MINE = RED if 'MINE' not in color_mappings else color_mappings['MINE']
+            self.WIN_MINE = GREEN if 'WIN_MINE' not in color_mappings else color_mappings['WIN_MINE']
             self.FLAG = SOFT_BLUE if 'FLAG' not in color_mappings else color_mappings['FLAG']
 
         # board properties
         self.rows, self.cols = rows, cols  # board dimensions
         self.area = rows * cols  # number of total tiles
-        self.prob = mine_spawn  # probability of mine spawn
+        self.mine_spawn = mine_spawn  # probability of mine spawn
 
         # game setup
         self.revealed_count = 0  # keeps track of how many tiles were revealed (not flagged)
@@ -123,18 +125,31 @@ class Minesweeper:
     # === GAME SETUP FUNCTIONS ===
     def generate_mine_matrix(self) -> list[list]:
         """ Generates a matrix of mines (booleans) based on game's mine spawn probability. """
-        self.mine_count = 0  # stores total number of mines
-        mine_board = []
-
-        for _ in range(self.rows):
-            mine_board.append([])  # append new row list
-            for _ in range(self.cols):
-                # randomly generates mine
-                if random.random() < self.prob:
-                    mine_board[-1].append(True)
-                    self.mine_count += 1
-                else:
-                    mine_board[-1].append(False)
+        # generate mine matrix by probability
+        if self.mine_spawn < 1:
+            mine_board = []
+            self.mine_count = 0  # stores total number of mines
+            for _ in range(self.rows):
+                mine_board.append([])  # append new row list
+                for _ in range(self.cols):
+                    # randomly generates mine
+                    if random.random() < self.mine_spawn:
+                        mine_board[-1].append(True)
+                        self.mine_count += 1
+                    else:
+                        mine_board[-1].append(False)
+        # generate mine matrix by mine count
+        else:
+            mine_board = [[False]*self.cols for _ in range(self.rows)]
+            self.mine_count = self.mine_spawn
+            # generates random mine coord for the number of desired mines
+            for _ in range(self.mine_spawn):
+                # generate random coord until you get a coord with no mine already
+                while True:
+                    rr, cc = random.randrange(self.rows), random.randrange(self.cols)
+                    if mine_board[rr][cc] is False:
+                        mine_board[rr][cc] = True
+                        break
 
         return mine_board
 
@@ -442,6 +457,35 @@ class Minesweeper:
             # displays whole breadth of newly drawn nodes together
             self.delay()
             self.update_display()
+
+    def level_order_win(self, start: Node):
+        """ Traverses the whole board and recolors all mines, win procedure. """
+        queue = deque([start])  # append to enqueue and popleft to dequeue
+        discovered = {start}  # hashset keeping track of already discovered nodes
+
+        while len(queue) > 0:
+            breadth = len(queue)  # get length of current breadth of nodes
+
+            # iterate breadth of nodes
+            for _ in range(breadth):
+                curr = queue.popleft()  # pop node to process
+
+                # process node
+                if curr.is_mine():
+                    # reveal (modified reveal)
+                    curr.state = self.WIN_MINE
+                    self.draw_revealed(curr)
+
+                # add adjacent nodes
+                for adj in self.adjacent_nodes(curr):
+                    if adj not in discovered:
+                        discovered.add(adj)
+                        queue.append(adj)
+
+            # displays whole breadth of newly drawn nodes together
+            self.delay()
+            self.update_display()
+
 
     def initialize_game(self):
         """ Startup code for game. """

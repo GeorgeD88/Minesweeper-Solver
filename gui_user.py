@@ -93,19 +93,17 @@ class User(Minesweeper):
                         if node.is_revealed() and not node.is_empty():  # chord node
                             # chord returns false if you incorrectly flagged
                             if self.chord(node) is False:
-                                # end_procedure(lose_message)
                                 self.level_order_loss(node)
                         elif node.is_flagged():  # can't reveal flagged node
                             continue
                         elif node.is_mine():  # run lose procedure if node is a mine
                             node.reveal()  # reveal node (mine), without incrementing revealed count
                             self.update_revealed(node)  # update revealed mine
-                            # end_procedure(lose_message)
                             self.level_order_loss(node)
                         else:  # node is safe, reveal it
                             self.reveal(node)
                             if self.is_win():
-                                end_procedure(win_message)
+                                self.level_order_win(node)
 
                     # right click, flag tile
                     elif event.button == 3:#pygame.mouse.get_pressed()[2]:
@@ -167,7 +165,7 @@ def lose_message():
 
 def main():
     # TODO: make different size presets
-    ms = User(16, 30)
+    ms = User()
     ms.play()
 
 
