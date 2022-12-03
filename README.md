@@ -33,7 +33,7 @@ bot.solve()  # solver + game
 <img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/ms_solver_demo.gif" alt="Minesweeper demo" width="400">
 
 ### Running GUI Versions
-The solver component is currently not ready in the GUI version, but game itself is ready to play. To play the game, import the class `User` from the module `gui_user.py`, initialize it, and run the method `.play()`. You can initialize the `User` object with different parameters if you want to change the board dimensions, number of mines, etc. Set the mine spawn to a value below 1 to generate mines by probability, or a value over 1 to generate mines by number of mines.<br>*The code below can be found in the file `gui_ms.py`.*<br>
+The solver component is currently not ready in the GUI version, but the game itself is ready to play. To play the game, import the class `User` from the module `gui_user.py`, initialize it, and run the method `.play()`. You can initialize the `User` object with different parameters if you want to change the board dimensions, number of mines, etc. Set the mine spawn to a value below 1 to generate mines by probability, or a value over 1 to generate mines by number of mines.<br>*The code below can be found in the file `gui_ms.py`.*<br>
 ```python
 from gui_user import User
 
