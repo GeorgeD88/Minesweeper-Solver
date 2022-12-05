@@ -153,15 +153,14 @@ class Minesweeper:
 
     def count_adjacent_mines(self):
         """ Adds the mine counts to a board with already initialized nodes and mines. """
-        for r in range(self.rows):
-            for c in range(self.cols):
-                if self.get_node(r, c).is_mine():  # skip mines
-                    continue
-                # traverses the nodes adjacent to this node
-                for adj in self.adjacent_nodes(self.get_node(r, c)):
-                    # if the adjacent node is a mine, increments current node's mine count
-                    if adj.is_mine():
-                        self.get_node(r, c).value += 1
+        for node in self.loop_all_nodes():
+            if node.is_mine():  # skip mines
+                continue
+            # traverses the nodes adjacent to this node
+            for adj in self.adjacent_nodes(node):
+                # if the adjacent node is a mine, increments current node's mine count
+                if adj.is_mine():
+                    node.value += 1
 
     def initialize_board(self):
         """ Generates a board by generating mines then writing mine counts. """
@@ -188,10 +187,9 @@ class Minesweeper:
         self.revealed_count = 0
 
         # traverse board and set values according to new mines
-        for r in range(self.rows):
-            for c in range(self.cols):
-                self.get_node(r, c).unreveal()
-                self.get_node(r, c).value = True if mines[r][c] is True else 0
+        for (r, c), node in self.enum_all_coords():
+            node.unreveal()
+            node.value = True if mines[r][c] is True else 0
 
         # traverse board and count mines
         self.count_adjacent_mines()
@@ -199,9 +197,8 @@ class Minesweeper:
     def reset_game(self):
         """ Sets all tiles back to unrevealed but doesn't regenerate game board values. """
         self.revealed_count = 0
-        for r in range(self.rows):
-            for c in range(self.cols):
-                self.get_node(r, c).unreveal()
+        for node in self.loop_all_nodes():
+            node.unreveal()
 
     def generate_empty_drop(self, node: Node):
         """ Regenerates board until given node is an empty spot. """
@@ -249,6 +246,24 @@ class Minesweeper:
             # yields adjacent node if it's in bounds
             if self.in_bounds(*adj):
                 yield self.get_node(*adj)
+
+    def loop_all_nodes(self) -> Generator[Node, None, None]:
+        """ Generator that yields all nodes in the grid (gets rid of need for 2 loops). """
+        for r in range(self.rows):
+            for c in range(self.cols):
+                yield self.get_node(r, c)
+
+    def loop_all_coords(self) -> Generator[tuple[int, int], None, None]:
+        """ Generator that yields coords of all nodes in the grid (gets rid of need for 2 loops). """
+        for r in range(self.rows):
+            for c in range(self.cols):
+                yield (r, c)
+
+    def enum_all_coords(self) -> Generator[tuple[tuple[int, int], Node], None, None]:
+        """ Generator that yields coords and node pairs of all nodes in the grid (gets rid of need for 2 loops). """
+        for r in range(self.rows):
+            for c in range(self.cols):
+                yield (r, c), self.get_node(r, c)
 
     def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
         """ Returns a coord offset by the given offset. """
