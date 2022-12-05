@@ -244,7 +244,6 @@ class Minesweeper:
     # === SOMETHING (GETTERS?) ===
     def is_win(self) -> bool:
         """ Checks if the player won by comparing mine count to unrevealed count. """
-        # NOTE: it's important to remember that you win by revealing all open spaces and not by flagging all the mines
         return self.area - self.revealed_count == self.mine_count
 
     def is_loss(self, node: Node) -> bool:
