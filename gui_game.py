@@ -97,7 +97,7 @@ class Minesweeper:
             self.UNREVEALED = PURPLE  # color theme
             self.MINE = RED
             self.WIN_MINE = GREEN
-            self.FLAG = SOFT_BLUE
+            self.FLAG = LIGHT_GRAY#SOFT_BLUE
         # else color mappings were provided so sets values of provided colors
         else:
             self.GRID_LINE = GRAY if 'GRID_LINE' not in color_mappings else color_mappings['GRID_LINE']
@@ -107,7 +107,7 @@ class Minesweeper:
             self.UNREVEALED = PURPLE if 'UNREVEALED' not in color_mappings else color_mappings['UNREVEALED']
             self.MINE = RED if 'MINE' not in color_mappings else color_mappings['MINE']
             self.WIN_MINE = GREEN if 'WIN_MINE' not in color_mappings else color_mappings['WIN_MINE']
-            self.FLAG = SOFT_BLUE if 'FLAG' not in color_mappings else color_mappings['FLAG']
+            self.FLAG = LIGHT_GRAY if 'FLAG' not in color_mappings else color_mappings['FLAG']
 
         # board properties
         self.rows, self.cols = rows, cols  # board dimensions
@@ -256,6 +256,10 @@ class Minesweeper:
         """ Simple wrapper for pygame.display.update() function. """
         pygame.display.update()
 
+    def draw_flag(self, node: Node):
+        """ Draws tile with flag emoji onto pygame window. """
+        ptext.draw(FLAG_STR, centerx=node.x+self.cell_size//2, centery=node.y+self.cell_size//2, fontsize=int(self.cell_size/4*3))#3:2
+
     def draw_number(self, node: Node):
         """ Draws node's number onto pygame window. """
         ptext.draw(str(node.value), centerx=node.x+self.cell_size//2, centery=node.y+self.cell_size//2, fontsize=int(self.cell_size/4*3))#3:2
@@ -289,6 +293,7 @@ class Minesweeper:
         """ Draws unrevealed node. """
         self.draw_node(node)
         if node.is_flagged():
+            self.draw_flag(node)
             self.draw_node_grid(node)
 
     def draw_revealed(self, node: Node):

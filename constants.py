@@ -1,6 +1,7 @@
 """ This is store global constants that are used among all Minesweeper files. """
 
 WIN_TITLE = 'Minesweeper 💣🧹'
+FLAG_STR = '='
 
 # == BOARD PROPERTIES ==
 ROWS = 25
