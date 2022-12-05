@@ -27,10 +27,10 @@ bot = cli_solver.init_solver()
 bot.solve()  # solver + game
 ```
 #### CLI Game
-<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/minesweeper_demo.gif" alt="Minesweeper demo" width="400">
+<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/minesweeper_demo.gif" alt="Minesweeper game CLI demo" width="400">
 
 #### CLI Bot
-<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/ms_solver_demo.gif" alt="Minesweeper demo" width="400">
+<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/ms_solver_demo.gif" alt="Minesweeper bot CLI demo" width="400">
 
 ### Running GUI Versions
 The solver component is currently not ready in the GUI version, but the game itself is ready to play. To play the game, import the class `User` from the module `gui_user.py`, initialize it, and run the method `.play()`. You can initialize the `User` object with different parameters if you want to change the board dimensions, number of mines, etc. Set the mine spawn to a value below 1 to generate mines by probability, or a value over 1 to generate mines by number of mines.<br>*The code below can be found in the file `gui_ms.py`.*<br>
@@ -41,8 +41,8 @@ from gui_user import User
 ms = User()
 ms.play()
 ```
-#### Minesweeper Game
-<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/gui_ms_demo.gif" alt="Minesweeper demo" width="400">
+#### GUI Game
+<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/demo_gui_ms.gif" alt="Minesweeper game GUI demo" width="400">
 
-<!-- #### Minesweeper Bot
-<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/ms_solver_demo.gif" alt="Minesweeper demo" width="400"> -->
+<!-- #### GUI Bot
+<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/ms_solver_demo.gif" alt="Minesweeper bot GUI demo" width="400"> -->
