@@ -92,8 +92,11 @@ class User(Minesweeper):
                         # sanitize input before trying to reveal
                         if node.is_revealed() and not node.is_empty():  # chord node
                             # chord returns false if you incorrectly flagged
-                            if self.chord(node) is False:
+                            chord_result = self.chord(node)
+                            if chord_result is False:
                                 self.level_order_loss(node)
+                            if self.is_win():
+                                self.level_order_win(node)
                         elif node.is_flagged():  # can't reveal flagged node
                             continue
                         elif node.is_mine():  # run lose procedure if node is a mine
