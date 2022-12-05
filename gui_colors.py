@@ -11,6 +11,7 @@ VIOLET = (195, 59, 219)  # not soft purple
 PURPLE = (235, 191, 255)  # nice soft purple
 CYAN = (131, 252, 224)  # softish cyan
 SOFT_BLUE = (171, 215, 235)  # nice soft blue
+GRAY_BLUE = (109, 139, 153)
 TURQUOISE = (49, 208, 232)
 ORANGE = (255, 165, 0)
 SOFT_ORANGE = (255, 179, 71)

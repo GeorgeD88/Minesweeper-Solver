@@ -50,7 +50,7 @@ class Node:
         """ Returns whether node is unrevealed. """
         return self.state == self.parent.UNREVEALED
 
-    # NOTE: to check if node is unrevealed OR flagged, then do !is_revealed()
+    # NOTE: to check if node is unrevealed OR flagged, do !is_revealed()
     def is_revealed(self) -> bool:
         """ Returns whether node is revealed. """
         return self.state == self.parent.REVEALED
@@ -97,7 +97,7 @@ class Minesweeper:
             self.UNREVEALED = PURPLE  # color theme
             self.MINE = RED
             self.WIN_MINE = GREEN
-            self.FLAG = LIGHT_GRAY#SOFT_BLUE
+            self.FLAG = GRAY_BLUE#LIGHT_GRAY#SOFT_BLUE
         # else color mappings were provided so sets values of provided colors
         else:
             self.GRID_LINE = GRAY if 'GRID_LINE' not in color_mappings else color_mappings['GRID_LINE']
@@ -107,7 +107,7 @@ class Minesweeper:
             self.UNREVEALED = PURPLE if 'UNREVEALED' not in color_mappings else color_mappings['UNREVEALED']
             self.MINE = RED if 'MINE' not in color_mappings else color_mappings['MINE']
             self.WIN_MINE = GREEN if 'WIN_MINE' not in color_mappings else color_mappings['WIN_MINE']
-            self.FLAG = LIGHT_GRAY if 'FLAG' not in color_mappings else color_mappings['FLAG']
+            self.FLAG = GRAY_BLUE if 'FLAG' not in color_mappings else color_mappings['FLAG']
 
         # board properties
         self.rows, self.cols = rows, cols  # board dimensions
