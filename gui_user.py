@@ -19,22 +19,6 @@ class User(Minesweeper):
         super().__init__(rows, cols, mine_spawn, win_height, win_title, color_mappings)
         pygame.event.set_blocked(pygame.MOUSEMOTION)
 
-    def coord_from_pos(self, pos):
-        """ Gets the grid coord of node clicked based on position clicked in window. """
-        x, y = pos
-
-        # divides window position by cell width to see row/col number
-        row = y // self.cell_size
-        col = x // self.cell_size
-
-        return row, col
-
-    def get_clicked_node(self):
-        """ Gets the node clicked based on position in window clicked. """
-        pos = pygame.mouse.get_pos()  # get mouse position
-        coord = self.coord_from_pos(pos)  # convert position to coord
-        return self.get_node(*coord)  # get node at coord
-
     # === MAIN ===
     def play(self):
         """ Starts game by running start and update function (remember Unity). """
@@ -57,7 +41,8 @@ class User(Minesweeper):
                     break  # breaks event loop, not main loop
 
                 # left click, reveal tile
-                if pygame.mouse.get_pressed()[0]:
+                # if pygame.mouse.get_pressed()[0]:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     # get position on window clicked and then get node at position
                     node = self.get_clicked_node()
 

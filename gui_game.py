@@ -208,6 +208,23 @@ class Minesweeper:
         while not node.is_empty():
             self.new_game()
 
+    # functions to handle input clicks (used only in the subclasses user and solver)
+    def coord_from_pos(self, pos):
+        """ Gets the grid coord of node clicked based on position clicked in window. """
+        x, y = pos
+
+        # divides window position by cell width to see row/col number
+        row = y // self.cell_size
+        col = x // self.cell_size
+
+        return row, col
+
+    def get_clicked_node(self):
+        """ Gets the node clicked based on position in window clicked. """
+        pos = pygame.mouse.get_pos()  # get mouse position
+        coord = self.coord_from_pos(pos)  # convert position to coord
+        return self.get_node(*coord)  # get node at coord
+
     # === HELPER FUNCTIONS ===
     def gen_matrix(self, default=None) -> list[list]:
         """ Generates a 2D array the size of the board consisting of the given default value. """

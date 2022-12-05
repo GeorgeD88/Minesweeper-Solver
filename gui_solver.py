@@ -13,27 +13,22 @@ from pprint import PrettyPrinter
 pp = PrettyPrinter().pprint  # for dev purposes
 
 
-class User(Minesweeper):
+class Solver(Minesweeper):
 
     def __init__(self, rows: int = ROWS, cols: int = COLS, mine_spawn: float or int = MINE_SPAWN, win_height: int = WIN_HEIGHT, win_title: str = WIN_TITLE, color_mappings: dict = None):
         super().__init__(rows, cols, mine_spawn, win_height, win_title, color_mappings)
         pygame.event.set_blocked(pygame.MOUSEMOTION)
+        self.first_drop = None
+        """ NOTE: going to store the first drop coord in a class variable because we might
+        need it a few times and it makes it easier than having to pass it around functions. """
 
-    def coord_from_pos(self, pos):
-        """ Gets the grid coord of node clicked based on position clicked in window. """
-        x, y = pos
-
-        # divides window position by cell width to see row/col number
-        row = y // self.cell_size
-        col = x // self.cell_size
-
-        return row, col
-
-    def get_clicked_node(self):
-        """ Gets the node clicked based on position in window clicked. """
-        pos = pygame.mouse.get_pos()  # get mouse position
-        coord = self.coord_from_pos(pos)  # convert position to coord
-        return self.get_node(*coord)  # get node at coord
+    """ NOTE
+    I have to decide how I want to start the solver integration.
+    like if I want to be able to continue the solver from wherever the user presses key,
+    I have to figure out how I want to grab the existing information.
+    or maybe I'll decide to not be able to continue the user's work and I can only activate it
+    from the starting empty drop/pool.
+    """
 
     # === MAIN ===
     def play(self):
@@ -57,9 +52,11 @@ class User(Minesweeper):
                     break  # breaks event loop, not main loop
 
                 # left click, reveal tile
-                if pygame.mouse.get_pressed()[0]:
+                # if pygame.mouse.get_pressed()[0]:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     # get position on window clicked and then get node at position
                     node = self.get_clicked_node()
+                    self.first_drop = node.get_coord()  # save this coord as the first drop coord
 
                     self.generate_empty_drop(node)  # regen board until there's a zero under choice
                     self.reveal(node)  # reveals spot once the 0 is found
@@ -92,8 +89,11 @@ class User(Minesweeper):
                         # sanitize input before trying to reveal
                         if node.is_revealed() and not node.is_empty():  # chord node
                             # chord returns false if you incorrectly flagged
-                            if self.chord(node) is False:
+                            chord_result = self.chord(node)
+                            if chord_result is False:
                                 self.level_order_loss(node)
+                            if self.is_win():
+                                self.level_order_win(node)
                         elif node.is_flagged():  # can't reveal flagged node
                             continue
                         elif node.is_mine():  # run lose procedure if node is a mine
