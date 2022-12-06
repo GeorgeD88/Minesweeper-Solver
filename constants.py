@@ -23,6 +23,7 @@ FLAG: color of unrevealed tiles that are flagged                            *
 # == FRONTEND CONSTANTS ==
 WIN_HEIGHT = 900  # window height
 WAIT = 0.03  # in seconds
+SOLVER_WAIT = None  # delay animation for solver
 
 # == BACKEND CONSTANTS ==
 ADJACENT_COORDS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
