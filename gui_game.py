@@ -88,26 +88,15 @@ class Minesweeper:
         pygame.display.set_caption(win_title)
         # self.mine_icon = pygame.image.load('mine-icon.png')
 
-        # sets each color mapping to default value if custom color aren't provided
-        if color_mappings is None:
-            self.GRID_LINE = GRAY
-            self.TILE_NUMBER = WHITE  # tile foreground color (tile number)
-            self.REVEALED = DARK_GRAY  # tile background color (behind number)
-            self.LOSS_REVEALED = DARK_GRAY_LOSS  # tile background color (behind number)
-            self.UNREVEALED = PURPLE  # color theme
-            self.MINE = RED
-            self.WIN_MINE = GREEN
-            self.FLAG = GRAY_BLUE#LIGHT_GRAY#SOFT_BLUE
-        # else color mappings were provided so sets values of provided colors
-        else:
-            self.GRID_LINE = GRAY if 'GRID_LINE' not in color_mappings else color_mappings['GRID_LINE']
-            self.TILE_NUMBER = WHITE if 'TILE_NUMBER' not in color_mappings else color_mappings['TILE_NUMBER']
-            self.REVEALED = DARK_GRAY if 'REVEALED' not in color_mappings else color_mappings['REVEALED']
-            self.LOSS_REVEALED = DARK_GRAY_LOSS if 'LOSS_REVEALED' not in color_mappings else color_mappings['LOSS_REVEALED']
-            self.UNREVEALED = PURPLE if 'UNREVEALED' not in color_mappings else color_mappings['UNREVEALED']
-            self.MINE = RED if 'MINE' not in color_mappings else color_mappings['MINE']
-            self.WIN_MINE = GREEN if 'WIN_MINE' not in color_mappings else color_mappings['WIN_MINE']
-            self.FLAG = GRAY_BLUE if 'FLAG' not in color_mappings else color_mappings['FLAG']
+        # color mappings (mapping each state to a color)
+        self.GRID_LINE = GRAY
+        self.TILE_NUMBER = WHITE  # tile foreground color (tile number)
+        self.REVEALED = DARK_GRAY  # tile background color (behind number)
+        self.LOSS_REVEALED = DARK_GRAY_LOSS  # tile background color (behind number)
+        self.UNREVEALED = SOFT_PURPLE  # color theme
+        self.MINE = RED
+        self.WIN_MINE = GREEN
+        self.FLAG = GRAY_BLUE#LIGHT_GRAY#SOFT_BLUE
 
         # board properties
         self.rows, self.cols = rows, cols  # board dimensions
