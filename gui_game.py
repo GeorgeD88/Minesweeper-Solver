@@ -46,30 +46,34 @@ class Node:
         """ Set node state to unrevealed. """
         self.state = self.parent.UNREVEALED
 
-    def is_unrevealed(self) -> bool:
-        """ Returns whether node is unrevealed. """
-        return self.state == self.parent.UNREVEALED
+    def flag(self) -> bool:
+        """ Flags node. """
+        self.state = self.parent.FLAG
 
     # NOTE: to check if node is unrevealed OR flagged, do !is_revealed()
     def is_revealed(self) -> bool:
         """ Returns whether node is revealed. """
         return self.state == self.parent.REVEALED
 
-    def is_mine(self) -> bool:
-        """ Returns whether node is a mine. """
-        return self.value is True
+    def is_unrevealed(self) -> bool:
+        """ Returns whether node is unrevealed. """
+        return self.state == self.parent.UNREVEALED
 
     def is_flagged(self) -> bool:
         """ Returns whether node is flagged. """
         return self.state == self.parent.FLAG
 
-    def flag(self) -> bool:
-        """ Flags node. """
-        self.state = self.parent.FLAG
-
     def is_empty(self) -> bool:
         """ Returns whether node is an empty area (zero). """
         return self.value == 0
+
+    def is_chain(self) -> bool:
+        """ Returns whether node is a chain node (integer over zero). """
+        return type(self.value) is int and self.value > 0
+
+    def is_mine(self) -> bool:
+        """ Returns whether node is a mine. """
+        return self.value is True
 
 
 class Minesweeper:
