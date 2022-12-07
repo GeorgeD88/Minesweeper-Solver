@@ -29,4 +29,5 @@ DARK_RED_TINT = (70, 18, 18)
 DARK_YELLOW_TINT = (70, 70, 18)  # traversed but not solved
 DARK_GREEN_TINT = (18, 70, 18)  # fully solved tiles
 DARK_PURPLE_TINT = (70, 24, 79)  # current node color
-# TODO: blue for lake scan, traversing pools
+DULL_BLUE = (27, 125, 158)  # lake scan, traversing pools
+DULL_BLUE_LEADING = (33, 172, 219)
