@@ -75,6 +75,12 @@ class Node:
         """ Returns whether node is a mine. """
         return self.value is True
 
+    # TODO: if you can, try to find a different way to do this
+    def is_solved(self) -> bool:
+        """ Returns whether node is marked as solved. """
+        if not hasattr(self, 'solved'):
+            return None
+        return self.is_solved is True
 
 class Minesweeper:
     """ Game logic + visual (graphical), NOT INPUT. From here, we add the user input through a subclass (in another file) to play the game. """
@@ -445,8 +451,8 @@ class Minesweeper:
                 for adj in self.adjacent_nodes(curr):
                     # NOTE: if node isn't new then it was processed during a different run of this function.
                     if adj not in discovered and adj.is_unrevealed():
-                        discovered.add(adj)
                         queue.append(adj)
+                        discovered.add(adj)
 
             # displays whole breadth of newly drawn nodes together
             self.delay()
@@ -477,8 +483,8 @@ class Minesweeper:
                 # add adjacent nodes
                 for adj in self.adjacent_nodes(curr):
                     if adj not in discovered:
-                        discovered.add(adj)
                         queue.append(adj)
+                        discovered.add(adj)
 
             # displays whole breadth of newly drawn nodes together
             self.delay()
@@ -505,8 +511,8 @@ class Minesweeper:
                 # add adjacent nodes
                 for adj in self.adjacent_nodes(curr):
                     if adj not in discovered:
-                        discovered.add(adj)
                         queue.append(adj)
+                        discovered.add(adj)
 
             # displays whole breadth of newly drawn nodes together
             self.delay()
