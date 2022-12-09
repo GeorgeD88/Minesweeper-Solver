@@ -28,8 +28,11 @@ class Solver(Minesweeper):
 
         # solver colors
         self.CURRENT = DARK_PURPLE_TINT
-        self.VISITED = DARK_YELLOW_TINT
-        self.SOLVED = DARK_GREEN_TINT
+        self.LAKE = DULL_BLUE
+        self.VISITED = DARK_YELLOW_TINT2  # visited but wasn't able to solve
+        self.SOLVED = DARK_GREEN_TINT2
+        # colors that represent revealed state but are not specifically revealed state
+        self.revealed_states = {self.CURRENT, self.VISITED, self.SOLVED, self.REVEALED}
 
     """ TODO
     I have to decide how I want to start the solver integration.
@@ -83,37 +86,21 @@ class Solver(Minesweeper):
     # like mark wall that might be useful because that same code (or at least purpose) is definitely relevant for lake scan.
     def find_nearest_chain(self, start: Node) -> Node:
         """ Uses DFS to find the nearest chain (and returns first node it touched in the chain). """
-        stack = deque([(r, c)])  # use append to push, pop to pop
-        checked = {(r, c)}  # hashset containing nodes already processed
-        self.color_exposed(r, c, GREEN)  # marks the source node green
+        stack = deque([start])  # use append to push, pop to pop
+        discovered = {start}  # hashset containing nodes already discovered
 
-        while len(stack) > 0:  # while stack not empty
+        while len(stack) > 0:
             curr = stack.pop()
-            self.color_exposed(*curr, PURPLE)  # sets current node to purple
 
-            if curr not in checked:  # if this node hasn't been checked yet
-                # if we hit a number, return its coords
-                if self.game[curr[0]][curr[1]] != 0:
-                    self.color_exposed(*curr, RED)  # sets destination node to red
-                    return curr
-                checked.add(curr)
+            self.switch_color(curr, self.LAKE)
 
-            self.color_exposed(*curr, CYAN)  # sets processed node to cyan
-
-            # checks neighbors
+            # add adjacent nodes to stack
             for adj in self.adjacent_nodes(curr):
-                # that means this bumped into an already completed wall
-                if not self.bounds(*adj):
-                    continue
-                if self.is_solved(*adj):
-                    input('chick chick, BOOOMMM')
+                if adj.is_chain():  # chain was found
                     return adj
-                if adj not in checked and adj not in stack:
+                elif adj not in discovered:
                     stack.append(adj)
-
-        # bolds source node and updates display
-        self.bold_node(r, c)
-        sleep(GRAPH_SEARCH_DELAY)
+                    discovered.add(adj)
 
     def lake_scan(self, start: Node) -> list[Node]:
         """ BFS zero fill from CLI solver could be useful. """
@@ -137,43 +124,118 @@ class Solver(Minesweeper):
         return marked
 
     # === CHAIN SOLVING ALGORITHMS === NOTE: once we have chains, these are algorithms to do with solving them, like follow and grind chain
-    def grind_chain(self, r: int, c: int):
-        """ Keeps running follow chain on number until the chain is completely solved. """
+    def grind_chain(self, chain_start: Node):
+        """ Keeps running follow chain until the chain stagnates. """
         last_progress = -1
-        total_progress = self.flag_tracker + self.solved_count
-        # iter_counter = 1  # DELETE
+        curr_progress = self.flagged_count + self.solved_count
 
         # stagnation detector
-        while total_progress > last_progress:
-            last_progress = total_progress  # current total progress becomes last progress
-            self.follow_chain(r, c)
-            total_progress = self.flag_tracker + self.solved_count  # current total progress is calculated
+        while curr_progress > last_progress:
+            last_progress = curr_progress  # current total progress becomes last progress
+            self.follow_chain(chain_start)  # follow chain
+            curr_progress = self.flagged_count + self.solved_count  # current total progress is calculated
 
-            # DELETE --,
-            # iter_counter += 1
-        # input(f'last progress: {last_progress}\nupdated progress: {total_progress}')
-        input('finished grinding chain')
-
-    def follow_chain(self, r: int, c: int):
+    def follow_chain(self, chain_start: Node):
         """ Follow chain of numbers (using bfs) starting at given coord and process each node. """
-        pass
+        queue = deque([chain_start])  # use append to enqueue, popleft to dequeue
+        discovered = {chain_start}  # hashset containing nodes already discovered
 
-    def simple_solve(self, r: int, c: int) -> bool:
+        while len(queue) > 0:
+            curr = queue.popleft()
+
+            self.switch_color(curr, self.CURRENT)
+
+            """ when processing a node, we will be traversing nodes that have been processed before
+            in past calls of the follow chain function. those nodes may or may not have been fully solved.
+            so first we have to check for that before we try to solving. """
+
+            # process node
+            if curr.is_solved() is False:
+                """ NOTE: note that, this tile could've been solved by the actions of a tile next to it
+                but not marked as solved, so make note of that and try to include that when considering efficiency. """
+                solve_result = self.simple_solve(curr)
+                # color node green if was solved, else make it yellow
+                self.switch_color(curr, self.SOLVED if solve_result else self.VISITED)
+            else:
+                self.switch_color(curr, self.SOLVED)
+                # color it back to green, because remember it was colored purple at the beginning of the iteration
+
+            # add adjacent nodes to queue
+            for adj in self.adjacent_nodes(curr):
+                # node is revealed and node is part of chain
+                if self.is_revealed(adj) and adj.is_chain() and adj not in discovered:
+                    queue.append(adj)
+                    discovered.add(adj)
+
+    def simple_solve(self, node: Node) -> bool:
         """ Runs the simple solving algorithm and returns whether tile was solved. """
-        pass
+        unrevealed_count, flag_count = self.count_unrevealedNflags(node)
+        mines_left = node.value - flag_count  # mines actually left to find
 
-    def count_unrevealedNflags(self, r: int, c: int) -> tuple[int, int]:
+        # if the mines left match the unrevealed count, then we're able to solve the tile
+        if mines_left == unrevealed_count:
+            # if they're both 0, then the tile was solved but not marked, meaning it was solved because of actions of adjacent tiles
+            if mines_left == 0:
+                node.solved = True
+                self.solved_count += 1
+                return True
+            # flags all unrevealed tiles, as they have to be mines
+            for adj in self.adjacent_nodes(node):
+                if adj.is_unrevealed():  # if unrevealed, flag it
+                    self.flag(adj)
+                    self.flagged_count += 1
+        # no more mines or flags left, so reveal the rest of the tiles
+        elif mines_left == 0:
+            for adj in self.adjacent_nodes(node):
+                if adj.is_unrevealed():  # if unrevealed, reveal it
+                    self.reveal(adj)
+        # not enough information to solve the tile
+        else:
+            return False
+
+        # tile was able to solve, returns True
+        node.solved = True
+        self.solved_count += 1
+        return True
+
+    def count_unrevealedNflags(self, node: Node) -> tuple[int, int]:
         # TODO: find a better fucking name to replace this shitty fucking name
-        pass
+        """ Returns count of adjacent flags and unrevealed tiles. """
+        unrevealed_count = flagged_count = 0
 
-    """ bunch more helpers and small ones like getters:
-    is_solved (checks node.solved, which would normally be a function in the node class, but this is only a solver thing so I don't wanna add it in the class definition for nodes in the main game file.)
-    determine_if_solved
-    is_chain (maybe could make this a node method)
-    is_flag (exists as node method already)
-    """
+        for adj in self.adjacent_nodes(node):
+            if adj.is_unrevealed():
+                unrevealed_count += 1
+            elif adj.is_flagged():
+                flagged_count += 1
+
+        return unrevealed_count, flagged_count
+
+    # === HELPER FUNCTIONS ===
+    def solver_delay(self, wait: float = SOLVER_WAIT):
+        """ Delay some amount of time, for animation/visual purposes. """
+        pygame.time.delay(int(wait*1000))
+
+    def is_revealed(self, node: Node):
+        """ Checks if revealed but also considers solver revealed states. """
+        return node.state in self.revealed_states
+
+    # TODO: NEED to figure out a better name :sob:
+    def determine_if_solved(self, node: Node) -> bool:  # TODO: I also feel like the docstring could be much better
+        """ Calculates if the node is solved by checking the adjacent nodes. """
+        for adj in self.adjacent_nodes(node):
+            # aborts immediately if any adjacent node is unrevealed
+            if adj.is_unrevealed():
+                return False
+        return True
 
     # === COLORING FUNCTIONS === thank fuck I don't have to deal with these like I did in CLI solver,
+    def switch_color(self, node: Node, new_color: str):
+        """ Switches node's color, redraws, updates display, and delays solver. """
+        node.state = new_color
+        self.update_revealed(node)
+        self.solver_delay()  # NOTE: this feels odd to include, it feels dirty like cli solver
+
     # TODO: but I may still need to overwrite some of the update_node/reveal_node functions to instead get the color from the solved state.
     # because the nodes will still have their regular state (like REVEALED & UNREVEALED),
     # but they will need to be colored based on solving. now as for including a traversed attribute, idk if that matters, the node will simply get colored yellow as it's traversed,
