@@ -101,9 +101,14 @@ class User(Solver):
                             self.update_revealed(node)  # update revealed mine
                             self.level_order_loss(node)
                         else:  # node is safe, reveal it
-                            self.reveal(node)
-                            if self.is_win():
-                                self.level_order_win(node)
+                            # avoids increasing revealed counter for already revealed by solver
+                            if node.state in self.revealed_states:
+                                node.reveal()  # reveals node
+                                self.draw_revealed(node)  # draws node onto window
+                            else:
+                                self.reveal(node)
+                                if self.is_win():
+                                    self.level_order_win(node)
 
                     # right click, flag tile
                     elif event.button == 3:#pygame.mouse.get_pressed()[2]:
@@ -132,7 +137,7 @@ class User(Solver):
                     elif event.key == pygame.K_s:
                         self.run_solver()
                         if self.is_win():
-                            self.level_order_win(node)
+                            self.level_order_win(self.get_node(*self.first_drop))
 
                     # else, some other key was pressed
 
