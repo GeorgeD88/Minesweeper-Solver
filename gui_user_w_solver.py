@@ -22,15 +22,6 @@ class User2(Solver):
         super().__init__(rows, cols, mine_spawn, win_height, win_title)
         pygame.event.set_blocked(pygame.MOUSEMOTION)
 
-        self.first_drop = None
-        """ NOTE: going to store the first drop coord in a class variable because we might
-        need it a few times and it makes it easier than having to pass it around functions. """
-
-        # solver colors
-        self.CURRENT = DARK_PURPLE_TINT
-        self.VISITED = DARK_YELLOW_TINT
-        self.SOLVED = DARK_GREEN_TINT
-
     """ NOTE
     I have to decide how I want to start the solver integration.
     like if I want to be able to continue the solver from wherever the user presses key,
@@ -140,6 +131,8 @@ class User2(Solver):
                     # S, run solver
                     elif event.key == pygame.K_s:
                         self.run_solver()
+                        if self.is_win():
+                            self.level_order_win(node)
 
                     # else, some other key was pressed
 
