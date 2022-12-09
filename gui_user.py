@@ -1,6 +1,7 @@
 # interface
 import pygame
-from gui_game import Minesweeper, Node
+from gui_solver import Solver
+from gui_colors import *
 from constants import *
 
 # data structures
@@ -13,11 +14,21 @@ from pprint import PrettyPrinter
 pp = PrettyPrinter().pprint  # for dev purposes
 
 
-class User(Minesweeper):
+class User(Solver):
+    """ The same thing as subclassing from Minesweeper, except the Solver file is a middleman
+    to add all the solver code in between, while still keeping the final input loop separate. """
 
-    def __init__(self, rows: int = ROWS, cols: int = COLS, mine_spawn: float or int = MINE_SPAWN, win_height: int = WIN_HEIGHT, win_title: str = WIN_TITLE, color_mappings: dict = None):
-        super().__init__(rows, cols, mine_spawn, win_height, win_title, color_mappings)
+    def __init__(self, rows: int = ROWS, cols: int = COLS, mine_spawn: float or int = MINE_SPAWN, win_height: int = WIN_HEIGHT, win_title: str = WIN_TITLE):
+        super().__init__(rows, cols, mine_spawn, win_height, win_title)
         pygame.event.set_blocked(pygame.MOUSEMOTION)
+
+    """ NOTE
+    I have to decide how I want to start the solver integration.
+    like if I want to be able to continue the solver from wherever the user presses key,
+    I have to figure out how I want to grab the existing information.
+    or maybe I'll decide to not be able to continue the user's work and I can only activate it
+    from the starting empty drop/pool.
+    """
 
     # === MAIN ===
     def play(self):
@@ -45,6 +56,7 @@ class User(Minesweeper):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     # get position on window clicked and then get node at position
                     node = self.get_clicked_node()
+                    self.first_drop = node.get_coord()  # save this coord as the first drop coord
 
                     self.generate_empty_drop(node)  # regen board until there's a zero under choice
                     self.reveal(node)  # reveals spot once the 0 is found
@@ -118,7 +130,9 @@ class User(Minesweeper):
 
                     # S, run solver
                     elif event.key == pygame.K_s:
-                        pass
+                        self.run_solver()
+                        if self.is_win():
+                            self.level_order_win(node)
 
                     # else, some other key was pressed
 
