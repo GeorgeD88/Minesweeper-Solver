@@ -3,6 +3,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (64, 64, 64)
 LIGHT_GRAY = (128, 128, 128)
+LIGHTER_GRAY = (155, 155, 155)
 DARK_GRAY = (18, 18, 18)
 DARK_GRAY_LOSS = (46, 46, 46)
 
@@ -27,7 +28,9 @@ DARK_RED_TINT = (70, 18, 18)
 
 # solver colors, TODO: try lightening the tints a bit more
 DARK_YELLOW_TINT = (70, 70, 18)  # traversed but not solved
+DARK_YELLOW_TINT2 = (122, 122, 26)  # traversed but not solved
 DARK_GREEN_TINT = (18, 70, 18)  # fully solved tiles
+DARK_GREEN_TINT2 = (22, 94, 22)  # fully solved tiles
 DARK_PURPLE_TINT = (70, 24, 79)  # current node color
 DULL_BLUE = (27, 125, 158)  # lake scan, traversing pools
 DULL_BLUE_LEADING = (33, 172, 219)
