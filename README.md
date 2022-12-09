@@ -44,5 +44,5 @@ ms.play()
 #### GUI Game
 <img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/demo_gui_ms.gif" alt="Minesweeper game GUI demo" width="400">
 
-<!-- #### GUI Bot
-<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/ms_solver_demo.gif" alt="Minesweeper bot GUI demo" width="400"> -->
+#### GUI Bot
+<img src="https://github.com/GeorgeD88/Minesweeper-Solver/blob/main/gui_solver_demo.gif" alt="Minesweeper bot GUI demo" width="400">
