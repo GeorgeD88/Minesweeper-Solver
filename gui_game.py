@@ -80,7 +80,7 @@ class Node:
         """ Returns whether node is marked as solved. """
         if not hasattr(self, 'solved'):
             return None
-        return self.is_solved is True
+        return self.solved is True
 
 class Minesweeper:
     """ Game logic + visual (graphical), NOT INPUT. From here, we add the user input through a subclass (in another file) to play the game. """
@@ -99,7 +99,7 @@ class Minesweeper:
         # self.mine_icon = pygame.image.load('mine-icon.png')
 
         # color mappings (mapping each state to a color)
-        self.GRID_LINE = GRAY
+        self.GRID_LINE = LIGHT_GRAY#LIGHTER_GRAY
         self.TILE_NUMBER = WHITE  # tile foreground color (tile number)
         self.REVEALED = DARK_GRAY  # tile background color (behind number)
         self.LOSS_REVEALED = DARK_GRAY_LOSS  # tile background color (behind number)
