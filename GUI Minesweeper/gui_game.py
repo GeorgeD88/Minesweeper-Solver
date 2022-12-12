@@ -103,7 +103,7 @@ class Minesweeper:
         self.TILE_NUMBER = WHITE  # tile foreground color (tile number)
         self.REVEALED = DARK_GRAY  # tile background color (behind number)
         self.LOSS_REVEALED = DARK_GRAY_LOSS  # tile background color (behind number)
-        self.UNREVEALED = SOFT_PURPLE  # color theme
+        self.UNREVEALED = DARK_PURPLE2#SOFT_PURPLE  # color theme
         self.MINE = RED
         self.WIN_MINE = GREEN
         self.FLAG = GRAY_BLUE#LIGHT_GRAY#SOFT_BLUE
@@ -275,7 +275,8 @@ class Minesweeper:
     # === SOMETHING (GETTERS?) ===
     def is_win(self) -> bool:
         """ Checks if the player won by comparing mine count to unrevealed count. """
-        return self.area - self.revealed_count == self.mine_count
+        return self.area - self.revealed_count < self.mine_count
+        # turned the == into a < to combat issue solver makes revealed count go over
 
     def is_loss(self, node: Node) -> bool:
         """ Checks if coord choice is a loss (mine). """
