@@ -22,7 +22,7 @@ GRAY_BLUE = (109, 139, 153)  # similar to soft blue, but grayed out
 SOFT_BLUE = (171, 215, 235)  # nice soft blue
 SKY_BLUE = (39, 128, 176)
 CYAN = (131, 252, 224)  # softish cyan
-SOFT_PURPLE = (235, 191, 255)  # nice soft purple
+SOFT_PURPLE = (204, 124, 242)  # nice soft purple
 
 # darker colors
 REDDISH_BROWN = (120, 56, 13)
