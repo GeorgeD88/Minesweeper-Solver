@@ -29,6 +29,7 @@ REDDISH_BROWN = (120, 56, 13)
 DARK_RED = (163, 18, 8)
 DARK_RED_TINT = (70, 18, 18)
 DARK_PURPLE = (69, 21, 117)
+DARK_PURPLE2 = (81, 31, 130)
 
 # solver colors, TODO: try lightening the tints a bit more
 DARK_YELLOW_TINT = (70, 70, 18)  # traversed but not solved
