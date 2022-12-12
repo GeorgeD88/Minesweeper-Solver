@@ -23,7 +23,7 @@ FLAG: color of unrevealed tiles that are flagged                            *
 # == FRONTEND CONSTANTS ==
 WIN_HEIGHT = 900  # window height
 WAIT = 0.03  # in seconds
-SOLVER_WAIT = 0.015  # delay animation for solver
+SOLVER_WAIT = 0.002#.015  # delay animation for solver
 # TODO: add a delay variable for every solver animation (lake scan, grind chain, etc.)
 
 # == BACKEND CONSTANTS ==
