@@ -4,9 +4,6 @@ from gui_solver import Solver
 from gui_colors import *
 from constants import *
 
-# data structures
-from collections import deque
-
 # dev stuff
 from pprint import PrettyPrinter
 
