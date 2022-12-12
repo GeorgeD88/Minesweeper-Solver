@@ -84,12 +84,16 @@ class User(Solver):
                         node = self.get_clicked_node()
 
                         # sanitize input before trying to reveal
-                        if node.is_revealed() and not node.is_empty():  # chord node
+                        if node.state == self.LAKE:  # do nothing
+                            pass
+                        elif self.is_revealed_solver(node) and not node.is_empty():  # chord node
                             # chord returns false if you incorrectly flagged
                             chord_result = self.chord(node)
+                            # lose if chord is wrong (flags were wrong)
                             if chord_result is False:
                                 self.level_order_loss(node)
-                            if self.is_win():
+                            # check if chord resulted in a win
+                            elif self.is_win():
                                 self.level_order_win(node)
                         elif node.is_flagged():  # can't reveal flagged node
                             continue
@@ -100,8 +104,7 @@ class User(Solver):
                         else:  # node is safe, reveal it
                             # avoids increasing revealed counter for already revealed by solver
                             if node.state in self.revealed_states:
-                                node.reveal()  # reveals node
-                                self.draw_revealed(node)  # draws node onto window
+                                continue
                             else:
                                 self.reveal(node)
                                 if self.is_win():
