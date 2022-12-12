@@ -29,8 +29,8 @@ class Solver(Minesweeper):
         # solver colors
         self.CURRENT = DARK_PURPLE_TINT
         self.LAKE = DULL_BLUE
-        self.VISITED = DARK_YELLOW_TINT2  # visited but wasn't able to solve
-        self.SOLVED = DARK_GREEN_TINT2
+        self.VISITED = YELLOW_TINT  # visited but wasn't able to solve
+        self.SOLVED = GREEN_TINT
         # colors that represent revealed state but are not specifically revealed state
         self.revealed_states = {self.CURRENT, self.VISITED, self.SOLVED, self.REVEALED}
 
