@@ -34,14 +34,6 @@ class Solver(Minesweeper):
         # colors that represent revealed state but are not specifically revealed state
         self.revealed_states = {self.CURRENT, self.VISITED, self.SOLVED, self.REVEALED}
 
-    """ TODO
-    I have to decide how I want to start the solver integration.
-    like if I want to be able to continue the solver from wherever the user presses key,
-    I have to figure out how I want to grab the existing information.
-    or maybe I'll decide to not be able to continue the user's work and I can only activate it
-    from the starting empty drop/pool.
-    """
-
     def run_solver(self):
         """ Run solver by initializing bot, then running it. """
         self.init_solver()
@@ -53,7 +45,6 @@ class Solver(Minesweeper):
         # add solver attributes to every node in the grid
         for node in self.loop_all_nodes():
             node.solved = False
-            node.traversed = False  # TODO: not sure if I'll keep this, but this basically turns the yellow coloring into a state too
 
     # TODO: maybe put init_solver in main solver function and just make it part of the algorithm function.
     def solve_board(self):
@@ -82,7 +73,7 @@ class Solver(Minesweeper):
         solving v2: lake scan to get chains, loop through chains and run ***, etcetera etcetera."""
         pass
 
-    # === CHAIN SEARCH ALGORITHMS === NOTE: anything to do with FINDING chains (not solving them), so: find nearest chain, lake scan, even helper functions
+    # === CHAIN SEARCH ALGORITHMS ===
     # like mark wall that might be useful because that same code (or at least purpose) is definitely relevant for lake scan.
     def find_nearest_chain(self, start: Node) -> Node:
         """ Uses DFS to find the nearest chain (and returns first node it touched in the chain). """
@@ -123,7 +114,7 @@ class Solver(Minesweeper):
 
         return marked
 
-    # === CHAIN SOLVING ALGORITHMS === NOTE: once we have chains, these are algorithms to do with solving them, like follow and grind chain
+    # === CHAIN SOLVING ALGORITHMS ===
     def grind_chain(self, chain_start: Node):
         """ Keeps running follow chain until the chain stagnates. """
         last_progress = -1
@@ -163,7 +154,7 @@ class Solver(Minesweeper):
             # add adjacent nodes to queue
             for adj in self.adjacent_nodes(curr):
                 # node is revealed and node is part of chain
-                if self.is_revealed(adj) and adj.is_chain() and adj not in discovered:
+                if self.is_revealed_solver(adj) and adj.is_chain() and adj not in discovered:
                     queue.append(adj)
                     discovered.add(adj)
 
@@ -198,8 +189,8 @@ class Solver(Minesweeper):
         self.solved_count += 1
         return True
 
+    # TODO: find a better name ASAP
     def count_unrevealedNflags(self, node: Node) -> tuple[int, int]:
-        # TODO: find a better fucking name to replace this shitty fucking name
         """ Returns count of adjacent flags and unrevealed tiles. """
         unrevealed_count = flagged_count = 0
 
@@ -216,12 +207,11 @@ class Solver(Minesweeper):
         """ Delay some amount of time, for animation/visual purposes. """
         pygame.time.delay(int(wait*1000))
 
-    def is_revealed(self, node: Node):
+    def is_revealed_solver(self, node: Node):
         """ Checks if revealed but also considers solver revealed states. """
         return node.state in self.revealed_states
 
-    # TODO: NEED to figure out a better name :sob:
-    def determine_if_solved(self, node: Node) -> bool:  # TODO: I also feel like the docstring could be much better
+    def determine_if_solved(self, node: Node) -> bool:
         """ Calculates if the node is solved by checking the adjacent nodes. """
         for adj in self.adjacent_nodes(node):
             # aborts immediately if any adjacent node is unrevealed
@@ -235,8 +225,3 @@ class Solver(Minesweeper):
         node.state = new_color
         self.update_revealed(node)
         self.solver_delay()  # NOTE: this feels odd to include, it feels dirty like cli solver
-
-    # TODO: but I may still need to overwrite some of the update_node/reveal_node functions to instead get the color from the solved state.
-    # because the nodes will still have their regular state (like REVEALED & UNREVEALED),
-    # but they will need to be colored based on solving. now as for including a traversed attribute, idk if that matters, the node will simply get colored yellow as it's traversed,
-    # like a snail trail from the solver, and if it gets solved then it will turn green. but basically the traversed may not need to be an attribute and will simply be a trail from the solver's traversal
