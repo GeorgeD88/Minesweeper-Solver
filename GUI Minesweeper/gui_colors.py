@@ -39,5 +39,6 @@ DARK_GREEN_TINT = (18, 70, 18)  # fully solved tiles
 DARK_GREEN_TINT2 = (22, 94, 22)
 GREEN_TINT = (46, 158, 46)
 DARK_PURPLE_TINT = (70, 24, 79)  # current node color
-DULL_BLUE = (27, 125, 158)  # lake scan, traversing pools
+DULL_BLUE = (27, 125, 158)  # lake scan, traversing lake
+BORDER_BLUE = (8, 76, 99)  # slightly darker than dull blue
 DULL_BLUE_LEADING = (33, 172, 219)
