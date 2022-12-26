@@ -50,11 +50,13 @@ class Solver(Minesweeper):
 
         # [1] Get starting points for the algorithm (using lake scan)
         chains = self.lake_scan(first_node)
+        print(f'found {len(chains)} chains:')
 
         # [2] Loop through islands/starting points and run grind chain at each one.
         for chain in chains:
             self.switch_color(chain, SOFT_BLUE)
-            input('grinding: ' + str(chain.get_coord()))
+            print('grinding: ' + str(chain.get_coord()))
+            self.delay(2.5)
             self.grind_chain(chain)
 
     # === CHAIN SEARCH ALGORITHMS ===
