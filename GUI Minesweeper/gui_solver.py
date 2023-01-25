@@ -6,6 +6,7 @@ from constants import *
 
 # data structures
 from collections import deque, defaultdict
+from DSU import DSU as DisjointSet
 
 # dev stuff
 from pprint import PrettyPrinter
@@ -48,8 +49,8 @@ class Solver(Minesweeper):
         # [0] Random first drop (is done by the player and saved in a class variable)
         first_node = self.get_node(*self.first_drop)
 
-        # [1] Get starting points for the algorithm (using lake scan)
-        chains = self.lake_scan(first_node)
+        # [1] Get starting points for the algorithm (using island scan)
+        chains = self.island_scan(first_node)
         print(f'found {len(chains)} chains:')
 
         # [2] Loop through islands/starting points and run grind chain at each one.
@@ -60,7 +61,7 @@ class Solver(Minesweeper):
             self.grind_chain(chain)
 
     # === CHAIN SEARCH ALGORITHMS ===
-    # like mark wall that might be useful because that same code (or at least purpose) is definitely relevant for lake scan.
+    # like mark wall that might be useful because that same code (or at least purpose) is definitely relevant for island scan.
     # def find_nearest_chain(self, start: Node) -> Node:
     #     """ Uses DFS to find the nearest chain (and returns first node it touched in the chain). """
     #     stack = deque([start])  # use append to push, pop to pop
@@ -79,65 +80,34 @@ class Solver(Minesweeper):
     #                 stack.append(adj)
     #                 discovered.add(adj)
 
-    # === DISJOINT SETS === (keeping DSU section within the chain search section for now)
-    def disjoint_union(self, parents: defaultdict[Node], node1: Node, node2: Node):
-        """ Given 2 nodes and the parent map, combines the sets the nodes belong to. """
-        repr1, repr2 = self.disjoint_find(parents, node1), self.disjoint_find(parents, node2)  # get the root of both sets
-
-        # if the roots are the same, then the nodes are already in the same set
-        if repr1 == repr2:
-            # if this wasn't here, then the root's parent would be switched to being its own parent instead of pointing to Null
-            return
-
-        # else they are different, so make the root of the 2nd set the child of the 1st set, combining them
-        parents[repr2] = repr1
-
-    def disjoint_find(self, parents: defaultdict[Node], to_find: Node) -> Node:
-        """ Given a node, finds the set that the node belongs to and returns its root. """
-        # if we're not at root, recurse up the next parent
-        if parents[to_find] is not None:
-            return self.disjoint_find(parents, parents[to_find])
-        # else we've found the root of the set so return it
-        else:
-            return to_find
-
-    def dsu_adjacent_chain(self, parents: defaultdict[Node], node: Node):
-        """ Perform disjoint set union on the given node and its adjacent chain tiles. """
-        for adj in self.adjacent_nodes(node):
-            if self.is_revealed_solver(adj) and adj.is_chain():
-                if adj not in parents:
-                    parents[adj] = None
+    def union_adjacent_chain(self, DSU: DisjointSet, node: Node):
+        """ Perform union on the given node and its adjacent chain nodes. """
+        for adj in self.adjacent_nodes(node):  # iterate adjacent nodes
+            if self.is_revealed_solver(adj) and adj.is_chain():  # if chain
+                # if node not in disjoint-set, add it to the structure
+                if not DSU.exists(adj):
+                    DSU.new(adj)
                 self.switch_color(adj, DARK_RED_TINT)  # set adjacent disjoint to dark red tint
-                self.disjoint_union(parents, node, adj)
+                DSU.union(node, adj)  # perform union
 
-    def extract_sets(self, parents: defaultdict[Node]) -> set[Node]:
-        """ Given a disjoint-set forest, return all the representatives/roots. """
-        root_nodes = set()
-        for node, parent in parents.items():
-            if parent is None:
-                root_nodes.add(node)
-        return root_nodes
-    # === END DSU ===
-
-    def lake_scan(self, start: Node) -> set[Node]:
-        """ Lake scan implemented with disjoint sets. """
-        parents = defaultdict(None)  # disjoint set
-
+    def island_scan(self, start: Node) -> set[Node]:
+        """ Island scan implemented with disjoint sets. """
+        DSU = DisjointSet()  # disjoint-set data structure
         queue = deque([start])  # append to enqueue and popleft to dequeue
         discovered = {start}  # hashset keeping track of already discovered nodes
 
-        # TODO: convert to level order traversal
         while len(queue) > 0:
             curr = queue.popleft()
 
-            # when border is hit, runs disjoint-set union on the chain tile
+            # when border is hit, union node with adjacent chain tiles
             if curr.value != 0:
-                if curr not in parents:
-                    parents[curr] = None
+                # if node not in disjoint-set, add it to the structure
+                if not DSU.exists(curr):
+                    DSU.new(curr)
                 self.switch_color(curr, BORDER_BLUE)  # set chain tile to border blue
-                self.dsu_adjacent_chain(parents, curr)
+                self.union_adjacent_chain(DSU, curr)
                 continue
-            # else it's a still an empty node, so just colors it
+            # else it's a still an empty/lake node, so just colors it
             else:
                 self.switch_color(curr, self.LAKE)
                 self.solver_delay(0.008)
@@ -148,7 +118,8 @@ class Solver(Minesweeper):
                     queue.append(adj)
                     discovered.add(adj)
 
-        return self.extract_sets(parents)
+        # return disjoint-set representatives (each is a reference to an island)
+        return DSU.get_representatives()
 
     def lake_scan_BFS(self, start: Node) -> set[Node]:
         """ Scans lake of 0s and returns the chains found. returns set of first node found from every chain """
@@ -226,7 +197,7 @@ class Solver(Minesweeper):
         # return discovered  # returns all the nodes in this chain
 
     def lake_scan_later(self, start: Node) -> list[Node]:
-        """ TODO: implement lake scan for later stages where some of the chains
+        """ TODO: implement island scan for later stages where some of the chains
         you scan might already be touched/solved. This would be a change in the lake fill step,
         where when you hit the edge chains that contain the lakes, you don't add them to the all nodes list
         but you still use them as the nodes that stop you from searching farther. """
