@@ -5,7 +5,7 @@ from gui_colors import *
 from constants import *
 
 # data structures
-from collections import deque, defaultdict
+from collections import deque
 from DSU import DSU as DisjointSet
 
 # dev stuff
