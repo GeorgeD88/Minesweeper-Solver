@@ -150,7 +150,7 @@ class Minesweeper:
 
         return mine_board
 
-    def count_adjacent_mines(self):
+    def generate_mine_counts(self):
         """ Adds the mine counts to a board with already initialized nodes and mines. """
         for node in self.loop_all_nodes():
             if node.is_mine():  # skip mines
@@ -178,7 +178,7 @@ class Minesweeper:
                 self.board[-1].append(Node(self, r, c, True if mines[r][c] is True else 0))
 
         # traverse board and count mines
-        self.count_adjacent_mines()
+        self.generate_mine_counts()
 
     def new_game(self):
         """ Generates new game by regenerating mines/counts and unrevealing all nodes. """
@@ -191,7 +191,7 @@ class Minesweeper:
             node.value = True if mines[r][c] is True else 0
 
         # traverse board and count mines
-        self.count_adjacent_mines()
+        self.generate_mine_counts()
 
     def reset_game(self):
         """ Sets all tiles back to unrevealed but doesn't regenerate game board values. """
