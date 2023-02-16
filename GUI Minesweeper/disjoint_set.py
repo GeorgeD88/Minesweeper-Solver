@@ -1,7 +1,7 @@
 from gui_game import Node  # for type hinting only
 
 
-class DSU:
+class DisjointSet:
     """ Disjoint-set data structure implemented with union by rank and path compression.
         The nodes in this case are tuples containing row & column coordinates. """
 
