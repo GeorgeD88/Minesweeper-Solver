@@ -10,7 +10,6 @@ class DisjointSet:
         self.rank = {}  # keeps track of every node's rank
         self.representatives = set()  # keeps track of the representatives in the forest
         # self.sizes = {}  # keeps track of the size of every disjoint-set (by representative)
-        # TODO: maybe keep track of the sizes of each disjoint-set in the forest
         self.count = 0  # keeps track of the number of disjoint-sets in the forest
 
     def forest_size(self) -> int:
