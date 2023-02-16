@@ -5,8 +5,8 @@ from gui_colors import *
 from constants import *
 
 # data structures
+from disjoint_set import DisjointSet
 from collections import deque
-from DSU import DSU as DisjointSet
 
 # dev stuff
 from pprint import PrettyPrinter
@@ -44,24 +44,27 @@ class Solver(Minesweeper):
     # TODO: maybe put init_solver in main solver function and just make it part of the algorithm function.
     def solve_board(self):
         """ Solver algorithm, the whole bot algorithm. """
-        # self.init_solver()
-
         # [0] Random first drop (is done by the player and saved in a class variable)
         first_node = self.get_node(*self.first_drop)
 
-        # [1] Get starting points for the algorithm (using island scan)
-        chains = self.island_scan(first_node)
-        print(f'found {len(chains)} chains:')
+        # [1] Get starting points for the algorithm (using lake scan)
+        chains = self.lake_scan(first_node)  # run initial lake scan
 
-        # [2] Loop through islands/starting points and run grind chain at each one.
+        # list the chains found
+        print(f'found {len(chains)} chains:')
         for chain in chains:
-            self.switch_color(chain, SOFT_BLUE)
-            print('grinding: ' + str(chain.get_coord()))
-            self.delay(2.5)
+            print(str(chain.get_coord()), end=', ')
+        print('\n')
+
+        # [2] Loop through chains/starting points and run grind chain at each one.
+        for chain in chains:
+            print('grinding:', str(chain.get_coord()))
+            self.switch_color(chain, SOFT_BLUE)  # mark chain's starting point
+            self.delay(2)
             self.grind_chain(chain)
 
     # === CHAIN SEARCH ALGORITHMS ===
-    # like mark wall that might be useful because that same code (or at least purpose) is definitely relevant for island scan.
+    # like mark wall that might be useful because that same code (or at least purpose) is definitely relevant for lake scan.
     # def find_nearest_chain(self, start: Node) -> Node:
     #     """ Uses DFS to find the nearest chain (and returns first node it touched in the chain). """
     #     stack = deque([start])  # use append to push, pop to pop
@@ -83,15 +86,16 @@ class Solver(Minesweeper):
     def union_adjacent_chain(self, DSU: DisjointSet, node: Node):
         """ Perform union on the given node and its adjacent chain nodes. """
         for adj in self.adjacent_nodes(node):  # iterate adjacent nodes
-            if self.is_revealed_solver(adj) and adj.is_chain():  # if chain
-                # if node not in disjoint-set, add it to the structure
+            if self.is_revealed_solver(adj) and adj.is_chain():  # if chain and revealed
+                # add adjacent node to the structure first if it's not in it
                 if not DSU.exists(adj):
                     DSU.new(adj)
-                self.switch_color(adj, DARK_RED_TINT)  # set adjacent disjoint to dark red tint
-                DSU.union(node, adj)  # perform union
+                # sets adjacent node's color to dark red tint if the node was not already part of the same set
+                if DSU.union(node, adj):
+                    self.switch_color(adj, DARK_RED_TINT)
 
-    def island_scan(self, start: Node) -> set[Node]:
-        """ Island scan implemented with disjoint sets. """
+    def lake_scan(self, start: Node) -> set[Node]:
+        """ lake scan implemented with disjoint sets. """
         DSU = DisjointSet()  # disjoint-set data structure
         queue = deque([start])  # append to enqueue and popleft to dequeue
         discovered = {start}  # hashset keeping track of already discovered nodes
@@ -104,10 +108,10 @@ class Solver(Minesweeper):
                 # if node not in disjoint-set, add it to the structure
                 if not DSU.exists(curr):
                     DSU.new(curr)
-                self.switch_color(curr, BORDER_BLUE)  # set chain tile to border blue
-                self.union_adjacent_chain(DSU, curr)
+                    self.switch_color(curr, BORDER_BLUE)  # set chain tile to border blue
+                self.union_adjacent_chain(DSU, curr)  # union this node with its adjacent chain tiles
                 continue
-            # else it's a still an empty/lake node, so just colors it
+            # else it's a still an empty/lake node, so just color it
             else:
                 self.switch_color(curr, self.LAKE)
                 self.solver_delay(0.008)
@@ -120,88 +124,19 @@ class Solver(Minesweeper):
 
         # return disjoint-set representatives (each is a reference to an island)
         return DSU.get_representatives()
+        # return DSU
 
-    def lake_scan_BFS(self, start: Node) -> set[Node]:
-        """ Scans lake of 0s and returns the chains found. returns set of first node found from every chain """
-        # [1] fill lake and grab all border nodes
-        border_nodes = self.grab_lake_border(start)
+    # - Removed lake scan BFS implementation to the side, might need trace chain from it -
 
-        # [2] count number of separate chains from edge nodes found
-        chains_found = self.separate_chains(border_nodes)
-
-        return chains_found
-
-    def grab_lake_border(self, start: Node) -> set[Node]:
-        """ Returns all chain tiles that border the lake of 0s. """
-        # flood fills the lake of 0s, stops the fill at every chain tile it bumps into, and adds that chain tile to a return set.
-        queue = deque([start])  # append to enqueue and popleft to dequeue
-        discovered = {start}  # hashset keeping track of already discovered nodes
-        border_nodes = set()  # set containing all the border nodes that'll be returned
-
-        # TODO: convert to level order traversal
-        while len(queue) > 0:
-            curr = queue.popleft()
-
-            # when border is hit, adds node to return set and stops traversing this point
-            if curr.value != 0:
-                border_nodes.add(curr)
-                continue
-            # else it's a still an empty node, so just colors it
-            else:
-                self.switch_color(curr, self.LAKE)
-                self.solver_delay(0.008)
-
-            # add adjacent nodes to the queue
-            for adj in self.adjacent_nodes(curr):
-                if adj not in discovered:
-                    queue.append(adj)
-                    discovered.add(adj)
-
-        return border_nodes
-
-    def separate_chains(self, all_nodes: set[Node]) -> set[Node]:
-        """ Separates the given nodes into their chains. """
-        # first gonna implement it the BFS way that's cause how I know how, then I'll do the DSU way once I learn how
-        chains = set()  # contains one node for each chain
-        nodes_visited = set()  # keeps track of the nodes we've seen from chains we've traced
-
-        for node in all_nodes:
-            # if node has been visited, it's part of a discovered chain
-            if node in nodes_visited:
-                continue
-
-            # else the node is part of a new chain and we have to mark the whole chain as visited
-            chains.add(node)  # add this chain
-            self.trace_chain(node, nodes_visited)  # trace chian and mark nodes as visited
-
-        return chains
-
-    def trace_chain(self, start: Node, nodes_visited: set):
-        """ Traces chain and marks the nodes as visited. """
-        queue = deque([start])  # append to enqueue and popleft to dequeue
-        discovered = {start}  # hashset keeping track of already discovered nodes
-
-        while len(queue) > 0:
-            curr = queue.popleft()
-
-            # mark as visited
-            nodes_visited.add(curr)
-
-            # add adjacent nodes to queue
-            for adj in self.adjacent_nodes(curr):
-                # node is revealed and a chain tile
-                if self.is_revealed_solver(adj) and adj.is_chain() and adj not in discovered:
-                    queue.append(adj)
-                    discovered.add(adj)
-
-        # return discovered  # returns all the nodes in this chain
-
-    def lake_scan_later(self, start: Node) -> list[Node]:
-        """ TODO: implement island scan for later stages where some of the chains
+    def lake_scan_later(self, start: Node) -> set[Node]:
+        """ TODO: implement lake scan for later stages where some of the chains
         you scan might already be touched/solved. This would be a change in the lake fill step,
         where when you hit the edge chains that contain the lakes, you don't add them to the all nodes list
         but you still use them as the nodes that stop you from searching farther. """
-        pass
+        DSU: DisjointSet = self.lake_scan(start)
+        if DSU.count == 1:
+            return set()  # return empty set indicating no new chains
+        DSU.representatives.remove(start)
 
     # === CHAIN SOLVING ALGORITHMS ===
     def grind_chain(self, chain_start: Node):
