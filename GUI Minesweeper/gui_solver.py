@@ -124,9 +124,9 @@ class Solver(Minesweeper):
 
             # add adjacent nodes to the queue
             for adj in self.adjacent_nodes(curr):
-                if adj not in self.discovered:
+                if adj not in discovered:
                     queue.append(adj)
-                    self.discovered.add(adj)
+                    discovered.add(adj)
 
         # return disjoint-set representatives (each is a reference to an island)
         if border is None:
