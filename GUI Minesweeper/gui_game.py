@@ -87,17 +87,17 @@ class Minesweeper:
 
     def __init__(self, rows: int = 25, cols: int = 40, mine_spawn: float = 0.15, win_height: int = WIN_HEIGHT, win_title: str = 'Minesweeper 💣🧹', color_mappings: dict = None):
         # pygame window dimensions
-        self.win_height = win_height  # window height
+        pygame.init()
+        display_info = pygame.display.Info()
+        screen_width, screen_height = display_info.current_w, display_info.current_h
+        # self.win_height = win_height  # window height
+        self.win_height = int(screen_height * 0.75)  # window height
         self.cell_size = self.win_height // rows  # visual cell size
         self.cell_grid_size = self.cell_size * 0.56  # actual grid length (aesthetic purposes)
         self.grid_space = (self.cell_size - self.cell_grid_size) // 2  # the empty spaces in grid sides
         self.win_width = self.cell_size * cols  # window width
 
         # pygame window (everything is drawn here)
-        # display_info = pygame.display.Info()
-        # screen_width, screen_height = display_info.current_w, display_info.current_h
-        # print(screen_width, screen_height)
-        # exit()
         self.window = pygame.display.set_mode((self.win_width, self.win_height))
         pygame.display.set_caption(win_title)
 
