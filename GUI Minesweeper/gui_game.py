@@ -94,9 +94,12 @@ class Minesweeper:
         self.win_width = self.cell_size * cols  # window width
 
         # pygame window (everything is drawn here)
-        self.win = pygame.display.set_mode((self.win_width, self.win_height))
+        # display_info = pygame.display.Info()
+        # screen_width, screen_height = display_info.current_w, display_info.current_h
+        # print(screen_width, screen_height)
+        # exit()
+        self.window = pygame.display.set_mode((self.win_width, self.win_height))
         pygame.display.set_caption(win_title)
-        # self.mine_icon = pygame.image.load('mine-icon.png')
 
         # color mappings (mapping each state to a color)
         self.GRID_LINE = LIGHT_GRAY#LIGHTER_GRAY
@@ -301,18 +304,18 @@ class Minesweeper:
 
     def draw_node(self, node: Node):
         """ Draws given node onto pygame window. """
-        pygame.draw.rect(self.win, node.state, (node.x, node.y, self.cell_size, self.cell_size))
+        pygame.draw.rect(self.window, node.state, (node.x, node.y, self.cell_size, self.cell_size))
 
     def draw_node_grid(self, node: Node):
         """ Draws given node's grid lines onto pygame window. """
         # draw top line
-        pygame.draw.line(self.win, self.GRID_LINE, (node.x+self.grid_space, node.y), (node.x+self.cell_size-self.grid_space, node.y))
+        pygame.draw.line(self.window, self.GRID_LINE, (node.x+self.grid_space, node.y), (node.x+self.cell_size-self.grid_space, node.y))
         # draw left line
-        pygame.draw.line(self.win, self.GRID_LINE, (node.x, node.y+self.grid_space), (node.x, node.y+self.cell_size-self.grid_space))
+        pygame.draw.line(self.window, self.GRID_LINE, (node.x, node.y+self.grid_space), (node.x, node.y+self.cell_size-self.grid_space))
         # draw bottom line
-        pygame.draw.line(self.win, self.GRID_LINE, (node.x+self.grid_space, node.y+self.cell_size-1), (node.x+self.cell_size-self.grid_space, node.y+self.cell_size-1))
+        pygame.draw.line(self.window, self.GRID_LINE, (node.x+self.grid_space, node.y+self.cell_size-1), (node.x+self.cell_size-self.grid_space, node.y+self.cell_size-1))
         # draw right line
-        pygame.draw.line(self.win, self.GRID_LINE, (node.x+self.cell_size-1, node.y+self.grid_space), (node.x+self.cell_size-1, node.y+self.cell_size-self.grid_space))
+        pygame.draw.line(self.window, self.GRID_LINE, (node.x+self.cell_size-1, node.y+self.grid_space), (node.x+self.cell_size-1, node.y+self.cell_size-self.grid_space))
 
     def delay(self, wait: float = WAIT):
         """ Delay some amount of time, for animation/visual purposes. """
@@ -370,7 +373,7 @@ class Minesweeper:
     def draw(self):
         """ Draws the whole board then updates display. """
         # fill window with white
-        self.win.fill(WHITE)
+        self.window.fill(WHITE)
 
         # goes through every node in the grid and draws it
         for row in self.board:
