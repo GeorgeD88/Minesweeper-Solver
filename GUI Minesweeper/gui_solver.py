@@ -31,7 +31,7 @@ class Solver(Minesweeper):
 
     def run_solver(self):
         """ Run solver by initializing bot, then running it. """
-        self.init_solver()
+        # self.init_solver()
         self.solve_board()
 
     def init_solver(self):
@@ -44,6 +44,8 @@ class Solver(Minesweeper):
     # TODO: maybe put init_solver in main solver function and just make it part of the algorithm function.
     def solve_board(self):
         """ Solver algorithm, the whole bot algorithm. """
+        self.init_solver()
+
         # [0] Random first drop (is done by the player and saved in a class variable)
         first_node = self.get_node(*self.first_drop)
 
@@ -59,34 +61,19 @@ class Solver(Minesweeper):
 
         # [2] While the queue of chains is not empty, pop and grind the next chain
         while len(self.chain_queue) > 0:
+            print('queue state:', end=' ')
+            for chain in self.chain_queue:
+                print(str(chain.get_coord()), end=', ')
+            print('\n')
+
             chain = self.chain_queue.popleft()  # pop chain to grind
 
             # visuals
             print('grinding:', str(chain.get_coord()))
             self.switch_color(chain, SOFT_BLUE)  # mark chain's starting point
-            self.delay(2)
+            self.delay(0.8)
 
             self.grind_chain(chain)  # start grinding chain
-
-    # === CHAIN SEARCH ALGORITHMS ===
-    # like mark wall that might be useful because that same code (or at least purpose) is definitely relevant for lake scan.
-    # def find_nearest_chain(self, start: Node) -> Node:
-    #     """ Uses DFS to find the nearest chain (and returns first node it touched in the chain). """
-    #     stack = deque([start])  # use append to push, pop to pop
-    #     discovered = {start}  # hashset containing nodes already discovered
-
-    #     while len(stack) > 0:
-    #         curr = stack.pop()
-
-    #         self.switch_color(curr, self.LAKE)
-
-    #         # add adjacent nodes to stack
-    #         for adj in self.adjacent_nodes(curr):
-    #             if adj.is_chain():  # chain was found
-    #                 return adj
-    #             elif adj not in discovered:
-    #                 stack.append(adj)
-    #                 discovered.add(adj)
 
     def union_adjacent_chain(self, DSU: DisjointSet, node: Node):
         """ Perform union on the given node and its adjacent chain nodes. """
@@ -135,8 +122,6 @@ class Solver(Minesweeper):
             repr = DSU.get_representatives()
             repr.remove(DSU.find(border))
             return repr
-
-    # - Removed lake scan BFS implementation to the side, might need trace chain from it -
 
     # === CHAIN SOLVING ALGORITHMS ===
     def grind_chain(self, chain_start: Node):
@@ -208,7 +193,6 @@ class Solver(Minesweeper):
         self.solved_count += 1
         return True
 
-    # TODO: find a better name ASAP
     def count_adjacent_tiles(self, node: Node) -> tuple[int, int]:
         """ Returns count of adjacent flags and unrevealed tiles. """
         unrevealed_count = flagged_count = 0
@@ -232,8 +216,6 @@ class Solver(Minesweeper):
                 continue
 
             # lake is found, scan and add new chains to chain queue
-            print('new lake')
-
             new_chains = self.lake_scan(adj, border=node)
             if len(new_chains) > 0:
                 print(f'found {len(new_chains)} new chains')
@@ -264,7 +246,7 @@ class Solver(Minesweeper):
                 return False
         return True
 
-    # === COLORING FUNCTIONS === thank fuck I don't have to deal with these like I did in CLI solver,
+    # === COLORING FUNCTIONS ===
     def switch_color(self, node: Node, new_color: str):
         """ Switches node's color, redraws, updates display, and delays solver. """
         node.state = new_color
