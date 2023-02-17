@@ -106,7 +106,7 @@ class Minesweeper:
         self.TILE_NUMBER = WHITE  # tile foreground color (tile number)
         self.REVEALED = DARK_GRAY  # tile background color (behind number)
         self.LOSS_REVEALED = DARK_GRAY_LOSS  # tile background color (behind number)
-        self.UNREVEALED = SOFT_PURPLE#DARK_PURPLE2  # color theme
+        self.UNREVEALED = SOFT_PURPLE#DARK_GRAY2#DARK_PURPLE2  # color theme
         self.MINE = RED
         self.WIN_MINE = GREEN
         self.FLAG = GRAY_BLUE#LIGHT_GRAY#SOFT_BLUE
