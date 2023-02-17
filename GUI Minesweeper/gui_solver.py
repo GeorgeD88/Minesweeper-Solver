@@ -22,7 +22,7 @@ class Solver(Minesweeper):
         self.first_drop = None
 
         # solver colors
-        self.CURRENT = DARK_PURPLE_TINT
+        self.CURRENT = WHITE #DARK_PURPLE_TINT
         self.LAKE = DULL_BLUE
         self.VISITED = YELLOW_TINT  # visited but wasn't able to solve
         self.SOLVED = GREEN_TINT
@@ -48,20 +48,25 @@ class Solver(Minesweeper):
         first_node = self.get_node(*self.first_drop)
 
         # [1] Get starting points for the algorithm (using lake scan)
-        chains = self.lake_scan(first_node)  # run initial lake scan
+        self.scanned_water = set()  # keeps track of the nodes scanned during lake scans
+        self.chain_queue = deque(self.lake_scan(first_node))  # run initial lake scan
 
         # list the chains found
-        print(f'found {len(chains)} chains:')
-        for chain in chains:
+        print(f'found {len(self.chain_queue)} chains:')
+        for chain in self.chain_queue:
             print(str(chain.get_coord()), end=', ')
         print('\n')
 
-        # [2] Loop through chains/starting points and run grind chain at each one.
-        for chain in chains:
+        # [2] While the queue of chains is not empty, pop and grind the next chain
+        while len(self.chain_queue) > 0:
+            chain = self.chain_queue.popleft()  # pop chain to grind
+
+            # visuals
             print('grinding:', str(chain.get_coord()))
             self.switch_color(chain, SOFT_BLUE)  # mark chain's starting point
             self.delay(2)
-            self.grind_chain(chain)
+
+            self.grind_chain(chain)  # start grinding chain
 
     # === CHAIN SEARCH ALGORITHMS ===
     # like mark wall that might be useful because that same code (or at least purpose) is definitely relevant for lake scan.
@@ -94,11 +99,12 @@ class Solver(Minesweeper):
                 if DSU.union(node, adj):
                     self.switch_color(adj, DARK_RED_TINT)
 
-    def lake_scan(self, start: Node) -> set[Node]:
-        """ lake scan implemented with disjoint sets. """
+    def lake_scan(self, start: Node, border: Node = None) -> tuple[Node, set[Node]]:
+        """ Lake scan implemented with disjoint sets. """
         DSU = DisjointSet()  # disjoint-set data structure
         queue = deque([start])  # append to enqueue and popleft to dequeue
-        discovered = {start}  # hashset keeping track of already discovered nodes
+        self.scanned_water.add(start)
+        # discovered = {start}  # hashset keeping track of already discovered nodes
 
         while len(queue) > 0:
             curr = queue.popleft()
@@ -118,25 +124,19 @@ class Solver(Minesweeper):
 
             # add adjacent nodes to the queue
             for adj in self.adjacent_nodes(curr):
-                if adj not in discovered:
+                if adj not in self.scanned_water:
                     queue.append(adj)
-                    discovered.add(adj)
+                    self.scanned_water.add(adj)
 
         # return disjoint-set representatives (each is a reference to an island)
-        return DSU.get_representatives()
-        # return DSU
+        if border is None:
+            return DSU.get_representatives()
+        else:
+            repr = DSU.get_representatives()
+            repr.remove(DSU.find(border))
+            return repr
 
     # - Removed lake scan BFS implementation to the side, might need trace chain from it -
-
-    def lake_scan_later(self, start: Node) -> set[Node]:
-        """ TODO: implement lake scan for later stages where some of the chains
-        you scan might already be touched/solved. This would be a change in the lake fill step,
-        where when you hit the edge chains that contain the lakes, you don't add them to the all nodes list
-        but you still use them as the nodes that stop you from searching farther. """
-        DSU: DisjointSet = self.lake_scan(start)
-        if DSU.count == 1:
-            return set()  # return empty set indicating no new chains
-        DSU.representatives.remove(start)
 
     # === CHAIN SOLVING ALGORITHMS ===
     def grind_chain(self, chain_start: Node):
@@ -147,10 +147,10 @@ class Solver(Minesweeper):
         # stagnation detector
         while curr_progress > last_progress:
             last_progress = curr_progress  # current total progress becomes last progress
-            self.follow_chain(chain_start)  # follow chain
+            self.solve_chain(chain_start)  # follow chain
             curr_progress = self.flagged_count + self.solved_count  # current total progress is calculated
 
-    def follow_chain(self, chain_start: Node):
+    def solve_chain(self, chain_start: Node):
         """ Follow chain of numbers (using bfs) starting at given coord and process each node. """
         queue = deque([chain_start])  # use append to enqueue, popleft to dequeue
         discovered = {chain_start}  # hashset containing nodes already discovered
@@ -184,7 +184,7 @@ class Solver(Minesweeper):
 
     def simple_solve(self, node: Node) -> bool:
         """ Runs the simple solving algorithm and returns whether tile was solved. """
-        unrevealed_count, flag_count = self.count_unrevealedNflags(node)
+        unrevealed_count, flag_count = self.count_adjacent_tiles(node)
         mines_left = node.value - flag_count  # mines actually left to find
 
         # if the mines left match the unrevealed count, then we're able to solve the tile
@@ -195,15 +195,10 @@ class Solver(Minesweeper):
                 self.solved_count += 1
                 return True
             # flags all unrevealed tiles, as they have to be mines
-            for adj in self.adjacent_nodes(node):
-                if adj.is_unrevealed():  # if unrevealed, flag it
-                    self.flag(adj)
-                    self.flagged_count += 1
+            self.flag_adjacent_nodes(node)
         # no more mines or flags left, so reveal the rest of the tiles
         elif mines_left == 0:
-            for adj in self.adjacent_nodes(node):
-                if adj.is_unrevealed():  # if unrevealed, reveal it
-                    self.reveal(adj)
+            self.reveal_adjacent_nodes(node)
         # not enough information to solve the tile
         else:
             return False
@@ -214,7 +209,7 @@ class Solver(Minesweeper):
         return True
 
     # TODO: find a better name ASAP
-    def count_unrevealedNflags(self, node: Node) -> tuple[int, int]:
+    def count_adjacent_tiles(self, node: Node) -> tuple[int, int]:
         """ Returns count of adjacent flags and unrevealed tiles. """
         unrevealed_count = flagged_count = 0
 
@@ -225,6 +220,32 @@ class Solver(Minesweeper):
                 flagged_count += 1
 
         return unrevealed_count, flagged_count
+
+    def reveal_adjacent_nodes(self, node: Node):
+        """ Reveals all adjacent unrevealed tiles. """
+        for adj in self.adjacent_nodes(node):
+            if not adj.is_unrevealed():  # if not unrevealed, continue
+                continue
+            self.reveal(adj)  # reveal node first
+            # check if lake is found and scan
+            if not adj.is_empty():  # is not lake, no need to scan
+                continue
+
+            # lake is found, scan and add new chains to chain queue
+            print('new lake')
+
+            new_chains = self.lake_scan(adj, border=node)
+            if len(new_chains) > 0:
+                print(f'found {len(new_chains)} new chains')
+                self.chain_queue.extend(new_chains)  # add newly discovered chains to the chain queue
+            self.delay(0.3)
+
+    def flag_adjacent_nodes(self, node: Node):
+        """ Flags all adjacent unrevealed tiles. """
+        for adj in self.adjacent_nodes(node):
+            if adj.is_unrevealed():  # if unrevealed, flag it
+                self.flag(adj)
+                self.flagged_count += 1
 
     # === HELPER FUNCTIONS ===
     def solver_delay(self, wait: float = SOLVER_WAIT):
@@ -248,4 +269,3 @@ class Solver(Minesweeper):
         """ Switches node's color, redraws, updates display, and delays solver. """
         node.state = new_color
         self.update_revealed(node)
-        self.solver_delay()  # NOTE: this feels odd to include, it feels dirty like cli solver
