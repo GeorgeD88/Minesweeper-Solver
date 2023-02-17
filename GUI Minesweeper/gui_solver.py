@@ -48,7 +48,7 @@ class Solver(Minesweeper):
         first_node = self.get_node(*self.first_drop)
 
         # [1] Get starting points for the algorithm (using lake scan)
-        self.scanned_water = set()  # keeps track of the nodes scanned during lake scans
+        # self.scanned_water = set()  # keeps track of the nodes scanned during lake scans
         self.chain_queue = deque(self.lake_scan(first_node))  # run initial lake scan
 
         # list the chains found
@@ -103,8 +103,8 @@ class Solver(Minesweeper):
         """ Lake scan implemented with disjoint sets. """
         DSU = DisjointSet()  # disjoint-set data structure
         queue = deque([start])  # append to enqueue and popleft to dequeue
-        self.scanned_water.add(start)
-        # discovered = {start}  # hashset keeping track of already discovered nodes
+        # self.scanned_water.add(start)
+        discovered = {start}  # hashset keeping track of already discovered nodes
 
         while len(queue) > 0:
             curr = queue.popleft()
@@ -124,9 +124,9 @@ class Solver(Minesweeper):
 
             # add adjacent nodes to the queue
             for adj in self.adjacent_nodes(curr):
-                if adj not in self.scanned_water:
+                if adj not in self.discovered:
                     queue.append(adj)
-                    self.scanned_water.add(adj)
+                    self.discovered.add(adj)
 
         # return disjoint-set representatives (each is a reference to an island)
         if border is None:
