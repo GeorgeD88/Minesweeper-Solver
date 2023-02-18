@@ -54,26 +54,23 @@ class Solver(Minesweeper):
         self.chain_queue = deque(self.lake_scan(first_node))  # run initial lake scan
 
         # list the chains found
-        print(f'found {len(self.chain_queue)} chains:')
+        print(f'\nfound {len(self.chain_queue)} chains:', end=' ')
         for chain in self.chain_queue:
             print(str(chain.get_coord()), end=', ')
-        print('\n')
+        print()
 
         # [2] While the queue of chains is not empty, pop and grind the next chain
         while len(self.chain_queue) > 0:
-            print('queue state:', end=' ')
-            for chain in self.chain_queue:
-                print(str(chain.get_coord()), end=', ')
-            print('\n')
-
             chain = self.chain_queue.popleft()  # pop chain to grind
 
             # visuals
-            print('grinding:', str(chain.get_coord()))
+            print('\ngrinding:', str(chain.get_coord()), '\n')
             self.switch_color(chain, SOFT_BLUE)  # mark chain's starting point
             self.delay(0.8)
 
             self.grind_chain(chain)  # start grinding chain
+
+        print('finished solve cycle')
 
     def union_adjacent_chain(self, DSU: DisjointSet, node: Node):
         """ Perform union on the given node and its adjacent chain nodes. """
