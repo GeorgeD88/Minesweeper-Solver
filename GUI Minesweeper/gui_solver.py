@@ -51,7 +51,10 @@ class Solver(Minesweeper):
 
         # [1] Get starting points for the algorithm (using lake scan)
         # self.scanned_water = set()  # keeps track of the nodes scanned during lake scans
-        self.chain_queue = deque(self.lake_scan(first_node))  # run initial lake scan
+        # run initial lake scan and queue chains to solve
+        self.chain_queue = deque(self.lake_scan(first_node))  # append and popleft
+        # FIXME: maybe name it stagnated chains, but I like having both be called queues
+        self.stagnated_queue = deque()
 
         # list the chains found
         print(f'\nfound {len(self.chain_queue)} chains:', end=' ')
@@ -68,7 +71,15 @@ class Solver(Minesweeper):
             self.switch_color(chain, SOFT_BLUE)  # mark chain's starting point
             self.delay(0.8)
 
-            self.grind_chain(chain)  # start grinding chain
+            grind_result = self.grind_chain(chain)  # run grind chain
+            # if chain was not fully solved (stagnated) add to stagnated queue
+            if not grind_result:
+                self.stagnated_queue.append(chain)
+                print('\nchain stagnated:', str(chain.get_coord()), '\n')
+
+
+        # [3] Pattern recognition and break stagnated chains 😈
+        pass
 
         print('finished solve cycle')
 
@@ -121,19 +132,45 @@ class Solver(Minesweeper):
             return repr
 
     # === CHAIN SOLVING ALGORITHMS ===
-    def grind_chain(self, chain_start: Node):
-        """ Keeps running follow chain until the chain stagnates. """
+    def grind_chain(self, chain_start: Node) -> bool:
+        """ Keeps running solve chain until the chain stagnates. """
         last_progress = -1
         curr_progress = self.flagged_count + self.solved_count
+        initial_solved_count = self.solved_count  # snapshot of solved count before grinding chain
 
         # stagnation detector
         while curr_progress > last_progress:
             last_progress = curr_progress  # current total progress becomes last progress
-            self.solve_chain(chain_start)  # follow chain
+            self.solve_chain(chain_start)  # solve chain
             curr_progress = self.flagged_count + self.solved_count  # current total progress is calculated
 
+        # number of tiles solved during run of grind chain is the current solved count minus the initial solved count
+        newly_solved = self.solved_count - initial_solved_count
+        chain_length = self.measure_chain(chain_start)
+
+        return newly_solved == chain_length  # returns whether the chain was fully solved
+
+    def measure_chain(self, chain_start: Node) -> int:
+        """ Follow chain and count number of tiles. """
+        queue = deque([chain_start])  # use append to enqueue, popleft to dequeue
+        discovered = {chain_start}  # hashset containing nodes already discovered
+        tile_count = 0
+
+        while len(queue) > 0:
+            curr = queue.popleft()
+            tile_count += 1
+
+            # add adjacent nodes to queue
+            for adj in self.adjacent_nodes(curr):
+                # add adj node if it's revealed and a chain tile
+                if self.is_revealed_solver(adj) and adj.is_chain() and adj not in discovered:
+                    queue.append(adj)
+                    discovered.add(adj)
+
+        return tile_count
+
     def solve_chain(self, chain_start: Node):
-        """ Follow chain of numbers (using bfs) starting at given coord and process each node. """
+        """ Follow chain of tiles and simple solve each one. """
         queue = deque([chain_start])  # use append to enqueue, popleft to dequeue
         discovered = {chain_start}  # hashset containing nodes already discovered
 
@@ -150,16 +187,15 @@ class Solver(Minesweeper):
             if curr.is_solved() is False:
                 """ NOTE: note that, this tile could've been solved by the actions of a tile next to it
                 but not marked as solved, so make note of that and try to include that when considering efficiency. """
-                solve_result = self.simple_solve(curr)
                 # color node green if was solved, else make it yellow
-                self.switch_color(curr, self.SOLVED if solve_result else self.VISITED)
+                self.switch_color(curr, self.SOLVED if self.simple_solve(curr) else self.VISITED)
             else:
                 self.switch_color(curr, self.SOLVED)
                 # color it back to green, because remember it was colored purple at the beginning of the iteration
 
             # add adjacent nodes to queue
             for adj in self.adjacent_nodes(curr):
-                # node is revealed and a chain tile
+                # add adj node if it's revealed and a chain tile
                 if self.is_revealed_solver(adj) and adj.is_chain() and adj not in discovered:
                     queue.append(adj)
                     discovered.add(adj)
