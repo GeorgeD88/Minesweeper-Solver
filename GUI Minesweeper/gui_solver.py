@@ -134,21 +134,23 @@ class Solver(Minesweeper):
     # === CHAIN SOLVING ALGORITHMS ===
     def grind_chain(self, chain_start: Node) -> bool:
         """ Keeps running solve chain until the chain stagnates. """
-        last_progress = -1
-        curr_progress = self.flagged_count + self.solved_count
-        initial_solved_count = self.solved_count  # snapshot of solved count before grinding chain
+        # initialize progress trackers for every iteration to detect stagnation
+        last_progress, curr_progress = -1, self.flagged_count + self.solved_count
 
-        # stagnation detector
+        # record current solved count before grinding chain
+        initial_solved_count = self.solved_count
+
+        # run solve chain until progress stagnates
         while curr_progress > last_progress:
             last_progress = curr_progress  # current total progress becomes last progress
             self.solve_chain(chain_start)  # solve chain
-            curr_progress = self.flagged_count + self.solved_count  # current total progress is calculated
+            curr_progress = self.flagged_count + self.solved_count  # new total progress is calculated
 
-        # number of tiles solved during run of grind chain is the current solved count minus the initial solved count
-        newly_solved = self.solved_count - initial_solved_count
-        chain_length = self.measure_chain(chain_start)
+        newly_solved = self.solved_count - initial_solved_count  # calculate number of newly solved tiles
+        chain_length = self.measure_chain(chain_start)  # calculate total number of tiles in chain
 
-        return newly_solved == chain_length  # returns whether the chain was fully solved
+        # returns whether the chain was fully solved by comparing chain's solved count with the total chain count
+        return newly_solved == chain_length
 
     def measure_chain(self, chain_start: Node) -> int:
         """ Follow chain and count number of tiles. """
