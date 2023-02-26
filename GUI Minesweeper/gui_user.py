@@ -135,7 +135,7 @@ class User(Solver):
 
                     # S, run solver
                     elif event.key == pygame.K_s:
-                        self.run_solver()
+                        self.solve_board()
                         if self.is_win():
                             self.level_order_win(self.get_node(*self.first_drop))
 
