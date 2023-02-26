@@ -19,7 +19,7 @@ class Solver(Minesweeper):
 
     def __init__(self, rows: int = ROWS, cols: int = COLS, mine_spawn: float or int = MINE_SPAWN, win_height: int = WIN_HEIGHT, win_title: str = WIN_TITLE):
         super().__init__(rows, cols, mine_spawn, win_height, win_title)
-        self.first_drop = None
+        self.first_drop = None  # keeps track of user's initial drop (that's where solving will start)
 
         # solver colors
         self.CURRENT = WHITE #DARK_PURPLE_TINT
@@ -29,38 +29,33 @@ class Solver(Minesweeper):
         # colors that represent revealed state but are not specifically REVEALED state
         self.revealed_states = {self.CURRENT, self.VISITED, self.SOLVED, self.REVEALED, BORDER_BLUE, DARK_RED_TINT, SOFT_BLUE}
 
-    def run_solver(self):
-        """ Run solver by initializing bot, then running it. """
-        # self.init_solver()
-        self.solve_board()
-
+    # === MAIN SOLVER CODE ===
     def init_solver(self):
         """ Initialize solver, startup code for bot. """
         self.solved_count = self.flagged_count = 0
-        # add solver attributes to every node in the grid
+        # add solved attribute to every node in the grid
         for node in self.loop_all_nodes():
             node.solved = False
 
-    # TODO: maybe put init_solver in main solver function and just make it part of the algorithm function.
     def solve_board(self):
         """ Solver algorithm, the whole bot algorithm. """
-        self.init_solver()
+        self.init_solver()  # initialize values
 
-        # [0] Random first drop (is done by the player and saved in a class variable)
-        first_node = self.get_node(*self.first_drop)
+        # [0] Random first drop (performed by the player and saved in a class variable)
+        initial_drop = self.get_node(*self.first_drop)
+
 
         # [1] Get starting points for the algorithm (using lake scan)
-        # self.scanned_water = set()  # keeps track of the nodes scanned during lake scans
-        # run initial lake scan and queue chains to solve
-        self.chain_queue = deque(self.lake_scan(first_node))  # append and popleft
-        # FIXME: maybe name it stagnated chains, but I like having both be called queues
-        self.stagnated_queue = deque()
+        # use append to enqueue, popleft to dequeue
+        self.chain_queue = deque(self.lake_scan(initial_drop))  # run initial lake scan and queue chains to solve
+        self.stagnated_queue = deque()  # keeps track of stagnated chains
 
         # list the chains found
         print(f'\nfound {len(self.chain_queue)} chains:', end=' ')
         for chain in self.chain_queue:
             print(str(chain.get_coord()), end=', ')
         print()
+
 
         # [2] While the queue of chains is not empty, pop and grind the next chain
         while len(self.chain_queue) > 0:
@@ -78,41 +73,36 @@ class Solver(Minesweeper):
                 print('\nchain stagnated:', str(chain.get_coord()), '\n')
 
 
-        # [3] Pattern recognition and break stagnated chains 😈
+        # [3] Use pattern recognition to break stagnated chains 😈
+        # list the chains that stagnated
+        print(f'\n{len(self.stagnated_queue)} stagnated chains:', end=' ')
+        for chain in self.stagnated_queue:
+            print(str(chain.get_coord()), end=', ')
+        print()
         pass
 
         print('finished solve cycle')
 
-    def union_adjacent_chain(self, DSU: DisjointSet, node: Node):
-        """ Perform union on the given node and its adjacent chain nodes. """
-        for adj in self.adjacent_nodes(node):  # iterate adjacent nodes
-            if self.is_revealed_solver(adj) and adj.is_chain():  # if chain and revealed
-                # add adjacent node to the structure first if it's not in it
-                if not DSU.exists(adj):
-                    DSU.new(adj)
-                # sets adjacent node's color to dark red tint if the node was not already part of the same set
-                if DSU.union(node, adj):
-                    self.switch_color(adj, DARK_RED_TINT)
 
+    # === LAKE SCAN ===
     def lake_scan(self, start: Node, border: Node = None) -> tuple[Node, set[Node]]:
         """ Lake scan implemented with disjoint sets. """
         DSU = DisjointSet()  # disjoint-set data structure
         queue = deque([start])  # append to enqueue and popleft to dequeue
-        # self.scanned_water.add(start)
         discovered = {start}  # hashset keeping track of already discovered nodes
 
         while len(queue) > 0:
             curr = queue.popleft()
 
-            # when border is hit, union node with adjacent chain tiles
+            # border is hit, union node with adjacent chain tiles
             if curr.value != 0:
                 # if node not in disjoint-set, add it to the structure
                 if not DSU.exists(curr):
                     DSU.new(curr)
                     self.switch_color(curr, BORDER_BLUE)  # set chain tile to border blue
                 self.union_adjacent_chain(DSU, curr)  # union this node with its adjacent chain tiles
-                continue
-            # else it's a still an empty/lake node, so just color it
+                continue  # don't adjacent tiles, can't traverse past border
+            # else it's a still an empty/lake node, so just color it and continue
             else:
                 self.switch_color(curr, self.LAKE)
                 self.solver_delay(0.008)
@@ -123,15 +113,28 @@ class Solver(Minesweeper):
                     queue.append(adj)
                     discovered.add(adj)
 
-        # return disjoint-set representatives (each is a reference to an island)
-        if border is None:
+        # return disjoint-set representatives (each is a reference to a chain)
+        if border is None:  # no border specified, return chains as-is
             return DSU.get_representatives()
-        else:
-            repr = DSU.get_representatives()
-            repr.remove(DSU.find(border))
-            return repr
+        else:  # if border is given, remove it from the chains before returning
+            repr = DSU.get_representatives()  # get representatives
+            repr.remove(DSU.find(border))  # remove border chain
+            return repr  # return representatives
 
-    # === CHAIN SOLVING ALGORITHMS ===
+    def union_adjacent_chain(self, DSU: DisjointSet, node: Node):
+        """ Perform union on the given node and its adjacent chain nodes. """
+        for adj in self.adjacent_nodes(node):  # iterate adjacent nodes
+            if self.is_revealed_solver(adj) and adj.is_chain():  # if chain and revealed
+                # add adjacent node to the structure first if it's not in it
+                if not DSU.exists(adj):
+                    DSU.new(adj)
+                # attempt to union current node with adjacent node
+                if DSU.union(node, adj):
+                    # sets adjacent node's color to dark red tint if union was successful
+                    self.switch_color(adj, DARK_RED_TINT)
+
+
+    # === CHAIN SOLVING ===
     def grind_chain(self, chain_start: Node) -> bool:
         """ Keeps running solve chain until the chain stagnates. """
         # initialize progress trackers for every iteration to detect stagnation
@@ -149,30 +152,11 @@ class Solver(Minesweeper):
         newly_solved = self.solved_count - initial_solved_count  # calculate number of newly solved tiles
         chain_length = self.measure_chain(chain_start)  # calculate total number of tiles in chain
 
-        # returns whether the chain was fully solved by comparing chain's solved count with the total chain count
+        # returns whether the chain was fully solved by comparing chain's solved count with the chain's total count
         return newly_solved == chain_length
 
-    def measure_chain(self, chain_start: Node) -> int:
-        """ Follow chain and count number of tiles. """
-        queue = deque([chain_start])  # use append to enqueue, popleft to dequeue
-        discovered = {chain_start}  # hashset containing nodes already discovered
-        tile_count = 0
-
-        while len(queue) > 0:
-            curr = queue.popleft()
-            tile_count += 1
-
-            # add adjacent nodes to queue
-            for adj in self.adjacent_nodes(curr):
-                # add adj node if it's revealed and a chain tile
-                if self.is_revealed_solver(adj) and adj.is_chain() and adj not in discovered:
-                    queue.append(adj)
-                    discovered.add(adj)
-
-        return tile_count
-
     def solve_chain(self, chain_start: Node):
-        """ Follow chain of tiles and simple solve each one. """
+        """ Follows chain of tiles and simple solves each one. """
         queue = deque([chain_start])  # use append to enqueue, popleft to dequeue
         discovered = {chain_start}  # hashset containing nodes already discovered
 
@@ -181,19 +165,19 @@ class Solver(Minesweeper):
 
             self.switch_color(curr, self.CURRENT)
 
-            """ when processing a node, we will be traversing nodes that have been processed before
+            """ NOTE: when processing a node, we will be traversing nodes that have been processed before
             in past calls of the follow chain function. those nodes may or may not have been fully solved.
             so first we have to check for that before we try to solving. """
 
-            # process node
+            # check if tile is not yet solved
             if curr.is_solved() is False:
                 """ NOTE: note that, this tile could've been solved by the actions of a tile next to it
                 but not marked as solved, so make note of that and try to include that when considering efficiency. """
-                # color node green if was solved, else make it yellow
+                # color node green if was able to solve, else make it yellow
                 self.switch_color(curr, self.SOLVED if self.simple_solve(curr) else self.VISITED)
             else:
+                # color back to green (because it was colored purple at the start of the iteration)
                 self.switch_color(curr, self.SOLVED)
-                # color it back to green, because remember it was colored purple at the beginning of the iteration
 
             # add adjacent nodes to queue
             for adj in self.adjacent_nodes(curr):
@@ -204,12 +188,16 @@ class Solver(Minesweeper):
 
     def simple_solve(self, node: Node) -> bool:
         """ Runs the simple solving algorithm and returns whether tile was solved. """
+        # count surrounding unrevealed tiles and flags
         unrevealed_count, flag_count = self.count_adjacent_tiles(node)
-        mines_left = node.value - flag_count  # mines actually left to find
 
-        # if the mines left match the unrevealed count, then we're able to solve the tile
+        # mine count minus flag count is equal to mines actually left to find
+        mines_left = node.value - flag_count
+
+        # if the mines left match the unrevealed count, then they're all mines so flag them
         if mines_left == unrevealed_count:
-            # if they're both 0, then the tile was solved but not marked, meaning it was solved because of actions of adjacent tiles
+            # if they're both 0, then the tile was solved but not marked
+            # (meaning it was solved because of actions of adjacent tiles)
             if mines_left == 0:
                 node.solved = True
                 self.solved_count += 1
@@ -223,19 +211,40 @@ class Solver(Minesweeper):
         else:
             return False
 
-        # tile was able to solve, returns True
+        # if tile was able to solve, returns True
         node.solved = True
         self.solved_count += 1
         return True
+
+    # === CHAIN SOLVING HELPERS ===
+    def measure_chain(self, chain_start: Node) -> int:
+        """ Follow chains and counts number of tiles. """
+        queue = deque([chain_start])  # use append to enqueue, popleft to dequeue
+        discovered = {chain_start}  # hashset containing nodes already discovered
+        tile_count = 0
+
+        while len(queue) > 0:
+            curr = queue.popleft()
+            tile_count += 1  # increase tile count
+
+            # add adjacent nodes to queue
+            for adj in self.adjacent_nodes(curr):
+                # add adj node if it's revealed and a chain tile
+                if self.is_revealed_solver(adj) and adj.is_chain() and adj not in discovered:
+                    queue.append(adj)
+                    discovered.add(adj)
+
+        return tile_count
 
     def count_adjacent_tiles(self, node: Node) -> tuple[int, int]:
         """ Returns count of adjacent flags and unrevealed tiles. """
         unrevealed_count = flagged_count = 0
 
+        # go through adjacent nodes
         for adj in self.adjacent_nodes(node):
-            if adj.is_unrevealed():
+            if adj.is_unrevealed():  # increment unrevealed counter
                 unrevealed_count += 1
-            elif adj.is_flagged():
+            elif adj.is_flagged():  # increment flagged counter
                 flagged_count += 1
 
         return unrevealed_count, flagged_count
@@ -243,7 +252,8 @@ class Solver(Minesweeper):
     def reveal_adjacent_nodes(self, node: Node):
         """ Reveals all adjacent unrevealed tiles. """
         for adj in self.adjacent_nodes(node):
-            if not adj.is_unrevealed():  # if not unrevealed, continue
+            # if not unrevealed, skip
+            if not adj.is_unrevealed():
                 continue
             self.reveal(adj)  # reveal node first
             # check if lake is found and scan
@@ -263,6 +273,10 @@ class Solver(Minesweeper):
             if adj.is_unrevealed():  # if unrevealed, flag it
                 self.flag(adj)
                 self.flagged_count += 1
+
+
+    # === BREAKING STAGNATION ===
+    # def find_stagnation/search_stagnation??
 
     # === HELPER FUNCTIONS ===
     def solver_delay(self, wait: float = SOLVER_WAIT):
