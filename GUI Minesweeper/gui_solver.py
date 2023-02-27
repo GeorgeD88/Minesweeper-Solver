@@ -64,7 +64,7 @@ class Solver(Minesweeper):
             # visuals
             print('\ngrinding:', str(chain.get_coord()), '\n')
             self.switch_color(chain, SOFT_BLUE)  # mark chain's starting point
-            self.delay(0.8)
+            self.delay(0.3)
 
             grind_result = self.grind_chain(chain)  # run grind chain
             # if chain was not fully solved (stagnated) add to stagnated queue
@@ -105,7 +105,7 @@ class Solver(Minesweeper):
             # else it's a still an empty/lake node, so just color it and continue
             else:
                 self.switch_color(curr, self.LAKE)
-                self.solver_delay(0.008)
+                self.solver_delay(0.004)
 
             # add adjacent nodes to the queue
             for adj in self.adjacent_nodes(curr):
@@ -265,7 +265,7 @@ class Solver(Minesweeper):
             if len(new_chains) > 0:
                 print(f'found {len(new_chains)} new chains')
                 self.chain_queue.extend(new_chains)  # add newly discovered chains to the chain queue
-            self.delay(0.3)
+            self.delay(0.03)
 
     def flag_adjacent_nodes(self, node: Node):
         """ Flags all adjacent unrevealed tiles. """
