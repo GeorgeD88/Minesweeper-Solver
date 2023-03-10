@@ -1,5 +1,6 @@
 # interface
 import pygame
+import ptext
 from gui_game import Minesweeper, Node
 from gui_colors import *
 from constants import *
@@ -174,7 +175,12 @@ class Solver(Minesweeper):
                 """ NOTE: note that, this tile could've been solved by the actions of a tile next to it
                 but not marked as solved, so make note of that and try to include that when considering efficiency. """
                 # color node green if was able to solve, else make it yellow
-                self.switch_color(curr, self.SOLVED if self.simple_solve(curr) else self.VISITED)
+                if self.simple_solve(curr):
+                    self.switch_color(curr, self.SOLVED)
+                # if node was not solved, make it yellow and add number of real mines left
+                else:
+                    self.switch_unsolved(curr, self.VISITED)
+
             else:
                 # color back to green (because it was colored purple at the start of the iteration)
                 self.switch_color(curr, self.SOLVED)
@@ -300,3 +306,26 @@ class Solver(Minesweeper):
         """ Switches node's color, redraws, updates display, and delays solver. """
         node.state = new_color
         self.update_revealed(node)
+
+    def switch_unsolved(self, node: Node, new_color: str):
+        """ Switch color and updates revealed but modified specifically for an unsolved node. """
+        node.state = new_color
+        self.draw_unsolved(node)
+        self.update_display()
+
+    def draw_unsolved(self, node: Node):
+        """ Draws revealed nodes that are unsolved (draws "real" mine count). """
+        self.draw_node(node)  # draws tile color, aka bg
+        self.draw_node_grid(node)  # draws grid lines
+        # NOTE: if unsolved then it should always not be empty
+        # if not node.is_empty():  # draws number if value over 0
+        self.draw_real_mine_count(node)  # draws tile number, aka fg
+
+    def draw_real_mine_count(self, node: Node):
+        """ Draws node's real mine count onto pygame window. """
+        # calculate real mine count
+        flag_count = self.count_adjacent_tiles(node)[1]
+        real_mine_count = node.value - flag_count
+
+        # draw the value
+        ptext.draw(str(real_mine_count), centerx=node.x+self.cell_size//2, centery=node.y+self.cell_size//2, fontsize=int(self.cell_size/4*3), color=DARK_GRAY)#3:2
