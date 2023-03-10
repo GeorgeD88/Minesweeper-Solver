@@ -90,8 +90,8 @@ class Minesweeper:
         pygame.init()
         display_info = pygame.display.Info()
         screen_width, screen_height = display_info.current_w, display_info.current_h
-        # self.win_height = win_height  # window height
-        self.win_height = int(screen_height * 0.75)  # window height
+        self.win_height = win_height  # window height
+        # self.win_height = int(screen_height * 0.75)  # window height
         self.cell_size = self.win_height // rows  # visual cell size
         self.cell_grid_size = self.cell_size * 0.56  # actual grid length (aesthetic purposes)
         self.grid_space = (self.cell_size - self.cell_grid_size) // 2  # the empty spaces in grid sides
