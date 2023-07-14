@@ -39,7 +39,6 @@ class User(Solver):
         running = True
 
         while running:
-            # MOUSEMOTION event is important because it allows you to hold down and place
 
             for event in pygame.event.get():
 
@@ -67,7 +66,6 @@ class User(Solver):
         # main update loop
         running = True
         while running:
-            # MOUSEMOTION event is important because it allows you to hold down and place
 
             for event in pygame.event.get():
 
