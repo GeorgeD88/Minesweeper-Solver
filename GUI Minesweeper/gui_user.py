@@ -19,14 +19,6 @@ class User(Solver):
         super().__init__(rows, cols, mine_spawn, win_height, win_title)
         pygame.event.set_blocked(pygame.MOUSEMOTION)
 
-    """ NOTE
-    I have to decide how I want to start the solver integration.
-    like if I want to be able to continue the solver from wherever the user presses key,
-    I have to figure out how I want to grab the existing information.
-    or maybe I'll decide to not be able to continue the user's work and I can only activate it
-    from the starting empty drop/pool.
-    """
-
     # === MAIN ===
     def play(self):
         """ Starts game by running start and update function (remember Unity). """
