@@ -12,8 +12,42 @@ from collections import deque
 # dev stuff
 from pprint import PrettyPrinter
 
-
 pp = PrettyPrinter().pprint  # for dev purposes
+
+
+class Pattern:
+    """ Pattern class that makes it easier to store patterns and their actions. """
+
+    # * Based on Minesweeper online patterns: https://minesweeper.online/help/patterns
+
+    def __init__(self, name: str, pattern: list[list], action: list[list]):
+        """
+        Pattern Guide:
+        * positive integer: represents itself, part of the pattern
+        * -1: represents necessary obstruction (tile, flag, or out-of-bounds)
+        * None: represents unrevealed tile
+
+        Action Guide:
+        * False: reveal tile
+        * True: flag tile
+        """
+
+        # MS online pattern name and "bounding box" of pattern
+        self.name = name
+        self.dimensions = (len(pattern), len(pattern[0]))
+
+        # set of the number tiles contained in the pattern (starting point for pattern matching)
+        self.contains = {}
+        # iterate through the pattern's tiles
+        for row in pattern:
+            for tile in row:
+                # pulls number tiles, essential for matching the pattern
+                if type(tile) is int and tile >= 0:
+                    self.contains.add(tile)
+
+        # the pattern and its respective actions
+        self.pattern = pattern
+        self.action = action
 
 
 class Solver(Minesweeper):
