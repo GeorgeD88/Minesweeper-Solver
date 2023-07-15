@@ -233,7 +233,7 @@ class Solver(Minesweeper):
 
     # === CHAIN SOLVING HELPERS ===
     def measure_chain(self, chain_start: Node) -> int:
-        """ Follow chains and counts number of tiles. """
+        """ Follows chain and counts the number of tiles. """
         queue = deque([chain_start])  # use append to enqueue, popleft to dequeue
         discovered = {chain_start}  # hashset containing nodes already discovered
         tile_count = 0
