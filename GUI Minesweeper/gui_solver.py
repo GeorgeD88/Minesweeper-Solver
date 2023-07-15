@@ -92,6 +92,15 @@ class Solver(Minesweeper):
         queue = deque([start])  # append to enqueue and popleft to dequeue
         discovered = {start}  # hashset keeping track of already discovered nodes
 
+        """
+        pumps event to prevent system from thinking app timed out.
+        pumping the event here because I need it to happen frequently,
+        but not too frequently, so this is a perfect interval.
+        """
+        pygame.event.pump()
+        # pops last event to avoid filling queue with pumped events
+        pygame.event.poll()
+
         while len(queue) > 0:
             curr = queue.popleft()
 

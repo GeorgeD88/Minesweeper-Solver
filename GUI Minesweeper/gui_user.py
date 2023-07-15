@@ -82,9 +82,11 @@ class User(Solver):
                             # lose if chord is wrong (flags were wrong)
                             if chord_result is False:
                                 self.level_order_loss(node)
+                                pygame.event.clear()  # ignore events added during animation
                             # check if chord resulted in a win
                             elif self.is_win():
                                 self.level_order_win(node)
+                                pygame.event.clear()  # ignore events added during animation
                         elif node.is_flagged():  # can't reveal flagged node
                             continue
                         elif node.is_mine():  # run lose procedure if node is a mine
@@ -99,6 +101,7 @@ class User(Solver):
                                 self.reveal(node)
                                 if self.is_win():
                                     self.level_order_win(node)
+                                    pygame.event.clear()  # ignore events added during animation
 
                     # right click, flag tile
                     elif event.button == 3:#pygame.mouse.get_pressed()[2]:
@@ -126,6 +129,9 @@ class User(Solver):
                     # S, run solver
                     elif event.key == pygame.K_s:
                         self.solve_board()
+                        # clear event queue after solving, this ignores buttons pressed during solve cycle
+                        pygame.event.clear()
+
                         if self.is_win():
                             self.level_order_win(self.get_node(*self.first_drop))
 
