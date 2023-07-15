@@ -30,6 +30,7 @@ class Pattern:
         Action Guide:
         * False: reveal tile
         * True: flag tile
+        * only the unrevealed tiles (Nones) have actions, if any
         """
 
         # MS online pattern name and "bounding box" of pattern
@@ -61,8 +62,114 @@ class Solver(Minesweeper):
         self.LAKE = DULL_BLUE
         self.VISITED = YELLOW_TINT  # visited but wasn't able to solve
         self.SOLVED = GREEN_TINT
+
         # colors that represent revealed state but are not specifically REVEALED state
         self.revealed_states = {self.CURRENT, self.VISITED, self.SOLVED, self.REVEALED, BORDER_BLUE, DARK_RED_TINT, SOFT_BLUE}
+
+        # pattern matching, all the basic patterns finished so far
+        self.patterns = (
+            Pattern(
+                name = '1-1',
+                pattern = [
+                    [-1, None, None, None],     # -1 can be any revealed tile/flag or out of bounds
+                    [-1, 1,    1,    -1]        # simply needs to be an obstruction
+                ],
+                action = [
+                    [-1, None, None, False],    # False to reveal tile
+                    [-1, 1,    1,    -1]
+                ]
+            ),
+            Pattern(
+                name = '1-1+',
+                pattern = [
+                    [-1, None, None, None],  # should the Nones be -1 (any tile)?
+                    [-1, 1,    1,    None],
+                    [-1, -1,  -1,    None]   # should the 2nd to last -1 be a 0?
+                ],
+                action = [
+                    [-1, None, None, False],
+                    [-1, 1,    1,    False],
+                    [-1, -1,  -1,    False]
+                ]
+            ),
+            # added reveal to top-left, all 1-2s don't have it but need it
+            Pattern(
+                name = '1-2',
+                pattern = [
+                # !this pattern should work if already half done (ex. left revealed or right flagged)
+                # !I need to figure out how to account for that. SEE BELOW FOR THEORY
+                    [-1, None, None, None],
+                    [-1, 1,    2,    -1]
+                ],
+                action = [
+                    [-1, None, None, True],
+                    [-1, 1,    2,    -1]
+                ]
+            ),
+            Pattern(
+                name = '1-2+',  # technically 1-4
+                # basically like 1-1 except all flags instead of all reveals
+                pattern = [
+                    [-1, None, None, None],
+                    [-1, 1,    4,    None],
+                    [-1, -1,   -1,   None]
+                ],
+                action = [
+                    [False, None, None, True],
+                    [-1,    1,    4,    True],
+                    [-1,    -1,   -1,   True]
+                ]
+            ),
+            Pattern(
+                name = '1-2C',
+                pattern = [
+                # !like 1-2 but left is empty not wall. covers case of tile being empty or wall
+                    [None, None, None, None],
+                    [-1,   1,    2,    -1]
+                ],
+                action = [
+                    [False, None, None, True],
+                    [-1,   1,    2,    -1]
+                ]
+            ),
+            Pattern(
+                name = '1-2C+',
+                pattern = [
+                    [None, None, None, None],
+                    [-1,   1,    4,    None],
+                    [-1,   -1,  -1,    None]
+                ],
+                action = [
+                    [False, None, None, True],
+                    [-1,    1,    4,    True],
+                    [-1,    -1,   -1,   True]
+                ]
+            ),
+            Pattern(
+                name = '1-2-1',
+                pattern = [
+                    [None, None, None],
+                    [1,    2,    1]
+                ],
+                action = [
+                    [True, False, True],
+                    [1,    2,     1]
+                ]
+            ),
+            Pattern(
+                # * NOTE: despite being combo of 2 existing 1-2 patterns
+                # * added because it's easier to process 2 at once
+                name = '1-2-2-1',
+                pattern = [
+                    [None, None, None, None],
+                    [1,    2,    2,    1]
+                ],
+                action = [
+                    [False, True, True, False],
+                    [1,     2,     2,   1]
+                ]
+            )
+        )
 
     # === MAIN SOLVER CODE ===
     def init_solver(self):
