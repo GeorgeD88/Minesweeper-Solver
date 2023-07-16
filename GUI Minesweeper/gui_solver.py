@@ -10,6 +10,7 @@ from disjoint_set import DisjointSet
 from collections import deque
 
 # dev stuff
+from typing import Generator
 from pprint import PrettyPrinter
 
 pp = PrettyPrinter().pprint  # for dev purposes
@@ -38,12 +39,12 @@ class Pattern:
         self.dimensions = (len(pattern), len(pattern[0]))
 
         # set of the number tiles contained in the pattern (starting point for pattern matching)
-        self.contains = {}
+        self.contains = set()
         # iterate through the pattern's tiles
         for row in pattern:
             for tile in row:
                 # pulls number tiles, essential for matching the pattern
-                if type(tile) is int and tile >= 0:
+                if type(tile) is int and tile >= 1:  # ? don't think so, but should it be >= 0?
                     self.contains.add(tile)
 
         # the pattern and its respective actions
@@ -181,6 +182,7 @@ class Solver(Minesweeper):
 
     def solve_board(self):
         """ Solver algorithm, the whole bot algorithm. """
+
         self.init_solver()  # initialize values
 
         # [0] Random first drop (performed by the player and saved in a class variable)
@@ -200,6 +202,7 @@ class Solver(Minesweeper):
 
 
         # [2] While the queue of chains is not empty, pop and grind the next chain
+        # TODO: move this off to an independent method so that it can be called repeatedly in between breaking stagnation
         while len(self.chain_queue) > 0:
             chain = self.chain_queue.popleft()  # pop chain to grind
 
@@ -208,14 +211,16 @@ class Solver(Minesweeper):
             self.switch_color(chain, SOFT_BLUE)  # mark chain's starting point
             self.delay(0.3)
 
-            grind_result = self.grind_chain(chain)  # run grind chain
+            # run grind chain to attempt solving chain
+            grind_result = self.grind_chain(chain)
+
             # if chain was not fully solved (stagnated) add to stagnated queue
             if not grind_result:
                 self.stagnated_queue.append(chain)
                 print('\nchain stagnated:', str(chain.get_coord()), '\n')
 
 
-        # [3] Use pattern recognition to break stagnated chains 😈
+        # [3] Use pattern recognition to break stagnations in stagnated chains 😈
         # list the chains that stagnated
         print(f'\n{len(self.stagnated_queue)} stagnated chains:', end=' ')
         for chain in self.stagnated_queue:
@@ -229,6 +234,7 @@ class Solver(Minesweeper):
     # === LAKE SCAN ===
     def lake_scan(self, start: Node, border: Node = None) -> tuple[Node, set[Node]]:
         """ Lake scan implemented with disjoint sets. """
+
         DSU = DisjointSet()  # disjoint-set data structure
         queue = deque([start])  # append to enqueue and popleft to dequeue
         discovered = {start}  # hashset keeping track of already discovered nodes
@@ -274,6 +280,7 @@ class Solver(Minesweeper):
 
     def union_adjacent_chain(self, DSU: DisjointSet, node: Node):
         """ Perform union on the given node and its adjacent chain nodes. """
+
         for adj in self.adjacent_nodes(node):  # iterate adjacent nodes
             if self.is_revealed_solver(adj) and adj.is_chain():  # if chain and revealed
                 # add adjacent node to the structure first if it's not in it
@@ -288,6 +295,7 @@ class Solver(Minesweeper):
     # === CHAIN SOLVING ===
     def grind_chain(self, chain_start: Node) -> bool:
         """ Keeps running solve chain until the chain stagnates. """
+
         # initialize progress trackers for every iteration to detect stagnation
         last_progress, curr_progress = -1, self.flagged_count + self.solved_count
 
@@ -308,6 +316,7 @@ class Solver(Minesweeper):
 
     def solve_chain(self, chain_start: Node):
         """ Follows chain of tiles and simple solves each one. """
+
         queue = deque([chain_start])  # use append to enqueue, popleft to dequeue
         discovered = {chain_start}  # hashset containing nodes already discovered
 
@@ -330,7 +339,6 @@ class Solver(Minesweeper):
                 # if node was not solved, make it yellow and add number of real mines left
                 else:
                     self.switch_unsolved(curr, self.VISITED)
-
             else:
                 # color back to green (because it was colored purple at the start of the iteration)
                 self.switch_color(curr, self.SOLVED)
@@ -344,6 +352,7 @@ class Solver(Minesweeper):
 
     def simple_solve(self, node: Node) -> bool:
         """ Runs the simple solving algorithm and returns whether tile was solved. """
+
         # count surrounding unrevealed tiles and flags
         unrevealed_count, flag_count = self.count_adjacent_tiles(node)
 
@@ -375,6 +384,7 @@ class Solver(Minesweeper):
     # === CHAIN SOLVING HELPERS ===
     def measure_chain(self, chain_start: Node) -> int:
         """ Follows chain and counts the number of tiles. """
+
         queue = deque([chain_start])  # use append to enqueue, popleft to dequeue
         discovered = {chain_start}  # hashset containing nodes already discovered
         tile_count = 0
@@ -407,6 +417,7 @@ class Solver(Minesweeper):
 
     def reveal_adjacent_nodes(self, node: Node):
         """ Reveals all adjacent unrevealed tiles. """
+
         for adj in self.adjacent_nodes(node):
             # if not unrevealed, skip
             if not adj.is_unrevealed():
