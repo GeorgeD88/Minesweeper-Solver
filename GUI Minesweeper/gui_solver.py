@@ -172,6 +172,11 @@ class Solver(Minesweeper):
             )
         )
 
+        # store all values of possible patterns
+        # ! this might not be great because for example, a tile might be half solved, so we have to work on accounting for that
+        # self.contains
+
+
     # === MAIN SOLVER CODE ===
     def init_solver(self):
         """ Initialize solver, startup code for bot. """
@@ -226,7 +231,42 @@ class Solver(Minesweeper):
         for chain in self.stagnated_queue:
             print(str(chain.get_coord()), end=', ')
         print()
-        pass
+        print('finished loop cycle')  # dupe of below, to skip code in progress below
+        return
+    
+        # while the queue of chains is not empty, pop and grind the next chain
+        while len(self.stagnated_queue) > 0:  # TODO: figure out if this loop is correct to use
+            chain = self.stagnated_queue.popleft()  # pop stagnated chain to fix
+
+            # visuals
+            print('\ngrinding:', str(chain.get_coord()), '\n')
+            self.switch_color(chain, SOFT_BLUE)  # mark chain's starting point
+            self.delay(0.3)
+
+            # search for patterns to break stagnation
+            patterns_found = self.break_stagnation(chain)
+            # ? remember the idea I had where when a pattern is found, we localize progress to that point.
+            # so when we go back to simple solving, we start from that point.
+            # another idea to limit the radius so that we don't waste traversing the same completed tiles,
+            # is to ignore tiles solved before and to only start from the yellow tiles of that chain
+
+            # no patterns found means no stagnation progress
+            if patterns_found == 0:
+                # ! no progress made, stagnation persists, nothing we can do now
+                stagnation_lockedUP = chain
+            # at least one pattern found so stagnation progress was made
+            else:
+                # add back to chain queue to attempt further simple solving
+                print('\npatterns found in chain!:', str(chain.get_coord()), '\n')
+                self.chain_queue.append(chain)
+                # ! TODO: figure out how to go back to simple solving
+
+            """
+            I think if stagnation found nothing, it needs to go to fully stagnated chain queue
+            where I can figure out stuff later, but it's not common for chains to have no patterns.
+            anyways it will just be set up to be the next development point, similar to how I had
+            the stagnated chain queue ready long before I started working on the pattern matching.
+            """
 
         print('finished solve cycle')
 
