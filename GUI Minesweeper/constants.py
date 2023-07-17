@@ -29,3 +29,4 @@ SOLVER_WAIT = 0.002#.015  # delay animation for solver
 # == BACKEND CONSTANTS ==
 ADJACENT_COORDS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
 DIRECTLY_ADJ_COORDS = [(-1, 0), (0, -1), (0, 1), (1, 0)]  # adjacent without diagonals
+Coord = tuple[int, int]  # custom type for type hinting

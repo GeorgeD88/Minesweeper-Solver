@@ -51,6 +51,8 @@ class Pattern:
         self.pattern = pattern
         self.action = action
 
+    def loop_pattern_coords(self) -> Generator[Coord, None, None]:
+    def enum_adjacent_coords(self, r: int, c: int) -> Generator[tuple[Coord, int], None, None]:
 
 class Solver(Minesweeper):
 

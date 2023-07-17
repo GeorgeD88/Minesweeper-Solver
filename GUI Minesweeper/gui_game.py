@@ -33,7 +33,7 @@ class Node:
         self.state = self.parent.UNREVEALED  # current state/color of the node
         self.value = value  # minesweeper tile value (0 to 9 or mine)
 
-    def get_coord(self) -> tuple[int, int]:
+    def get_coord(self) -> Coord:
         """ Returns node's coordinate. """
         return (self.row, self.col)
 
@@ -234,7 +234,7 @@ class Minesweeper:
         """ Returns the node at the given coord. """
         return self.board[r][c]
 
-    def adjacent_coords(self, r: int, c: int) -> Generator[tuple[int, int], None, None]:
+    def adjacent_coords(self, r: int, c: int) -> Generator[Coord, None, None]:
         """ Returns the coords adjacent to the given coord. """
         for offset in ADJACENT_COORDS:
             adj_coord = self.offset_coord((r, c), offset)
@@ -255,19 +255,19 @@ class Minesweeper:
             for c in range(self.cols):
                 yield self.get_node(r, c)
 
-    def loop_all_coords(self) -> Generator[tuple[int, int], None, None]:
+    def loop_all_coords(self) -> Generator[Coord, None, None]:
         """ Generator that yields coords of all nodes in the grid (gets rid of need for 2 loops). """
         for r in range(self.rows):
             for c in range(self.cols):
                 yield (r, c)
 
-    def enum_all_coords(self) -> Generator[tuple[tuple[int, int], Node], None, None]:
+    def enum_all_coords(self) -> Generator[tuple[Coord, Node], None, None]:
         """ Generator that yields coords and node pairs of all nodes in the grid (gets rid of need for 2 loops). """
         for r in range(self.rows):
             for c in range(self.cols):
                 yield (r, c), self.get_node(r, c)
 
-    def offset_coord(self, coord: tuple[int, int], offset: tuple[int, int]) -> tuple[int, int]:
+    def offset_coord(self, coord: Coord, offset: tuple[int, int]) -> Coord:
         """ Returns a coord offset by the given offset. """
         return tuple(crd + ofst for crd, ofst in zip(coord, offset))
 
