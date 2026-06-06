@@ -245,8 +245,9 @@ class Minesweeper:
     # === HELPER FUNCTIONS ===
     def gen_matrix(self, default=None) -> list[list]:
         """ Generates a 2D array the size of the board consisting of the given default value. """
-        nested_arr = [] if default is None else [default]*self.cols
-        return [nested_arr for _ in range(self.rows)]
+        if default is None:
+            return [[] for _ in range(self.rows)]
+        return [[default]*self.cols for _ in range(self.rows)]
 
     def get_node(self, r: int, c: int) -> Node:
         """ Returns the node at the given coord. """
