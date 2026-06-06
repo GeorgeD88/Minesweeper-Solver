@@ -202,6 +202,24 @@ class Minesweeper:
         for node in self.loop_all_nodes():
             node.unreveal()
 
+
+    """ ### Measuring the average number of times the board is regenerated to get an empty drop
+    def EXP_avg(self):
+        from random import randint
+        rs, cs = self.rows, self.cols  # rows, cols
+        qr, qc = rs//4, cs//4  # quarter rows, quarter cols
+        total_regens = 0
+        trial_count = 1_000
+        for _ in range(trial_count):
+            drop_node = self.board[randint(qr-1, rs-qr-1)][randint(qc-1, cs-qc-1)]
+            self.first_drop = drop_node.get_coord()
+            self.new_game()  # first gen
+            while not drop_node.is_empty():
+                total_regens += 1
+                self.new_game()
+        print('Average regens per game/first click:', total_regens/trial_count) """
+
+
     def generate_empty_drop(self, node: Node):
         """ Regenerates board until given node is an empty spot. """
         while not node.is_empty():
@@ -383,6 +401,43 @@ class Minesweeper:
                     self.draw_node_grid(node)
 
         self.update_display()
+
+    def debug_draw(self, border: bool = True):
+        """ Outputs the whole internal board (values) to the console (DEBUGGING). """
+        chars = {
+            'tile': '▢',
+            'mine': '☹',
+            'zero': ' ',
+            'flag': '+',
+            'maybe': '?'
+        }
+
+        # Prints border around board
+        if border:  # Top border
+            print('-'*(self.cols*2+3))
+
+        for r in range(self.rows):
+            if border:  # left border
+                print('|', end=' ')
+
+            for c in range(self.cols):
+                node = self.board[r][c]  # type Node
+
+                if node.is_mine():
+                    print(chars['mine'], end=' ')
+                elif node.is_empty():
+                    print(chars['zero'], end=' ')
+                elif node.is_chain():  # number tile
+                    print(str(node.value), end=' ')
+
+            if border:  # right border
+                print('|', end='')
+
+            print()
+
+        if border:  # bottom border
+            print('-'*(self.cols*2+3))
+
 
     # === GAME FUNCTIONS ===
     def flag(self, node: Node):
