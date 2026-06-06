@@ -160,7 +160,7 @@ class Solver(Minesweeper):
             curr_progress = self.flagged_count + self.solved_count  # new total progress is calculated
 
         newly_solved = self.solved_count - initial_solved_count  # calculate number of newly solved tiles
-        chain_length = self.measure_chain(chain_start)  # calculate total number of tiles in chain
+        chain_length = self.measure_chain(chain_start)  # calculate total number of tiles in chain, after having revealed it all
 
         # returns whether the chain was fully solved by comparing chain's solved count with the chain's total count
         return newly_solved == chain_length
