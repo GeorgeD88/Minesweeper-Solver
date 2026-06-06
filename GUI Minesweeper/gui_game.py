@@ -257,7 +257,7 @@ class Minesweeper:
         """ Returns the coords adjacent to the given coord. """
         for offset in ADJACENT_COORDS:
             adj_coord = self.offset_coord((r, c), offset)
-            if self.bounds(*adj_coord) is True:
+            if self.in_bounds(*adj_coord) is True:
                 yield adj_coord
 
     def adjacent_nodes(self, node: Node) -> Generator[Node, None, None]:
