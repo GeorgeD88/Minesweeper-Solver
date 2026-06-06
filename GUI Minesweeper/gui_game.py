@@ -23,7 +23,7 @@ pp = PrettyPrinter().pprint  # for dev purposes
 
 class Node:
 
-    def __init__(self, visualizer, row: int, col: int, value: bool or int):
+    def __init__(self, visualizer, row: int, col: int, value: bool | int):
         self.parent = visualizer  # visualizer class that holds these nodes
         self.size = visualizer.cell_size  # side length of the cell
 
@@ -409,9 +409,13 @@ class Minesweeper:
         # goes through every node in the grid and draws it
         for row in self.board:
             for node in row:
-                self.draw_node(node)
-                if node.is_revealed():  # only draws grid for revealed nodes
-                    self.draw_node_grid(node)
+                # self.draw_node(node)
+                # if node.is_revealed():  # only draws grid for revealed nodes
+                #     self.draw_node_grid(node)
+                if node.is_unrevealed() or node.is_flagged():
+                    self.draw_unrevealed(node)
+                else:
+                    self.draw_revealed(node)
 
         self.update_display()
 
