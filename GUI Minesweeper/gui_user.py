@@ -18,6 +18,7 @@ class User(Solver):
     def __init__(self, rows: int = ROWS, cols: int = COLS, mine_spawn: float or int = MINE_SPAWN, win_height: int = WIN_HEIGHT, win_title: str = WIN_TITLE):
         super().__init__(rows, cols, mine_spawn, win_height, win_title)
         pygame.event.set_blocked(pygame.MOUSEMOTION)
+        self.preloss_snapshot = None
 
     # === MAIN ===
     def play(self):
@@ -81,8 +82,7 @@ class User(Solver):
                             chord_result = self.chord(node)
                             # lose if chord is wrong (flags were wrong)
                             if chord_result is False:
-                                self.level_order_loss(node)
-                                pygame.event.clear()  # ignore events added during animation
+                                self.lose_procedure(node)
                             # check if chord resulted in a win
                             elif self.is_win():
                                 self.level_order_win(node)
@@ -90,9 +90,9 @@ class User(Solver):
                         elif node.is_flagged():  # can't reveal flagged node
                             continue
                         elif node.is_mine():  # run lose procedure if node is a mine
-                            node.reveal()  # reveal node (mine), without incrementing revealed count
-                            self.update_revealed(node)  # update revealed mine
-                            self.level_order_loss(node)
+                            # node.reveal()  # reveal node (mine), without incrementing revealed count
+                            # self.update_revealed(node)  # update revealed mine
+                            self.lose_procedure(node)
                         else:  # node is safe, reveal it
                             # avoids increasing revealed counter for already revealed by solver
                             if node.state in self.revealed_states:
@@ -129,15 +129,30 @@ class User(Solver):
                     # S, run solver
                     elif event.key == pygame.K_s:
                         self.solve_board()
-                        # clear event queue after solving, this ignores buttons pressed during solve cycle
+                        # clear event queue after solving, ignores buttons pressed during solve cycle
                         pygame.event.clear()
 
                         if self.is_win():
                             self.level_order_win(self.get_node(*self.first_drop))
 
+                    # U, undo losing move
+                    elif event.key == pygame.K_u and self.preloss_snapshot is not None:
+                        self.restore_snapshot(self.preloss_snapshot)
+                        self.draw()
+                        pygame.event.clear()
+                        self.preloss_snapshot = None
+
                     # else, some other key was pressed
 
         pygame.quit()
+
+    def win_procedure(self, node):
+        ...
+
+    def lose_procedure(self, node):
+        self.preloss_snapshot = self.take_snapshot()
+        self.level_order_loss(node)
+        pygame.event.clear()  # ignore (mouse/keyboard?) events added during animation
 
 def end_procedure(end_message):
     end_message()
