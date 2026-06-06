@@ -202,6 +202,18 @@ class Minesweeper:
         for node in self.loop_all_nodes():
             node.unreveal()
 
+    def take_snapshot(self) -> tuple:
+        """ Captures snapshot of current board state and revealed count. """
+        copied_state = [[node.state for node in row] for row in self.board]
+        return (copied_state, self.revealed_count)
+
+    def restore_snapshot(self, snapshot: tuple):
+        """ Restores board from snapshot. """
+        states, self.revealed_count = snapshot
+        for r in range(self.rows):
+            for c in range(self.cols):
+                self.board[r][c].state = states[r][c]
+        # self.draw()
 
     """ ### Measuring the average number of times the board is regenerated to get an empty drop
     def EXP_avg(self):
